@@ -1,5 +1,8 @@
 {
   "name": "cururu-telegram-bot",
   "compatibility_date": "2026-05-12",
-  "main": "worker.js"
+  "main": "worker.js",
+  "triggers": {
+    "crons": ["*/2 * * * *"]
+  }
 }

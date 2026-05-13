@@ -211,7 +211,14 @@ async function handleTelegramWebhook(request, env, supabase, notificationService
   const update = await request.json();
   const message = telegramMessageFromUpdate(update);
   const startCode = parseStartCode(message?.text);
-  if (!message || !startCode) return json({ ok: true, ignored: true });
+  if (!message || !startCode) {
+    console.log("Telegram inbound message ignored", {
+      reason: "announcements_only",
+      chat_id: message?.chat?.id ? String(message.chat.id) : null,
+      has_text: Boolean(message?.text),
+    });
+    return json({ ok: true, ignored: true });
+  }
 
   const chat = message.chat || {};
   const from = message.from || {};
@@ -254,7 +261,7 @@ async function handleTelegramWebhook(request, env, supabase, notificationService
     username: from.username || chat.username || null,
     first_name: from.first_name || null,
   });
-  await sendTelegramMessage(env, chat.id, "Curur\u00FA Club \uD83C\uDF3F\nTelegram vinculado correctamente.");
+  await sendTelegramMessage(env, chat.id, "Curur\u00FA Club \uD83C\uDF3F\nTelegram vinculado correctamente.\nEste canal se usara solo para avisos del club.");
   return json({ ok: true, linked: true });
 }
 
@@ -289,9 +296,7 @@ function workerSecretIsValid(request, env) {
   return !workerSecret || request.headers.get("authorization") === `Bearer ${workerSecret}`;
 }
 
-async function handleDispatchPending(request, env, supabase, notificationService) {
-  if (!workerSecretIsValid(request, env)) return json({ error: "Forbidden" }, 403);
-
+async function processPendingTelegramNotifications(supabase, notificationService) {
   const pending = await supabase.request(
     `notificaciones_programadas?estado=eq.pendiente&canal=eq.telegram&fecha_programada=lte.${encodeURIComponent(new Date().toISOString())}&select=id,socio_id,mensaje&order=fecha_programada.asc&limit=50`,
   );
@@ -325,6 +330,13 @@ async function handleDispatchPending(request, env, supabase, notificationService
     }
   }
 
+  return results;
+}
+
+async function handleDispatchPending(request, env, supabase, notificationService) {
+  if (!workerSecretIsValid(request, env)) return json({ error: "Forbidden" }, 403);
+
+  const results = await processPendingTelegramNotifications(supabase, notificationService);
   return json({ processed: results.length, results });
 }
 
@@ -355,5 +367,14 @@ export default {
     } catch (error) {
       return json({ ok: false, error: error?.message || String(error) }, 500);
     }
+  },
+  async scheduled(_event, env, ctx) {
+    const supabase = buildSupabase(env);
+    const notificationService = createNotificationService(env, supabase);
+    ctx.waitUntil(
+      processPendingTelegramNotifications(supabase, notificationService)
+        .then((results) => console.log("Telegram pending dispatch", { processed: results.length }))
+        .catch((error) => console.error("Telegram pending dispatch failed", error?.message || String(error))),
+    );
   },
 };

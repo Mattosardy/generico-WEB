@@ -61,7 +61,7 @@ function renderTelegramLinkPanel() {
             <div>
                 <span class="metric-label">Notificaciones</span>
                 <strong>${linked ? username : 'Telegram'}</strong>
-                <small>${linked ? 'Canal principal activo.' : 'Vincula tu cuenta para recibir avisos del club.'}</small>
+                <small>${linked ? 'Canal de avisos activo.' : 'Vincula tu cuenta para recibir avisos del club.'}</small>
             </div>
             <button type="button" id="btnVincularTelegram" class="dashboard-shortcut">
                 <i class="fab fa-telegram"></i> ${linked ? 'Verificar' : 'Vincular Telegram'}
@@ -85,7 +85,7 @@ function renderTelegramLinkPanel() {
 
             const { code } = await crearTelegramLinkCode(appState.socioData.id);
             window.open(obtenerTelegramLinkUrl(code), '_blank', 'noopener,noreferrer');
-            mostrarMensaje('Se abrio Telegram. Toca Start para completar la vinculacion.', true);
+            mostrarMensaje('Se abrio Telegram. Toca Start para activar avisos del club.', true);
         } catch (error) {
             console.error('Error al vincular Telegram:', error);
             mostrarMensaje('No se pudo iniciar la vinculacion con Telegram.', false);
