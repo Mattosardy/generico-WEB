@@ -2,6 +2,10 @@
   "name": "cururu-telegram-bot",
   "compatibility_date": "2026-05-12",
   "main": "worker.js",
+  "vars": {
+    "SUPABASE_URL": "https://qjiqbcokhlwisxbeplym.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqaXFiY29raGx3aXN4YmVwbHltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTc3MjgsImV4cCI6MjA5MDI3MzcyOH0._bRZjYV1Ly30T-g4zuI7GNNTRnZtnD9HTamojbP3xnY"
+  },
   "triggers": {
     "crons": ["*/2 * * * *"]
   }

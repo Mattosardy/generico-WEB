@@ -42,6 +42,31 @@ function buildSupabase(env) {
   return { request };
 }
 
+function buildSupabaseRpc(env) {
+  const url = requireEnv(env, "SUPABASE_URL").replace(/\/$/, "");
+  const key = requireEnv(env, "SUPABASE_ANON_KEY");
+
+  async function rpc(functionName, body = {}) {
+    const response = await fetch(`${url}/rest/v1/rpc/${functionName}`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const payload = await response.json().catch(async () => ({ error: await response.text() }));
+    if (!response.ok) {
+      throw new Error(`Supabase RPC ${response.status}: ${JSON.stringify(payload)}`);
+    }
+    return payload;
+  }
+
+  return { rpc };
+}
+
 function parseStartCode(text = "") {
   const parts = String(text).trim().split(/\s+/);
   if (parts[0] !== "/start") return null;
@@ -73,6 +98,15 @@ async function sendTelegramMessage(env, chatId, text) {
     throw new Error(body.description || `Telegram ${response.status}`);
   }
   return body.result;
+}
+
+function telegramWebhookSendMessage(chatId, text) {
+  return json({
+    method: "sendMessage",
+    chat_id: chatId,
+    text,
+    disable_web_page_preview: true,
+  });
 }
 
 function createTelegramProvider(env) {
@@ -201,7 +235,7 @@ function notifyPickupAvailable(env, user, reservation) {
   );
 }
 
-async function handleTelegramWebhook(request, env, supabase, notificationService) {
+async function handleTelegramWebhook(request, env) {
   const expectedSecret = getEnv(env, "TELEGRAM_WEBHOOK_SECRET");
   if (expectedSecret) {
     const receivedSecret = request.headers.get("x-telegram-bot-api-secret-token") || "";
@@ -222,76 +256,36 @@ async function handleTelegramWebhook(request, env, supabase, notificationService
 
   const chat = message.chat || {};
   const from = message.from || {};
-  const socios = await supabase.request(
-    `socios?telegram_link_code=eq.${encodeURIComponent(startCode)}&telegram_link_code_expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id,telegram_chat_id,telegram_link_code_expires_at`,
-  );
-  const socio = socios?.[0];
+  const supabaseRpc = buildSupabaseRpc(env);
+  const result = await supabaseRpc.rpc("link_telegram_by_code", {
+    p_code: startCode,
+    p_chat_id: String(chat.id),
+    p_username: from.username || chat.username || null,
+    p_first_name: from.first_name || null,
+  });
 
-  if (socio) {
-    const existingChats = await supabase.request(
-      `socios?telegram_chat_id=eq.${encodeURIComponent(String(chat.id))}&id=neq.${encodeURIComponent(socio.id)}&select=id`,
-    );
-    if (existingChats?.length) {
-      await sendTelegramMessage(env, chat.id, "Este Telegram ya esta vinculado a otro socio. Contacta al club para cambiar la vinculacion.");
-      console.log("Telegram link rejected", { reason: "chat_already_linked", chat_id: String(chat.id) });
-      return json({ ok: true, linked: false, reason: "chat_already_linked" });
-    }
-
-    await supabase.request(`socios?id=eq.${encodeURIComponent(socio.id)}`, {
-      method: "PATCH",
-      prefer: "return=minimal",
-      body: JSON.stringify({
-        telegram_chat_id: String(chat.id),
-        telegram_username: from.username || chat.username || null,
-        telegram_enabled: true,
-        telegram_linked_at: new Date().toISOString(),
-        telegram_link_code: null,
-        telegram_link_code_expires_at: null,
-      }),
-    });
-
+  if (result?.linked) {
     console.log("Telegram linked", {
-      socio_id: socio.id,
+      target: result.target,
+      id: result.id,
       chat_id: String(chat.id),
       username: from.username || chat.username || null,
       first_name: from.first_name || null,
     });
-    await sendTelegramMessage(env, chat.id, "Curur\u00FA Club \uD83C\uDF3F\nTelegram vinculado correctamente.\nEste canal se usara solo para avisos del club.");
-    return json({ ok: true, linked: true, target: "socio" });
+    const text = result.target === "solicitud"
+      ? "Curur\u00FA Club \uD83C\uDF3F\nTelegram verificado correctamente.\nTu solicitud quedo pendiente de aprobacion."
+      : "Curur\u00FA Club \uD83C\uDF3F\nTelegram vinculado correctamente.\nEste canal se usara solo para avisos del club.";
+    return telegramWebhookSendMessage(chat.id, text);
   }
 
-  const solicitudes = await supabase.request(
-    `solicitudes_membresia?telegram_link_code=eq.${encodeURIComponent(startCode)}&telegram_link_code_expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id`,
+  const alreadyLinked = result?.reason === "chat_already_linked";
+  console.log("Telegram link rejected", { reason: result?.reason || "unknown", chat_id: String(chat.id) });
+  return telegramWebhookSendMessage(
+    chat.id,
+    alreadyLinked
+      ? "Este Telegram ya esta vinculado a otro socio. Contacta al club para cambiar la vinculacion."
+      : "C\u00F3digo inv\u00E1lido o vencido. Volv\u00E9 a la web y toc\u00E1 Vincular Telegram otra vez.",
   );
-  const solicitud = solicitudes?.[0];
-
-  if (solicitud) {
-    await supabase.request(`solicitudes_membresia?id=eq.${encodeURIComponent(solicitud.id)}`, {
-      method: "PATCH",
-      prefer: "return=minimal",
-      body: JSON.stringify({
-        telegram_chat_id: String(chat.id),
-        telegram_username: from.username || chat.username || null,
-        telegram_enabled: true,
-        telegram_linked_at: new Date().toISOString(),
-        telegram_link_code: null,
-        telegram_link_code_expires_at: null,
-      }),
-    });
-
-    console.log("Telegram linked to membership request", {
-      solicitud_id: solicitud.id,
-      chat_id: String(chat.id),
-      username: from.username || chat.username || null,
-      first_name: from.first_name || null,
-    });
-    await sendTelegramMessage(env, chat.id, "Curur\u00FA Club \uD83C\uDF3F\nTelegram verificado correctamente.\nTu solicitud quedo pendiente de aprobacion.");
-    return json({ ok: true, linked: true, target: "solicitud" });
-  }
-
-  await sendTelegramMessage(env, chat.id, "C\u00F3digo inv\u00E1lido o vencido. Volv\u00E9 a la web y toc\u00E1 Vincular Telegram otra vez.");
-  console.log("Telegram link rejected", { reason: "invalid_or_expired_code", chat_id: String(chat.id) });
-  return json({ ok: true, linked: false });
 }
 
 async function handleNotificationSend(request, env, supabase, notificationService) {
@@ -373,11 +367,9 @@ export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
-      const supabase = buildSupabase(env);
-      const notificationService = createNotificationService(env, supabase);
 
       if (request.method === "POST" && url.pathname === "/webhook/telegram") {
-        return handleTelegramWebhook(request, env, supabase, notificationService);
+        return handleTelegramWebhook(request, env);
       }
 
       if (request.method === "POST" && url.pathname === "/telegram/send-test") {
@@ -385,10 +377,14 @@ export default {
       }
 
       if (request.method === "POST" && url.pathname === "/api/notifications/send") {
+        const supabase = buildSupabase(env);
+        const notificationService = createNotificationService(env, supabase);
         return handleNotificationSend(request, env, supabase, notificationService);
       }
 
       if (request.method === "POST" && url.pathname === "/api/notifications/dispatch-pending") {
+        const supabase = buildSupabase(env);
+        const notificationService = createNotificationService(env, supabase);
         return handleDispatchPending(request, env, supabase, notificationService);
       }
 
