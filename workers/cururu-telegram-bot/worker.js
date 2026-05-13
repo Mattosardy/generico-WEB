@@ -346,11 +346,17 @@ async function processPendingTelegramNotifications(env) {
   return results;
 }
 
+async function queueTelegramReservationReminders(env) {
+  const supabaseRpc = buildSupabaseRpc(env);
+  return supabaseRpc.rpc("queue_monthly_telegram_reservation_reminders", {});
+}
+
 async function handleDispatchPending(request, env, supabase, notificationService) {
   if (!workerSecretIsValid(request, env)) return json({ error: "Forbidden" }, 403);
 
+  const queuedReminders = await queueTelegramReservationReminders(env);
   const results = await processPendingTelegramNotifications(env);
-  return json({ processed: results.length, results });
+  return json({ queuedReminders, processed: results.length, results });
 }
 
 export default {
@@ -383,8 +389,13 @@ export default {
   },
   async scheduled(_event, env, ctx) {
     ctx.waitUntil(
-      processPendingTelegramNotifications(env)
-        .then((results) => console.log("Telegram pending dispatch", { processed: results.length }))
+      queueTelegramReservationReminders(env)
+        .then((queuedReminders) => processPendingTelegramNotifications(env)
+          .then((results) => ({ queuedReminders, results })))
+        .then(({ queuedReminders, results }) => console.log("Telegram pending dispatch", {
+          queuedReminders,
+          processed: results.length,
+        }))
         .catch((error) => console.error("Telegram pending dispatch failed", error?.message || String(error))),
     );
   },
