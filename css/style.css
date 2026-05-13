@@ -2925,6 +2925,67 @@ body::before {
     line-height: 1.15;
 }
 
+#inicio .section-title,
+.cururu-news-section .section-title {
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+}
+
+#inicio .section-title i,
+.cururu-news-section .section-title i {
+    margin-right: 0;
+}
+
+.cururu-news-section {
+    text-align: center;
+}
+
+.cururu-news-section .noticias-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.cururu-news-section .noticia-card {
+    text-align: center;
+}
+
+.cururu-news-section .noticia-body {
+    align-items: center;
+    padding: 12px;
+}
+
+.cururu-news-section .noticia-contenido {
+    text-align: center;
+}
+
+.cururu-news-section .noticia-cta {
+    justify-content: center;
+}
+
+.cururu-news-section .actividad-item {
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    padding: 12px;
+    border-right: 0;
+    border: 1px solid rgba(67, 105, 48, 0.16);
+}
+
+.cururu-news-section .actividad-fecha {
+    min-width: 82px;
+    padding: 7px 10px;
+}
+
+.cururu-news-section .actividad-info {
+    min-width: min(100%, 220px);
+}
+
+.cururu-news-section .empty-state {
+    text-align: center;
+    align-items: center;
+}
+
 @media (max-width: 520px) {
     .historia-texto-principal {
         padding: 10px 9px 9px;
