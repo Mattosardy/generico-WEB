@@ -100,16 +100,17 @@ const notificationService = {
     },
     async send(userId, message, options = {}) {
         const canal = options.channel || 'telegram';
-        return supabaseClient.from('notificaciones_programadas').insert([{
-            socio_id: userId,
-            tipo: options.type || 'manual',
-            mensaje: message,
-            fecha_programada: options.scheduledAt || new Date().toISOString(),
-            estado: 'pendiente',
-            canal,
-            provider: canal === 'telegram' ? 'telegram' : null,
-            metadata: options.metadata || {}
-        }]);
+        if (canal !== 'telegram') {
+            return { data: null, error: new Error('Canal no soportado por ahora.') };
+        }
+
+        return supabaseClient.rpc('queue_telegram_notification', {
+            p_socio_id: userId,
+            p_tipo: options.type || 'manual',
+            p_mensaje: message,
+            p_fecha_programada: options.scheduledAt || new Date().toISOString(),
+            p_metadata: options.metadata || {}
+        });
     },
 };
 
