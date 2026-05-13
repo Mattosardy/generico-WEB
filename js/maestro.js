@@ -239,10 +239,9 @@ async function cargarMaestroSocios() {
         <p style="color:var(--text-muted); margin: 8px 0 14px;">El maestro comparte la misma edicion completa de usuarios que Admin.</p>
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email legacy</th><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
             <tbody>${(data || []).map((socio) => `
                 <tr>
-                    <td><input type="email" class="socio-edit-input email" id="socioEmail_maestro_${socio.id}" value="${escapeHtml(socio.email || '')}" placeholder="Opcional / Auth"></td>
                     <td><input type="text" class="socio-edit-input" id="socioNombre_maestro_${socio.id}" value="${escapeHtml(socio.nombre || '')}" placeholder="Nombre"></td>
                     <td><input type="text" class="socio-edit-input" id="socioApellido_maestro_${socio.id}" value="${escapeHtml(socio.apellido || '')}" placeholder="Apellido"></td>
                     <td><input type="text" class="socio-edit-input small" id="socioCedula_maestro_${socio.id}" value="${escapeHtml(socio.cedula || '')}" placeholder="Cedula"></td>

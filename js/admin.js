@@ -728,10 +728,9 @@ async function cargarSociosAdmin() {
     container.innerHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email legacy</th><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
             <tbody>${data.map((socio) => `
                 <tr>
-                    <td><input type="email" class="socio-edit-input email" id="socioEmail_admin_${socio.id}" value="${escapeHtml(socio.email || '')}" placeholder="Opcional / Auth"></td>
                     <td><input type="text" class="socio-edit-input" id="socioNombre_admin_${socio.id}" value="${escapeHtml(socio.nombre || '')}" placeholder="Nombre"></td>
                     <td><input type="text" class="socio-edit-input" id="socioApellido_admin_${socio.id}" value="${escapeHtml(socio.apellido || '')}" placeholder="Apellido"></td>
                     <td><input type="text" class="socio-edit-input small" id="socioCedula_admin_${socio.id}" value="${escapeHtml(socio.cedula || '')}" placeholder="Cedula"></td>
@@ -775,7 +774,6 @@ function obtenerValorCampoSocio(socioId, origen, campo) {
 window.guardarSocioAdmin = async function(socioId, origen = 'admin') {
     const nombre = obtenerValorCampoSocio(socioId, origen, 'Nombre');
     const apellido = obtenerValorCampoSocio(socioId, origen, 'Apellido');
-    const email = obtenerValorCampoSocio(socioId, origen, 'Email');
     const cedula = obtenerValorCampoSocio(socioId, origen, 'Cedula');
     const numeroSocio = obtenerValorCampoSocio(socioId, origen, 'Numero');
     const telefono = normalizarTelefonoSocioInput(obtenerValorCampoSocio(socioId, origen, 'Telefono'));
@@ -790,7 +788,6 @@ window.guardarSocioAdmin = async function(socioId, origen = 'admin') {
     const payload = {
         nombre,
         apellido,
-        email: email || null,
         cedula: cedula || null,
         numero_socio: numeroSocio ? Number(numeroSocio) : null,
         telefono,
@@ -846,9 +843,9 @@ async function cargarReservasAdmin() {
 async function cargarSociosParaMensajes() {
     const select = document.getElementById('mensajeDestinatario');
     if (!select) return;
-    const { data } = await supabaseClient.from('socios').select('id, email, nombre, apellido').eq('estado', 'activo');
+    const { data } = await supabaseClient.from('socios').select('id, nombre, apellido, telefono, telegram_enabled').eq('estado', 'activo');
     select.innerHTML = '<option value="todos">Todos los socios</option>' + (data || []).map((socio) => `
-        <option value="${socio.id}">${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)} (${escapeHtml(socio.email || '-')})</option>
+        <option value="${socio.id}">${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}${socio.telegram_enabled ? ' · Telegram' : (socio.telefono ? ` · ${escapeHtml(socio.telefono)}` : '')}</option>
     `).join('');
 }
 
