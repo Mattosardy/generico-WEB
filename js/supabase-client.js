@@ -399,7 +399,7 @@ window.obtenerProductos = obtenerProductos;
 window.obtenerActividades = obtenerActividades;
 window.solicitarMembresia = solicitarMembresia;
 
-// Autenticación email (NUEVAS)
+// Autenticación principal
 window.loginConEmail = loginConEmail;
 window.verificarEmail = verificarEmail;
 window.enviarEnlaceRecuperacionPassword = enviarEnlaceRecuperacionPassword;
@@ -496,4 +496,4 @@ window.renderizarEstrellas = renderizarEstrellas;
 
 
 
-console.log('🚀 Cururú Club - Client listo (con login por email)');
+console.log('Cururu Club - Client listo (con login por telefono)');
