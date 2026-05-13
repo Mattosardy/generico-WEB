@@ -97,6 +97,120 @@ function construirTarjetaCalendarioReservaHTML({ titulo, fecha, reserva, puedeRe
     `;
 }
 
+function obtenerDetalleRetiroReserva(reserva) {
+    if (!reservaEstaActiva(reserva)) return 'Sin retiro registrado';
+    if (reserva.estado === 'entregado' || reserva.estado === 'retirado') return `${reserva.cantidad_gramos}g retirados`;
+    return 'Retiro pendiente';
+}
+
+function renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo, gramosRestantesCiclo) {
+    const container = document.getElementById('reservasActividadCalendar');
+    if (!container || !appState.socioData?.id || !appState.fechasEntrega || !appState.cicloClubActual) return;
+
+    const eventos = [
+        { tipo: 'primer', titulo: 'Primer jueves', fecha: appState.fechasEntrega.primerJueves, reserva: reservaPrimer, puedeReservar: puedePrimer },
+        { tipo: 'ultimo', titulo: 'Ultimo jueves', fecha: appState.fechasEntrega.ultimoJueves, reserva: reservaUltimo, puedeReservar: puedeUltimo }
+    ];
+    const reservasActivas = [reservaPrimer, reservaUltimo].filter(reservaEstaActiva).length;
+    const historialRetirado = (reservas || []).filter((reserva) => reserva.estado === 'entregado' || reserva.estado === 'retirado').length;
+
+    container.style.display = '';
+    container.innerHTML = `
+        <div class="reservas-activity-head">
+            <span class="dashboard-eyebrow">Calendario de entregas</span>
+            <strong>${escapeHtml(appState.cicloClubActual.etiqueta)}</strong>
+            <small>${gramosRestantesCiclo}g disponibles · ${reservasActivas} reservas · ${historialRetirado} retiros</small>
+        </div>
+        <div class="reservas-activity-events">
+            ${eventos.map((evento) => {
+                const fecha = formatearFechaReservaCalendario(evento.fecha);
+                const estado = obtenerEtiquetaEstadoReserva(evento.reserva, evento.puedeReservar);
+                const detalle = evento.reserva ? `${evento.reserva.cantidad_gramos}g reservados` : 'Sin reserva';
+                return `
+                    <button type="button" class="reserva-activity-event" data-reserva-evento="${evento.tipo}">
+                        <span class="reserva-activity-date"><strong>${fecha.dia}</strong><small>${escapeHtml(fecha.mes)}</small></span>
+                        <span class="reserva-activity-copy">
+                            <strong>${escapeHtml(evento.titulo)}</strong>
+                            <small>${escapeHtml(estado)} · ${escapeHtml(detalle)}</small>
+                        </span>
+                    </button>
+                `;
+            }).join('')}
+        </div>
+    `;
+
+    container.querySelectorAll('[data-reserva-evento]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const evento = eventos.find((item) => item.tipo === btn.dataset.reservaEvento);
+            abrirReservaActividadModal(evento, gramosRestantesCiclo);
+        });
+    });
+}
+
+function asegurarReservaActividadModal() {
+    let modal = document.getElementById('reservaActividadModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'reservaActividadModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content reserva-actividad-modal-content">
+            <span class="cerrar-modal" id="cerrarReservaActividadModal">&times;</span>
+            <div id="reservaActividadModalBody"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#cerrarReservaActividadModal')?.addEventListener('click', cerrarReservaActividadModal);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) cerrarReservaActividadModal();
+    });
+    return modal;
+}
+
+function abrirReservaActividadModal(evento, gramosRestantesCiclo) {
+    if (!evento) return;
+    const modal = asegurarReservaActividadModal();
+    const body = modal.querySelector('#reservaActividadModalBody');
+    const fecha = formatearFechaReservaCalendario(evento.fecha);
+    const reservado = evento.reserva ? `${evento.reserva.cantidad_gramos}g reservados` : 'Sin reserva';
+    const retirado = obtenerDetalleRetiroReserva(evento.reserva);
+
+    body.innerHTML = `
+        <div class="reserva-modal-fecha">
+            <strong>${fecha.dia}</strong>
+            <span>${escapeHtml(fecha.mes)}</span>
+        </div>
+        <h2 class="modal-titulo">${escapeHtml(evento.titulo)}</h2>
+        <div class="noticia-modal-meta">${escapeHtml(fecha.completa)}</div>
+        <div class="reserva-modal-detalles">
+            <div><span>Estado</span><strong>${escapeHtml(obtenerEtiquetaEstadoReserva(evento.reserva, evento.puedeReservar))}</strong></div>
+            <div><span>Reservado</span><strong>${escapeHtml(reservado)}</strong></div>
+            <div><span>Retiro</span><strong>${escapeHtml(retirado)}</strong></div>
+        </div>
+        ${!evento.reserva && evento.puedeReservar ? `
+            <div class="modal-pedido-info">Reservar para esta fecha</div>
+            ${construirOpcionesReservaHTML(gramosRestantesCiclo, evento.tipo)}
+        ` : ''}
+        ${construirAccionCancelarReservaHTML(evento.reserva, evento.tipo, evento.puedeReservar)}
+    `;
+
+    body.querySelectorAll('.opcion-gramo').forEach((el) => el.addEventListener('click', async () => {
+        const gramos = parseInt(el.dataset.gramos, 10);
+        cerrarReservaActividadModal();
+        await confirmarReservaHandler(evento.tipo, gramos);
+    }));
+    body.querySelectorAll('.btn-cancelar-reserva').forEach((el) => el.addEventListener('click', async () => {
+        cerrarReservaActividadModal();
+        await cancelarReservaHandler(el.dataset.reservaId, el.dataset.tipo);
+    }));
+    modal.style.display = 'flex';
+}
+
+function cerrarReservaActividadModal() {
+    const modal = document.getElementById('reservaActividadModal');
+    if (modal) modal.style.display = 'none';
+}
+
 function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo) {
     const dashboard = document.getElementById('socioDashboard');
     if (!dashboard || appState.rolUsuario === 'invitado') return;
@@ -149,7 +263,7 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
 
 async function renderProximasEntregasEnProductos() {
     const proximasWrapper = document.getElementById('productosProximasEntregas');
-    if (proximasWrapper) proximasWrapper.style.display = 'block';
+    if (proximasWrapper) proximasWrapper.style.display = 'none';
     const container = document.getElementById('calendarioProductos');
     if (!container) return;
 
@@ -191,6 +305,8 @@ async function cargarReservasSocio() {
     const misReservasWrapper = document.getElementById('productosMisReservas');
     if (!appState.socioData?.id) {
         if (misReservasWrapper) misReservasWrapper.style.display = 'none';
+        const activityCalendar = document.getElementById('reservasActividadCalendar');
+        if (activityCalendar) activityCalendar.style.display = 'none';
         const dashboard = document.getElementById('socioDashboard');
         if (dashboard) dashboard.style.display = 'none';
         appState.gramosReservadosCiclo = 0;
@@ -198,7 +314,7 @@ async function cargarReservasSocio() {
         await renderProximasEntregasEnProductos();
         return;
     }
-    if (misReservasWrapper) misReservasWrapper.style.display = 'block';
+    if (misReservasWrapper) misReservasWrapper.style.display = 'none';
 
     const container = document.getElementById('calendarioContainer');
     if (!container) return;
@@ -275,6 +391,7 @@ async function cargarReservasSocio() {
     }
 
     renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo);
+    renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo, gramosRestantesCiclo);
     await renderProximasEntregasEnProductos();
 }
 

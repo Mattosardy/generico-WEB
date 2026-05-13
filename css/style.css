@@ -3100,6 +3100,146 @@ body::before {
     max-width: 180px;
 }
 
+.reservas-activity-calendar {
+    border: 1px solid rgba(67, 105, 48, 0.16);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 12px;
+    background: #ffffff;
+}
+
+.reservas-activity-head {
+    text-align: center;
+    padding: 6px 4px 10px;
+}
+
+.reservas-activity-head strong {
+    display: block;
+    color: var(--text-strong);
+    font-size: 0.98rem;
+}
+
+.reservas-activity-head small {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+}
+
+.reservas-activity-events {
+    display: grid;
+    gap: 8px;
+}
+
+.reserva-activity-event {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    border: 1px solid rgba(67, 105, 48, 0.16);
+    border-radius: 11px;
+    background: #f8fbf6;
+    padding: 8px;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+}
+
+.reserva-activity-date {
+    min-height: 54px;
+    border-radius: 10px;
+    background: #eef5ea;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.reserva-activity-date strong {
+    color: var(--text-strong);
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.reserva-activity-date small {
+    color: var(--text-muted);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+}
+
+.reserva-activity-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.reserva-activity-copy strong {
+    color: var(--text-strong);
+    font-size: 0.9rem;
+}
+
+.reserva-activity-copy small {
+    color: var(--text-muted);
+    font-size: 0.73rem;
+}
+
+.reserva-actividad-modal-content {
+    text-align: center;
+}
+
+.reserva-modal-fecha {
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+    background: #eef5ea;
+    border: 1px solid rgba(67, 105, 48, 0.18);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 10px;
+}
+
+.reserva-modal-fecha strong {
+    color: var(--text-strong);
+    font-size: 1.65rem;
+    line-height: 1;
+}
+
+.reserva-modal-fecha span {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.72rem;
+}
+
+.reserva-modal-detalles {
+    display: grid;
+    gap: 8px;
+    margin: 14px 0;
+}
+
+.reserva-modal-detalles div {
+    border: 1px solid rgba(67, 105, 48, 0.14);
+    border-radius: 10px;
+    padding: 9px;
+    background: #ffffff;
+}
+
+.reserva-modal-detalles span,
+.reserva-modal-detalles strong {
+    display: block;
+}
+
+.reserva-modal-detalles span {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+}
+
+.reserva-modal-detalles strong {
+    color: var(--text-strong);
+    font-size: 0.9rem;
+}
+
 @media (max-width: 520px) {
     .historia-texto-principal {
         padding: 10px 9px 9px;
