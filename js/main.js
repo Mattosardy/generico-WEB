@@ -211,11 +211,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     document.getElementById('formLoginPassword')?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const email = document.getElementById('loginEmailPassword').value;
+        const identificador = document.getElementById('loginTelefonoPassword').value.trim();
         const password = document.getElementById('loginPassword').value;
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) {
-            mostrarMensaje('Email o contraseña incorrectos', false);
+        const resultado = identificador.includes('@')
+            ? await supabaseClient.auth.signInWithPassword({ email: identificador, password }).then(({ data, error }) => error ? { success: false, error } : { success: true, data })
+            : await loginConTelefonoPassword(identificador, password);
+        if (!resultado.success) {
+            mostrarMensaje('Telefono o contrasena incorrectos', false);
             return;
         }
         mostrarMensaje('Inicio de sesión exitoso', true);

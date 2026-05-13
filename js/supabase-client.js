@@ -166,6 +166,28 @@ async function enviarEnlaceRecuperacionPassword(email) {
     }
 }
 
+function normalizarTelefonoAuth(telefono) {
+    const limpio = String(telefono || '').replace(/[^\d+]/g, '').trim();
+    const digitos = limpio.replace(/[^\d]/g, '');
+    if (limpio.startsWith('+598')) return limpio;
+    if (digitos.startsWith('598') && digitos.length === 11) return `+${digitos}`;
+    if (digitos.startsWith('09') && digitos.length === 9) return `+598${digitos.slice(1)}`;
+    if (digitos.startsWith('9') && digitos.length === 8) return `+598${digitos}`;
+    return limpio;
+}
+
+async function loginConTelefonoPassword(telefono, password) {
+    try {
+        const phone = normalizarTelefonoAuth(telefono);
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ phone, password });
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error al iniciar sesion con telefono:', error.message);
+        return { success: false, error };
+    }
+}
+
 // Obtener usuario actual (sesión activa)
 async function obtenerUsuarioActual() {
     try {
@@ -381,6 +403,8 @@ window.solicitarMembresia = solicitarMembresia;
 window.loginConEmail = loginConEmail;
 window.verificarEmail = verificarEmail;
 window.enviarEnlaceRecuperacionPassword = enviarEnlaceRecuperacionPassword;
+window.loginConTelefonoPassword = loginConTelefonoPassword;
+window.normalizarTelefonoAuth = normalizarTelefonoAuth;
 window.obtenerUsuarioActual = obtenerUsuarioActual;
 window.cerrarSesion = cerrarSesion;
 
