@@ -728,10 +728,10 @@ async function cargarSociosAdmin() {
     container.innerHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email</th><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+            <thead><tr><th>Email legacy</th><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
             <tbody>${data.map((socio) => `
                 <tr>
-                    <td><input type="email" class="socio-edit-input email" id="socioEmail_admin_${socio.id}" value="${escapeHtml(socio.email || '')}" placeholder="correo@ejemplo.com"></td>
+                    <td><input type="email" class="socio-edit-input email" id="socioEmail_admin_${socio.id}" value="${escapeHtml(socio.email || '')}" placeholder="Opcional / Auth"></td>
                     <td><input type="text" class="socio-edit-input" id="socioNombre_admin_${socio.id}" value="${escapeHtml(socio.nombre || '')}" placeholder="Nombre"></td>
                     <td><input type="text" class="socio-edit-input" id="socioApellido_admin_${socio.id}" value="${escapeHtml(socio.apellido || '')}" placeholder="Apellido"></td>
                     <td><input type="text" class="socio-edit-input small" id="socioCedula_admin_${socio.id}" value="${escapeHtml(socio.cedula || '')}" placeholder="Cedula"></td>
@@ -782,15 +782,15 @@ window.guardarSocioAdmin = async function(socioId, origen = 'admin') {
     const rol = obtenerValorCampoSocio(socioId, origen, 'Rol') || 'socio';
     const estado = obtenerValorCampoSocio(socioId, origen, 'Estado') || 'activo';
 
-    if (!nombre || !apellido || !email) {
-        mostrarMensaje('Nombre, apellido y email son obligatorios.', false);
+    if (!nombre || !apellido) {
+        mostrarMensaje('Nombre y apellido son obligatorios.', false);
         return;
     }
 
     const payload = {
         nombre,
         apellido,
-        email,
+        email: email || null,
         cedula: cedula || null,
         numero_socio: numeroSocio ? Number(numeroSocio) : null,
         telefono,

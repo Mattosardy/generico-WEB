@@ -35,7 +35,12 @@ async function actualizarUIporRol() {
     appState.usuarioActual = usuario;
 
     if (usuario) {
-        const socio = await obtenerSocioPorEmail(usuario.email);
+        let socio = usuario.id && typeof obtenerSocioPorAuthId === 'function'
+            ? await obtenerSocioPorAuthId(usuario.id)
+            : { success: false };
+        if (!socio.success && usuario.email) {
+            socio = await obtenerSocioPorEmail(usuario.email);
+        }
         if (socio.success && socio.data) {
             appState.rolUsuario = socio.data.rol || 'socio';
             appState.socioData = socio.data;

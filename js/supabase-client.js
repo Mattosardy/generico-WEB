@@ -200,6 +200,23 @@ async function cerrarSesion() {
 // FUNCIONES PARA SOCIOS (PANEL)
 // ============================================
 
+// Obtener socio por ID de Supabase Auth
+async function obtenerSocioPorAuthId(authUserId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('socios')
+            .select('*')
+            .eq('auth_user_id', authUserId)
+            .single();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.warn('No se pudo obtener socio por Auth ID:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 // Obtener socio por email
 async function obtenerSocioPorEmail(email) {
     try {
@@ -368,6 +385,7 @@ window.obtenerUsuarioActual = obtenerUsuarioActual;
 window.cerrarSesion = cerrarSesion;
 
 // Funciones para socio
+window.obtenerSocioPorAuthId = obtenerSocioPorAuthId;
 window.obtenerSocioPorEmail = obtenerSocioPorEmail;
 window.obtenerReservas = obtenerReservas;
 window.confirmarReserva = confirmarReserva;
