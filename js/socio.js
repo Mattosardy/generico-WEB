@@ -142,19 +142,9 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
             </article>
         </div>
         <div id="telegramLinkPanel" class="telegram-link-panel"></div>
-        <div class="dashboard-shortcuts">
-            <button type="button" class="dashboard-shortcut" data-section="productos"><i class="fas fa-calendar-check"></i> Reservas</button>
-            <button type="button" class="dashboard-shortcut" data-section="productos"><i class="fas fa-history"></i> Historial</button>
-        </div>
     `;
 
     if (typeof renderTelegramLinkPanel === 'function') renderTelegramLinkPanel();
-
-    dashboard.querySelectorAll('.dashboard-shortcut').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-            if (typeof mostrarSeccion === 'function') await mostrarSeccion(btn.dataset.section);
-        });
-    });
 }
 
 async function renderProximasEntregasEnProductos() {

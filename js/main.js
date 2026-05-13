@@ -190,6 +190,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             await mostrarSeccion(btn.dataset.section);
         });
     });
+    document.querySelectorAll('[data-productos-target]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            await mostrarSeccion('productos');
+            document.getElementById(btn.dataset.productosTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
 
     document.getElementById('tabLogin')?.addEventListener('click', () => {
         document.getElementById('tabLogin').style.background = '#7ca35a';

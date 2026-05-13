@@ -319,37 +319,27 @@ function workerSecretIsValid(request, env) {
   return !workerSecret || request.headers.get("authorization") === `Bearer ${workerSecret}`;
 }
 
-async function processPendingTelegramNotifications(supabase, notificationService) {
-  const pending = await supabase.request(
-    `notificaciones_programadas?estado=eq.pendiente&canal=eq.telegram&fecha_programada=lte.${encodeURIComponent(new Date().toISOString())}&select=id,socio_id,mensaje&order=fecha_programada.asc&limit=50`,
-  );
+async function processPendingTelegramNotifications(env) {
+  const supabaseRpc = buildSupabaseRpc(env);
+  const pending = await supabaseRpc.rpc("claim_pending_telegram_notifications", {
+    p_limit: 50,
+  });
   const results = [];
 
   for (const item of pending || []) {
     try {
-      await notificationService.send(item.socio_id, item.mensaje, { channel: "telegram" });
-      await supabase.request(`notificaciones_programadas?id=eq.${encodeURIComponent(item.id)}`, {
-        method: "PATCH",
-        prefer: "return=minimal",
-        body: JSON.stringify({
-          estado: "enviado",
-          fecha_envio: new Date().toISOString(),
-          provider: "telegram",
-          error_detalle: null,
-        }),
+      const sent = await sendTelegramMessage(env, item.chat_id, item.message);
+      await supabaseRpc.rpc("mark_telegram_notification_sent", {
+        p_notification_id: item.notification_id,
+        p_provider_message_id: sent?.message_id ? String(sent.message_id) : null,
       });
-      results.push({ id: item.id, status: "enviado" });
+      results.push({ id: item.notification_id, status: "enviado" });
     } catch (error) {
-      await supabase.request(`notificaciones_programadas?id=eq.${encodeURIComponent(item.id)}`, {
-        method: "PATCH",
-        prefer: "return=minimal",
-        body: JSON.stringify({
-          estado: "error",
-          provider: "telegram",
-          error_detalle: error?.message || String(error),
-        }),
+      await supabaseRpc.rpc("mark_telegram_notification_error", {
+        p_notification_id: item.notification_id,
+        p_error: error?.message || String(error),
       });
-      results.push({ id: item.id, status: "error", detail: error?.message || String(error) });
+      results.push({ id: item.notification_id, status: "error", detail: error?.message || String(error) });
     }
   }
 
@@ -359,7 +349,7 @@ async function processPendingTelegramNotifications(supabase, notificationService
 async function handleDispatchPending(request, env, supabase, notificationService) {
   if (!workerSecretIsValid(request, env)) return json({ error: "Forbidden" }, 403);
 
-  const results = await processPendingTelegramNotifications(supabase, notificationService);
+  const results = await processPendingTelegramNotifications(env);
   return json({ processed: results.length, results });
 }
 
@@ -383,9 +373,7 @@ export default {
       }
 
       if (request.method === "POST" && url.pathname === "/api/notifications/dispatch-pending") {
-        const supabase = buildSupabase(env);
-        const notificationService = createNotificationService(env, supabase);
-        return handleDispatchPending(request, env, supabase, notificationService);
+        return handleDispatchPending(request, env);
       }
 
       return json({ ok: true, service: "cururu-telegram-bot" });
@@ -394,10 +382,8 @@ export default {
     }
   },
   async scheduled(_event, env, ctx) {
-    const supabase = buildSupabase(env);
-    const notificationService = createNotificationService(env, supabase);
     ctx.waitUntil(
-      processPendingTelegramNotifications(supabase, notificationService)
+      processPendingTelegramNotifications(env)
         .then((results) => console.log("Telegram pending dispatch", { processed: results.length }))
         .catch((error) => console.error("Telegram pending dispatch failed", error?.message || String(error))),
     );
