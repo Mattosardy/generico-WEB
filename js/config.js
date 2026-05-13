@@ -5,7 +5,7 @@ window.configSistema = {
 };
 
 window.defaultHistoriaVideoUrl = 'https://qjiqbcokhlwisxbeplym.supabase.co/storage/v1/object/public/noticias/historia_video_1776899904368_g07gbj3gkwn.mp4';
-window.TELEGRAM_BOT_USERNAME = 'NOMBRE_DEL_BOT';
+window.TELEGRAM_BOT_USERNAME = 'Cururuclub_bot';
 
 window.appState = {
     usuarioActual: null,
