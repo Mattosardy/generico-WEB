@@ -95,7 +95,13 @@ function normalizarTipoCultivo(tipoCultivo) {
 }
 
 function obtenerTituloTipoCultivo(tipoCultivo) {
-    return tipoCultivo === 'exterior' ? 'Exterior' : 'Invernáculo';
+    return tipoCultivo === 'exterior' ? 'STANDARD' : 'PREMIUM';
+}
+
+function obtenerDescripcionTipoCultivo(tipoCultivo) {
+    return tipoCultivo === 'exterior'
+        ? 'Cultivo exterior, perfil clasico y acceso simple.'
+        : 'Cultivo asistido, seleccion cuidada y mayor control.';
 }
 
 function inicializarAcordeonesProductos() {
@@ -124,6 +130,16 @@ function inicializarAcordeonesProductos() {
     });
 }
 
+function construirEstadoProductoHTML(producto) {
+    const disponible = producto.disponible !== false;
+    return `
+        <div class="producto-status-row">
+            <span class="producto-status-dot ${disponible ? 'disponible' : 'agotado'}"></span>
+            <span>${disponible ? 'Disponible' : 'Agotado'}</span>
+        </div>
+    `;
+}
+
 function renderizarTarjetaProducto(producto) {
     const imagenes = normalizarListaImagenes(producto.imagen_url);
     const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción');
@@ -133,15 +149,34 @@ function renderizarTarjetaProducto(producto) {
     return `
         <div class="producto-card" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
             <div class="producto-miniatura">
+                <span class="producto-disponibilidad-badge ${disponible ? 'disponible' : 'agotado'}">${disponible ? 'Disponible' : 'Agotado'}</span>
                 <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
             </div>
             ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}
             <div class="producto-detalle">
                 <h3 class="producto-nombre">${escapeHtml(producto.nombre)}</h3>
+                ${construirEstadoProductoHTML(producto)}
                 <div style="color:#111111;font-size:0.9rem;margin-bottom:10px;">${escapeHtml(indicaSativa)}</div>
                 <button class="btn-mas-info" onclick="event.stopPropagation();mostrarMasInfo('${producto.id}')" style="background:#496535;border:1px solid #496535;color:#f4f8ef;padding:8px 16px;border-radius:20px;cursor:pointer;width:100%;margin-bottom:10px;"><i class="fas fa-plus-circle"></i> Información</button>
                 <button class="btn-reservar-producto" onclick="event.stopPropagation();abrirModalDesdeBoton('${producto.id}')" style="background:#496535;border:none;color:#f4f8ef;padding:10px;border-radius:25px;cursor:pointer;font-weight:bold;width:100%;" ${!disponible ? 'disabled' : ''}><i class="fas fa-calendar-check"></i> Reservar</button>
-                ${!disponible ? '<div style="margin-top:8px;color:#9B6A6C;">No disponible</div>' : ''}
+                ${!disponible ? '<div class="producto-agotado-texto">No disponible para reservar</div>' : ''}
+            </div>
+        </div>
+    `;
+}
+
+function renderizarTarjetaProductoCompacta(producto) {
+    const imagenes = normalizarListaImagenes(producto.imagen_url);
+    const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcciÃ³n');
+
+    return `
+        <div class="producto-card producto-card-compacta" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
+            <div class="producto-miniatura">
+                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcciÃ³n')}';">
+                <div class="producto-overlay">
+                    ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}
+                    <h3 class="producto-nombre">${escapeHtml(producto.nombre)}</h3>
+                </div>
             </div>
         </div>
     `;
@@ -153,7 +188,7 @@ async function cargarNoticias() {
 
     const noticias = await obtenerNoticias();
     if (!noticias?.length) {
-        container.innerHTML = '<p style="color: #c8d8b5;">No hay noticias disponibles.</p>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-newspaper"></i><strong>Sin novedades por ahora</strong><span>Cuando haya comunicados del club, los vas a ver acá.</span></div>';
         return;
     }
 
@@ -190,7 +225,7 @@ async function cargarActividadesPublicas() {
 
     const actividades = await obtenerActividades();
     if (!actividades?.length) {
-        container.innerHTML = '<p style="color: #c8d8b5;">No hay actividades programadas.</p>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar"></i><strong>Sin actividades programadas</strong><span>Las próximas fechas se publicarán en este espacio.</span></div>';
         return;
     }
 
@@ -212,7 +247,7 @@ async function cargarProductosPublicos() {
 
     const productos = await obtenerProductos();
     if (!productos?.length) {
-        container.innerHTML = '<p style="color: #c8d8b5;">No hay productos disponibles.</p>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-leaf"></i><strong>Catálogo en preparación</strong><span>Las variedades disponibles se mostrarán acá.</span></div>';
         return;
     }
 
@@ -240,7 +275,8 @@ async function cargarProductosPublicos() {
                 <div class="productos-columna">
                     <h3 class="productos-columna-titulo">
                         <button type="button" class="productos-toggle" data-tipo-cultivo="${tipoCultivo}" aria-expanded="false">
-                            <span>${obtenerTituloTipoCultivo(tipoCultivo)}</span>
+                            <span class="productos-toggle-titulo">${obtenerTituloTipoCultivo(tipoCultivo)}</span>
+                            <span class="productos-toggle-descripcion">${obtenerDescripcionTipoCultivo(tipoCultivo)}</span>
                             <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                         </button>
                     </h3>
@@ -250,7 +286,7 @@ async function cargarProductosPublicos() {
         ${tiposCultivo.map((tipoCultivo) => `
             <div class="productos-panel" data-tipo-cultivo="${tipoCultivo}" hidden>
                 <div class="productos-lista">
-                    ${grupos[tipoCultivo].length ? grupos[tipoCultivo].map((producto) => renderizarTarjetaProducto(producto)).join('') : '<div class="productos-vacio">No hay variedades en esta columna.</div>'}
+                    ${grupos[tipoCultivo].length ? grupos[tipoCultivo].map((producto) => renderizarTarjetaProductoCompacta(producto)).join('') : '<div class="empty-state productos-vacio"><i class="fas fa-seedling"></i><strong>Sin variedades en esta categoría</strong><span>Probá revisar la otra sección del catálogo.</span></div>'}
                 </div>
             </div>
         `).join('')}

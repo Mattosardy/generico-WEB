@@ -5,6 +5,7 @@ window.configSistema = {
 };
 
 window.defaultHistoriaVideoUrl = 'https://qjiqbcokhlwisxbeplym.supabase.co/storage/v1/object/public/noticias/historia_video_1776899904368_g07gbj3gkwn.mp4';
+window.TELEGRAM_BOT_USERNAME = 'NOMBRE_DEL_BOT';
 
 window.appState = {
     usuarioActual: null,
@@ -22,7 +23,8 @@ window.appState = {
     gramosReservadosCiclo: 0,
     reservasChart: null,
     sociosChart: null,
-    configWhatsApp: { phoneNumberId: null, accessToken: null }
+    configWhatsApp: { phoneNumberId: null, accessToken: null },
+    configTelegram: { botUsername: window.TELEGRAM_BOT_USERNAME }
 };
 
 console.log('Config loaded');

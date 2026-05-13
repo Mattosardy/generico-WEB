@@ -265,6 +265,45 @@ async function confirmarReserva(socioId, gramos, tipo, fechaRetiro) {
 // AUTENTICACIÓN CON WHATSAPP (MANTENIDA)
 // ============================================
 
+// Cambio funcional solicitado: cancelar solo reservas propias y solo mientras siga abierto el plazo de reserva.
+async function cancelarReserva(reservaId, socioId) {
+    try {
+        const { data: reservaActual, error: loadError } = await supabaseClient
+            .from('reservas_mensuales')
+            .select('*')
+            .eq('id', reservaId)
+            .eq('socio_id', socioId)
+            .single();
+
+        if (loadError) throw loadError;
+        if (!reservaActual || reservaActual.estado === 'cancelado') {
+            return { success: false, message: 'La reserva no está activa.' };
+        }
+
+        const fechaRetiro = new Date(reservaActual.fecha_retiro);
+        const horasLimite = reservaActual.tipo_entrega === 'primer_jueves'
+            ? configSistema.horasLimitePrimer
+            : configSistema.horasLimiteUltimo;
+
+        if (!puedeConfirmar(fechaRetiro, horasLimite)) {
+            return { success: false, message: 'El plazo para cancelar esta reserva ya venció.' };
+        }
+
+        const { data, error } = await supabaseClient
+            .from('reservas_mensuales')
+            .update({ estado: 'cancelado' })
+            .eq('id', reservaId)
+            .eq('socio_id', socioId)
+            .select();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error al cancelar reserva:', error.message);
+        return { success: false, message: error.message };
+    }
+}
+
 async function loginConWhatsapp(telefono) {
     try {
         const { data, error } = await supabaseClient.auth.signInWithOtp({
@@ -332,6 +371,7 @@ window.cerrarSesion = cerrarSesion;
 window.obtenerSocioPorEmail = obtenerSocioPorEmail;
 window.obtenerReservas = obtenerReservas;
 window.confirmarReserva = confirmarReserva;
+window.cancelarReserva = cancelarReserva;
 
 // Autenticación WhatsApp (mantenida)
 window.loginConWhatsapp = loginConWhatsapp;

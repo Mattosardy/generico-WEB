@@ -1,4 +1,61 @@
-# Supabase local para notificaciones WhatsApp
+# Supabase local para notificaciones
+
+## Telegram como canal principal
+
+La migracion `migrations/20260513_telegram_notifications.sql` agrega:
+
+- `socios.telegram_chat_id`
+- `socios.telegram_username`
+- `socios.telegram_enabled`
+- `socios.telegram_link_code`
+- `socios.telegram_link_code_expires_at`
+- `socios.telegram_linked_at`
+- indices para cola de `notificaciones_programadas` con `canal = 'telegram'`
+
+El token del bot no va en el frontend. El worker separado `workers/cururu-telegram-bot` usa:
+
+- `TELEGRAM_BOT_TOKEN`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `X_CURURU_ADMIN_SECRET` opcional para proteger `/telegram/send-test`
+- `TELEGRAM_WEBHOOK_SECRET` opcional si el webhook se configura con secret token
+- `NOTIFICATION_WORKER_SECRET` opcional para endpoints internos
+
+Configurar el nombre publico del bot en `js/config.js`:
+
+```js
+window.TELEGRAM_BOT_USERNAME = 'nombre_de_tu_bot';
+```
+
+### Flujo de prueba Telegram
+
+1. Crear un bot con BotFather y guardar el token.
+2. Configurar los secretos del worker, sin hacer deploy automatico desde este repo.
+3. Configurar el webhook:
+
+```bash
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
+  -d "url=https://<worker-url>/webhook/telegram" \
+  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
+```
+
+4. Aplicar la migracion SQL `20260513_telegram_notifications.sql` en Supabase.
+5. En la web, iniciar sesion como socio y usar "Vincular Telegram".
+6. Tocar Start en Telegram.
+7. Confirmar en Supabase que el socio quedo con `telegram_enabled = true`, `telegram_chat_id` cargado y el codigo limpio.
+8. Probar un mensaje desde el panel admin. Queda en `notificaciones_programadas` con `canal = 'telegram'`.
+9. Ejecutar el despacho con `POST https://<worker-url>/api/notifications/dispatch-pending`.
+
+### Envio directo de prueba
+
+```bash
+curl -X POST "https://<worker-url>/telegram/send-test" \
+  -H "Content-Type: application/json" \
+  -H "X-CURURU-ADMIN-SECRET: <X_CURURU_ADMIN_SECRET>" \
+  -d '{"chat_id":"<telegram_chat_id>","text":"Mensaje de prueba Cururu Club"}'
+```
+
+## WhatsApp legacy / futuro
 
 Esta carpeta deja preparado el proyecto para sumar notificaciones por WhatsApp usando:
 

@@ -1,0 +1,8 @@
+{
+  "name": "cururu-club-web",
+  "compatibility_date": "2026-05-12",
+  "main": "worker.js",
+  "assets": {
+    "directory": "."
+  }
+}

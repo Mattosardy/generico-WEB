@@ -183,7 +183,7 @@ function normalizarTipoCultivoAdmin(tipoCultivo) {
 }
 
 function obtenerEtiquetaTipoCultivoAdmin(tipoCultivo) {
-    return normalizarTipoCultivoAdmin(tipoCultivo) === 'exterior' ? 'Exterior' : 'Invernaculo';
+    return normalizarTipoCultivoAdmin(tipoCultivo) === 'exterior' ? 'STANDARD' : 'PREMIUM';
 }
 
 function errorEsColumnaTipoCultivoFaltante(error) {
@@ -530,7 +530,7 @@ async function cargarProductosAdmin() {
     container.innerHTML = `
         <form id="formProductoAdmin">
             <h3>Nuevo producto</h3>
-            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">Cargá nombre, tipo de cultivo, precio base e imágenes. La variedad se mostrará en el catálogo dentro de Invernaculo o Exterior según la opción elegida.</p>
+            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">Cargá nombre, tipo de cultivo, precio base e imágenes. La variedad se mostrará en el catálogo dentro de PREMIUM o STANDARD según la opción elegida.</p>
             <div class="form-grid">
                 <div class="form-group full-width"><input type="text" id="productoNombreAdmin" placeholder="Nombre" required></div>
                 <div class="form-group"><input type="text" id="productoCepaAdmin" placeholder="Cepa"></div>
@@ -538,8 +538,8 @@ async function cargarProductosAdmin() {
                 <div class="form-group"><input type="number" step="0.1" id="productoCbdAdmin" placeholder="CBD %"></div>
                 <div class="form-group">
                     <select id="productoTipoCultivoAdmin">
-                        <option value="invernaculo">Invernaculo</option>
-                        <option value="exterior">Exterior</option>
+                        <option value="invernaculo">PREMIUM</option>
+                        <option value="exterior">STANDARD</option>
                     </select>
                 </div>
                 <div class="form-group"><input type="number" step="0.01" id="productoPrecioAdmin" placeholder="Precio base" value="1600"></div>
@@ -728,11 +728,17 @@ async function cargarSociosAdmin() {
     container.innerHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Email</th><th>Nombre</th><th>Telefono</th><th>Rol</th><th>Estado</th></tr></thead>
             <tbody>${data.map((socio) => `
                 <tr>
                     <td>${escapeHtml(socio.email || '-')}</td>
                     <td>${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}</td>
+                    <td>
+                        <div class="telefono-edit-row">
+                            <input type="tel" class="telefono-socio-input" id="telefonoAdmin_${socio.id}" value="${escapeHtml(socio.telefono || '')}" placeholder="09XXXXXXX">
+                            <button type="button" class="btn-editar" onclick="actualizarTelefonoSocio('${socio.id}', 'telefonoAdmin_${socio.id}', 'admin')">Guardar</button>
+                        </div>
+                    </td>
                     <td>${escapeHtml(socio.rol || 'socio')}</td>
                     <td>${escapeHtml(socio.estado || '-')}</td>
                 </tr>
@@ -741,6 +747,41 @@ async function cargarSociosAdmin() {
         </div>
     ` : '<div class="loading">No hay socios.</div>';
 }
+
+function normalizarTelefonoSocioInput(valor) {
+    return String(valor || '').replace(/[^\d+]/g, '').trim();
+}
+
+window.actualizarTelefonoSocio = async function(socioId, inputId, origen = 'admin') {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    const telefono = normalizarTelefonoSocioInput(input.value);
+    if (!telefono) {
+        mostrarMensaje('Ingresa un telefono para guardar.', false);
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from('socios')
+        .update({ telefono })
+        .eq('id', socioId);
+
+    if (error) {
+        mostrarMensaje(`No se pudo actualizar el telefono: ${error.message}`, false);
+        return;
+    }
+
+    input.value = telefono;
+    mostrarMensaje('Telefono actualizado', true);
+    if (origen === 'admin') {
+        await cargarSociosAdmin();
+        await cargarSociosParaMensajes();
+    }
+    if (origen === 'maestro' && typeof cargarMaestroSocios === 'function') {
+        await cargarMaestroSocios();
+    }
+};
 
 async function cargarReservasAdmin() {
     const container = document.getElementById('admin-reservasAdmin');
@@ -787,7 +828,7 @@ async function cargarHistorialMensajes() {
     container.innerHTML = (data || []).length ? data.map((mensaje) => `
         <div class="mensaje-item">
             <div class="mensaje-fecha">${new Date(mensaje.created_at).toLocaleString()}</div>
-            <div class="mensaje-destino">Destino: ${mensaje.tipo === 'todos' ? 'Todos los socios' : 'Socio especifico'}</div>
+            <div class="mensaje-destino">Destino: ${mensaje.tipo === 'todos' ? 'Todos los socios' : 'Socio especifico'} · Canal: ${escapeHtml(mensaje.canal || 'telegram')}</div>
             <div class="mensaje-texto">${escapeHtml(mensaje.mensaje)}</div>
         </div>
     `).join('') : '<div class="loading">No hay mensajes enviados.</div>';
@@ -819,11 +860,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (destinatario === 'todos') {
             const { data: socios } = await supabaseClient.from('socios').select('id').eq('estado', 'activo');
             for (const socio of socios || []) {
-                await supabaseClient.from('notificaciones_programadas').insert([{ socio_id: socio.id, tipo: 'comunicado', mensaje: mensajeCompleto, fecha_programada: new Date(), estado: 'pendiente', canal: 'email' }]);
+                await notificationService.send(socio.id, mensajeCompleto, { type: 'aviso_general', channel: 'telegram' });
             }
             mostrarMensaje(`Mensaje cargado para ${socios?.length || 0} socios`, true);
         } else {
-            await supabaseClient.from('notificaciones_programadas').insert([{ socio_id: destinatario, tipo: 'comunicado', mensaje: mensajeCompleto, fecha_programada: new Date(), estado: 'pendiente', canal: 'email' }]);
+            await notificationService.send(destinatario, mensajeCompleto, { type: 'aviso_general', channel: 'telegram' });
             mostrarMensaje('Mensaje cargado', true);
         }
         document.getElementById('mensajeAsunto').value = '';

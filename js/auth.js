@@ -43,6 +43,8 @@ async function actualizarUIporRol() {
         } else {
             appState.rolUsuario = 'socio';
             appState.socioData = null;
+            const dashboard = document.getElementById('socioDashboard');
+            if (dashboard) dashboard.style.display = 'none';
             document.getElementById('userName').textContent = escapeHtml(usuario.email);
         }
         actualizarBotonesSesion(true);
@@ -51,6 +53,8 @@ async function actualizarUIporRol() {
         appState.socioData = null;
         appState.gramosReservadosCiclo = 0;
         appState.cicloClubActual = null;
+        const dashboard = document.getElementById('socioDashboard');
+        if (dashboard) dashboard.style.display = 'none';
         document.getElementById('userName').textContent = 'Invitado';
         actualizarBotonesSesion(false);
         mostrarPanelLogin();

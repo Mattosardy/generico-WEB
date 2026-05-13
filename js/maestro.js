@@ -22,12 +22,12 @@ function obtenerConfigHistoriaPredeterminada() {
 
 Flores de alta calidad y una experiencia cuidada para quienes buscan elegir y consumir de forma consciente.
 
-Ofrecemos más de 6 variedades durante todo el año, cultivadas con estrategias biominerales en exterior e invernáculo con luz asistida, logrando consistencia en cada cosecha.
+Ofrecemos más de 6 variedades durante todo el año, cultivadas con estrategias biominerales en STANDARD y PREMIUM con luz asistida, logrando consistencia en cada cosecha.
 
 ¿Qué ofrecemos?
 - Calidad superior con variedades a elección
 - Mismo estándar todo el año
-- Precios según tipo de cultivo (exterior o invernáculo)
+- Precios según tipo de cultivo (STANDARD o PREMIUM)
 
 Condiciones:
 - Mínimo: 20 g por variedad / mes
@@ -236,16 +236,24 @@ async function cargarMaestroSocios() {
     }
     container.innerHTML = `
         <h3>Socios</h3>
+        <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th></tr></thead>
+            <thead><tr><th>Email</th><th>Nombre</th><th>Telefono</th><th>Rol</th></tr></thead>
             <tbody>${(data || []).map((socio) => `
                 <tr>
                     <td>${escapeHtml(socio.email || '-')}</td>
                     <td>${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}</td>
+                    <td>
+                        <div class="telefono-edit-row">
+                            <input type="tel" class="telefono-socio-input" id="telefonoMaestro_${socio.id}" value="${escapeHtml(socio.telefono || '')}" placeholder="09XXXXXXX">
+                            <button type="button" class="btn-editar" onclick="actualizarTelefonoSocio('${socio.id}', 'telefonoMaestro_${socio.id}', 'maestro')">Guardar</button>
+                        </div>
+                    </td>
                     <td>${escapeHtml(socio.rol || 'socio')}</td>
                 </tr>
             `).join('')}</tbody>
         </table>
+        </div>
     `;
 }
 

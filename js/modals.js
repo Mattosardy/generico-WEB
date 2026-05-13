@@ -78,7 +78,7 @@ function inicializarPedidoModal() {
 
 function realizarPedidoProducto() {
     if (!appState.productoModalActual) {
-        mostrarMensaje('No hay producto seleccionado.', false);
+        mostrarMensaje('Elegí una variedad antes de realizar el pedido.', false);
         return;
     }
     if (!appState.socioData && !appState.usuarioActual) {
@@ -86,12 +86,12 @@ function realizarPedidoProducto() {
         return;
     }
     if (!appState.gramosSeleccionadosPedido) {
-        mostrarMensaje('Seleccioná una cantidad.', false);
+        mostrarMensaje('Seleccioná una cantidad para continuar.', false);
         return;
     }
     const totalActual = obtenerTotalPedidoMesActual();
     if (totalActual + appState.gramosSeleccionadosPedido > 40) {
-        mostrarMensaje(`Ya llevas ${totalActual}g en este ciclo.`, false);
+        mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${totalActual}g en este ciclo.`, false);
         return;
     }
 

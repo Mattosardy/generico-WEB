@@ -74,18 +74,19 @@
                 <div class="historia-imagen" id="historiaMediaPrincipal">
                     <div class="placeholder-media" style="min-height: 300px; border-radius: 16px;">Sitio en construcción</div>
                 </div>
+                <div id="socioDashboard" class="socio-dashboard auth-only" style="display: none;"></div>
                 <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
                 
                 <!-- TEXTO DEBAJO -->
                 <div class="historia-texto historia-texto-principal">
                     <div id="historiaTituloPrincipal" class="modal-titulo" style="margin-bottom: 14px;">Cururú Club Cannábico</div>
                     <div id="historiaTextoPrincipal" class="historia-texto-contenido">Flores de alta calidad y una experiencia cuidada para quienes buscan elegir y consumir de forma consciente.</div>
-                    <div id="historiaTextoAdicional" class="historia-texto-contenido" hidden>Ofrecemos más de 6 variedades durante todo el año, cultivadas con estrategias biominerales en exterior e invernáculo con luz asistida, logrando consistencia en cada cosecha.
+                    <div id="historiaTextoAdicional" class="historia-texto-contenido" hidden>Ofrecemos más de 6 variedades durante todo el año, cultivadas con estrategias biominerales en STANDARD y PREMIUM con luz asistida, logrando consistencia en cada cosecha.
 
 ¿Qué ofrecemos?
 - Calidad superior con variedades a elección
 - Mismo estándar todo el año
-- Precios según tipo de cultivo (exterior o invernáculo)
+- Precios según tipo de cultivo (STANDARD o PREMIUM)
 
 Condiciones:
 - Mínimo: 20 g por variedad / mes
@@ -325,7 +326,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                 <div class="form-group"><label>CBD %</label><input type="number" step="0.1" id="editCbd"></div>
                 <div class="form-group"><label>Indica %</label><input type="number" step="10" min="0" max="100" id="editIndicaPorcentaje" placeholder="50"></div>
                 <div class="form-group"><label>Sativa %</label><input type="number" step="10" min="0" max="100" id="editSativaPorcentaje" placeholder="50"></div>
-                <div class="form-group"><label>Tipo</label><select id="editTipoCultivo"><option value="invernaculo">Invernaculo</option><option value="exterior">Exterior</option></select></div>
+                <div class="form-group"><label>Tipo</label><select id="editTipoCultivo"><option value="invernaculo">PREMIUM</option><option value="exterior">STANDARD</option></select></div>
                 <div class="form-group"><label>Precio base ($)</label><input type="number" step="0.01" id="editPrecio" value="1600"></div>
                 <div class="form-group full-width"><label>Descripción</label><textarea id="editDescripcion" rows="3"></textarea></div>
                 <div class="form-group full-width"><label>URL Imagen principal</label><input type="text" id="editImagenUrl" placeholder="https://ejemplo.com/imagen.jpg"></div>
@@ -344,6 +345,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
 
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/notifications.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/public.js"></script>
 <script src="js/socio.js"></script>

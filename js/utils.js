@@ -1,6 +1,8 @@
 function mostrarMensaje(mensaje, esExito = true) {
     const div = document.createElement('div');
     div.className = `mensaje-flotante ${esExito ? 'mensaje-exito' : 'mensaje-error'}`;
+    div.setAttribute('role', 'status');
+    div.setAttribute('aria-live', 'polite');
     div.innerHTML = `<i class="fas ${esExito ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${mensaje}`;
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 4000);
