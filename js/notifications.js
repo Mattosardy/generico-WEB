@@ -36,6 +36,25 @@ async function crearTelegramLinkCode(socioId) {
     return { code, expiresAt };
 }
 
+async function crearSolicitudMembresiaConTelegram(datos) {
+    const code = generarTelegramLinkCode();
+    const expiresAt = new Date(Date.now() + TELEGRAM_LINK_CODE_TTL_MINUTES * 60 * 1000).toISOString();
+
+    const { data, error } = await supabaseClient.rpc('create_membership_request_with_telegram', {
+        p_nombre: datos.nombre,
+        p_apellido: datos.apellido,
+        p_cedula: datos.cedula,
+        p_telefono: datos.telefono,
+        p_email: datos.email || '',
+        p_mensaje: datos.mensaje || '',
+        p_code: code,
+        p_expires_at: expiresAt
+    });
+
+    if (error) throw error;
+    return { ...(data || {}), code, expiresAt };
+}
+
 async function refrescarEstadoTelegramSocio() {
     if (!appState.socioData?.id) return null;
     const { data, error } = await supabaseClient
@@ -117,3 +136,5 @@ const notificationService = {
 window.notificationService = notificationService;
 window.renderTelegramLinkPanel = renderTelegramLinkPanel;
 window.refrescarEstadoTelegramSocio = refrescarEstadoTelegramSocio;
+window.crearSolicitudMembresiaConTelegram = crearSolicitudMembresiaConTelegram;
+window.obtenerTelegramLinkUrl = obtenerTelegramLinkUrl;

@@ -225,9 +225,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('formRegisterMagic')?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const email = document.getElementById('registerEmail').value;
-        const resultado = await enviarEnlaceRecuperacionPassword(email);
-        mostrarMensaje(resultado.success ? 'Enlace enviado' : 'No se pudo enviar el enlace', resultado.success);
+        try {
+            const datos = {
+                nombre: document.getElementById('registerNombre').value.trim(),
+                apellido: document.getElementById('registerApellido').value.trim(),
+                cedula: document.getElementById('registerCedula').value.trim(),
+                telefono: document.getElementById('registerTelefono').value.trim(),
+                email: document.getElementById('registerEmail').value.trim(),
+                mensaje: document.getElementById('registerMensaje').value.trim()
+            };
+            const resultado = await crearSolicitudMembresiaConTelegram(datos);
+            window.open(obtenerTelegramLinkUrl(resultado.code), '_blank', 'noopener,noreferrer');
+            document.getElementById('registerMessage').style.display = 'block';
+            event.target.reset();
+            mostrarMensaje('Solicitud creada. Toca Start en Telegram para verificar.', true);
+        } catch (error) {
+            console.error('Error al registrar solicitud:', error);
+            mostrarMensaje(error?.message || 'No se pudo crear la solicitud.', false);
+        }
     });
 
     document.getElementById('formForgotMagic')?.addEventListener('submit', async (event) => {

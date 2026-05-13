@@ -668,12 +668,12 @@ async function cargarSolicitudesAdmin() {
     container.innerHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Fecha</th><th>Nombre</th><th>Email</th><th>Telefono</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Nombre</th><th>Telegram</th><th>Telefono</th><th>Acciones</th></tr></thead>
             <tbody>${data.map((solicitud) => `
                 <tr>
                     <td>${new Date(solicitud.fecha_solicitud).toLocaleDateString('es')}</td>
                     <td>${escapeHtml(solicitud.nombre)} ${escapeHtml(solicitud.apellido)}</td>
-                    <td>${escapeHtml(solicitud.email || '-')}</td>
+                    <td>${solicitud.telegram_enabled && solicitud.telegram_chat_id ? 'Verificado' : 'Pendiente'}</td>
                     <td>${escapeHtml(solicitud.telefono)}</td>
                     <td><button class="btn-aprobar" onclick="aprobarSolicitudAdmin('${solicitud.id}')">Aprobar</button> <button class="btn-rechazar" onclick="rechazarSolicitudAdmin('${solicitud.id}')">Rechazar</button></td>
                 </tr>
@@ -695,6 +695,10 @@ window.aprobarSolicitudAdmin = async function(id) {
         cedula: solicitud.cedula,
         telefono: solicitud.telefono,
         email: solicitud.email,
+        telegram_chat_id: solicitud.telegram_chat_id || null,
+        telegram_username: solicitud.telegram_username || null,
+        telegram_enabled: Boolean(solicitud.telegram_enabled && solicitud.telegram_chat_id),
+        telegram_linked_at: solicitud.telegram_linked_at || null,
         estado: 'activo',
         rol: 'socio'
     }]);

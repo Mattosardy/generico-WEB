@@ -227,42 +227,71 @@ async function handleTelegramWebhook(request, env, supabase, notificationService
   );
   const socio = socios?.[0];
 
-  if (!socio) {
-    await sendTelegramMessage(env, chat.id, "C\u00F3digo inv\u00E1lido o vencido. Volv\u00E9 a la web y toc\u00E1 Vincular Telegram otra vez.");
-    console.log("Telegram link rejected", { reason: "invalid_or_expired_code", chat_id: String(chat.id) });
-    return json({ ok: true, linked: false });
+  if (socio) {
+    const existingChats = await supabase.request(
+      `socios?telegram_chat_id=eq.${encodeURIComponent(String(chat.id))}&id=neq.${encodeURIComponent(socio.id)}&select=id`,
+    );
+    if (existingChats?.length) {
+      await sendTelegramMessage(env, chat.id, "Este Telegram ya esta vinculado a otro socio. Contacta al club para cambiar la vinculacion.");
+      console.log("Telegram link rejected", { reason: "chat_already_linked", chat_id: String(chat.id) });
+      return json({ ok: true, linked: false, reason: "chat_already_linked" });
+    }
+
+    await supabase.request(`socios?id=eq.${encodeURIComponent(socio.id)}`, {
+      method: "PATCH",
+      prefer: "return=minimal",
+      body: JSON.stringify({
+        telegram_chat_id: String(chat.id),
+        telegram_username: from.username || chat.username || null,
+        telegram_enabled: true,
+        telegram_linked_at: new Date().toISOString(),
+        telegram_link_code: null,
+        telegram_link_code_expires_at: null,
+      }),
+    });
+
+    console.log("Telegram linked", {
+      socio_id: socio.id,
+      chat_id: String(chat.id),
+      username: from.username || chat.username || null,
+      first_name: from.first_name || null,
+    });
+    await sendTelegramMessage(env, chat.id, "Curur\u00FA Club \uD83C\uDF3F\nTelegram vinculado correctamente.\nEste canal se usara solo para avisos del club.");
+    return json({ ok: true, linked: true, target: "socio" });
   }
 
-  const existingChats = await supabase.request(
-    `socios?telegram_chat_id=eq.${encodeURIComponent(String(chat.id))}&id=neq.${encodeURIComponent(socio.id)}&select=id`,
+  const solicitudes = await supabase.request(
+    `solicitudes_membresia?telegram_link_code=eq.${encodeURIComponent(startCode)}&telegram_link_code_expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id`,
   );
-  if (existingChats?.length) {
-    await sendTelegramMessage(env, chat.id, "Este Telegram ya esta vinculado a otro socio. Contacta al club para cambiar la vinculacion.");
-    console.log("Telegram link rejected", { reason: "chat_already_linked", chat_id: String(chat.id) });
-    return json({ ok: true, linked: false, reason: "chat_already_linked" });
+  const solicitud = solicitudes?.[0];
+
+  if (solicitud) {
+    await supabase.request(`solicitudes_membresia?id=eq.${encodeURIComponent(solicitud.id)}`, {
+      method: "PATCH",
+      prefer: "return=minimal",
+      body: JSON.stringify({
+        telegram_chat_id: String(chat.id),
+        telegram_username: from.username || chat.username || null,
+        telegram_enabled: true,
+        telegram_linked_at: new Date().toISOString(),
+        telegram_link_code: null,
+        telegram_link_code_expires_at: null,
+      }),
+    });
+
+    console.log("Telegram linked to membership request", {
+      solicitud_id: solicitud.id,
+      chat_id: String(chat.id),
+      username: from.username || chat.username || null,
+      first_name: from.first_name || null,
+    });
+    await sendTelegramMessage(env, chat.id, "Curur\u00FA Club \uD83C\uDF3F\nTelegram verificado correctamente.\nTu solicitud quedo pendiente de aprobacion.");
+    return json({ ok: true, linked: true, target: "solicitud" });
   }
 
-  await supabase.request(`socios?id=eq.${encodeURIComponent(socio.id)}`, {
-    method: "PATCH",
-    prefer: "return=minimal",
-    body: JSON.stringify({
-      telegram_chat_id: String(chat.id),
-      telegram_username: from.username || chat.username || null,
-      telegram_enabled: true,
-      telegram_linked_at: new Date().toISOString(),
-      telegram_link_code: null,
-      telegram_link_code_expires_at: null,
-    }),
-  });
-
-  console.log("Telegram linked", {
-    socio_id: socio.id,
-    chat_id: String(chat.id),
-    username: from.username || chat.username || null,
-    first_name: from.first_name || null,
-  });
-  await sendTelegramMessage(env, chat.id, "Curur\u00FA Club \uD83C\uDF3F\nTelegram vinculado correctamente.\nEste canal se usara solo para avisos del club.");
-  return json({ ok: true, linked: true });
+  await sendTelegramMessage(env, chat.id, "C\u00F3digo inv\u00E1lido o vencido. Volv\u00E9 a la web y toc\u00E1 Vincular Telegram otra vez.");
+  console.log("Telegram link rejected", { reason: "invalid_or_expired_code", chat_id: String(chat.id) });
+  return json({ ok: true, linked: false });
 }
 
 async function handleNotificationSend(request, env, supabase, notificationService) {
