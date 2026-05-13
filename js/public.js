@@ -225,10 +225,12 @@ async function cargarActividadesPublicas() {
 
     const actividades = await obtenerActividades();
     if (!actividades?.length) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar"></i><strong>Sin actividades programadas</strong><span>Las próximas fechas se publicarán en este espacio.</span></div>';
+        container.innerHTML = '';
+        container.style.display = 'none';
         return;
     }
 
+    container.style.display = '';
     const iconosTipo = { actividad: 'Actividad', sorteo: 'Sorteo', regalo: 'Regalo' };
     container.innerHTML = actividades.map((actividad) => `
         <div class="actividad-item">
@@ -381,3 +383,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 console.log('Public loaded');
+

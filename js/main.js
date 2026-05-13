@@ -182,12 +182,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.nav-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
             await mostrarSeccion(btn.dataset.section);
+            if (btn.dataset.scrollTarget) {
+                document.getElementById(btn.dataset.scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         });
     });
     document.querySelectorAll('.mobile-hidden-dock .dock-btn[data-section]').forEach((btn) => {
         if (btn.id === 'dockBtnLogin') return;
         btn.addEventListener('click', async () => {
             await mostrarSeccion(btn.dataset.section);
+            if (btn.dataset.scrollTarget) {
+                document.getElementById(btn.dataset.scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         });
     });
     document.querySelectorAll('[data-productos-target]').forEach((btn) => {
