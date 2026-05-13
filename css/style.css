@@ -2986,6 +2986,106 @@ body::before {
     align-items: center;
 }
 
+#socioDashboard .socio-dashboard-grid {
+    display: none !important;
+}
+
+#calendarioContainer.calendario-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+}
+
+.reserva-periodo-card,
+.reserva-cal-card {
+    border: 1px solid rgba(67, 105, 48, 0.16);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.reserva-periodo-card {
+    padding: 12px;
+    text-align: center;
+    background: #eef5ea;
+    border-color: rgba(67, 105, 48, 0.28);
+}
+
+.reserva-periodo-card strong {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-strong);
+    font-size: 1rem;
+}
+
+.reserva-periodo-resumen {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.reserva-periodo-resumen span {
+    border: 1px solid rgba(67, 105, 48, 0.14);
+    border-radius: 10px;
+    padding: 7px 4px;
+    background: #ffffff;
+    color: var(--text-main);
+    font-size: 0.72rem;
+    line-height: 1.2;
+}
+
+.reserva-cal-card {
+    display: grid;
+    grid-template-columns: 66px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+    align-items: start;
+}
+
+.reserva-cal-fecha {
+    min-height: 66px;
+    border-radius: 12px;
+    background: #f1f7ed;
+    border: 1px solid rgba(67, 105, 48, 0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.reserva-cal-fecha strong {
+    color: var(--text-strong);
+    font-size: 1.55rem;
+    line-height: 1;
+}
+
+.reserva-cal-fecha span {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+.reserva-cal-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.reserva-cal-info > strong {
+    color: var(--text-strong);
+    font-size: 0.96rem;
+}
+
+.reserva-cal-info small {
+    color: var(--text-muted);
+}
+
+#historialContainer {
+    margin-top: 12px;
+}
+
 @media (max-width: 520px) {
     .historia-texto-principal {
         padding: 10px 9px 9px;

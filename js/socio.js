@@ -62,6 +62,41 @@ function construirTimelineReservaHTML(reserva, puedeReservar) {
     `;
 }
 
+function formatearFechaReservaCalendario(fecha) {
+    return {
+        dia: fecha.toLocaleDateString('es-UY', { day: '2-digit' }),
+        mes: fecha.toLocaleDateString('es-UY', { month: 'short' }).replace('.', ''),
+        completa: fecha.toLocaleDateString('es-UY')
+    };
+}
+
+function construirTarjetaCalendarioReservaHTML({ titulo, fecha, reserva, puedeReservar, tipo, gramosRestantesCiclo }) {
+    const fechaPartes = formatearFechaReservaCalendario(fecha);
+    const detalle = reserva
+        ? `${reserva.cantidad_gramos}g reservados`
+        : (puedeReservar ? 'Disponible para reservar' : 'Plazo cerrado');
+    const estadoClase = reserva?.estado === 'confirmado' ? 'estado-confirmado' : 'estado-pendiente';
+
+    return `
+        <article class="reserva-cal-card">
+            <div class="reserva-cal-fecha">
+                <strong>${fechaPartes.dia}</strong>
+                <span>${escapeHtml(fechaPartes.mes)}</span>
+            </div>
+            <div class="reserva-cal-info">
+                <span class="metric-label">${escapeHtml(titulo)}</span>
+                <strong>${escapeHtml(fechaPartes.completa)}</strong>
+                ${construirBadgeEstadoReservaHTML(reserva, puedeReservar)}
+                <small>${escapeHtml(detalle)}</small>
+                <div class="estado-reserva ${estadoClase}">${reserva?.estado === 'confirmado' ? `Confirmado: ${reserva.cantidad_gramos}g` : 'Sin confirmar'}</div>
+                ${construirTimelineReservaHTML(reserva, puedeReservar)}
+                ${!reserva && puedeReservar ? construirOpcionesReservaHTML(gramosRestantesCiclo, tipo) : (!puedeReservar && !reserva ? '<div class="estado-reserva estado-pendiente">Plazo vencido</div>' : '')}
+                ${construirAccionCancelarReservaHTML(reserva, tipo, puedeReservar)}
+            </div>
+        </article>
+    `;
+}
+
 function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo) {
     const dashboard = document.getElementById('socioDashboard');
     if (!dashboard || appState.rolUsuario === 'invitado') return;
@@ -188,29 +223,35 @@ async function cargarReservasSocio() {
     const gramosReservadosCiclo = sumarGramosReservadosEnCiclo(reservas, appState.cicloClubActual);
     const gramosRestantesCiclo = Math.max(0, 40 - gramosReservadosCiclo);
     appState.gramosReservadosCiclo = gramosReservadosCiclo;
+    const reservasActivas = [reservaPrimer, reservaUltimo].filter(reservaEstaActiva);
+    const historialRetirado = (reservas || []).filter((reserva) => reserva.estado === 'entregado' || reserva.estado === 'retirado').length;
 
     container.innerHTML = `
-        <div class="estado-reserva estado-confirmado" style="grid-column: 1 / -1; text-align: center;">
-            Disponible en este ciclo (${appState.cicloClubActual.etiqueta}): ${gramosRestantesCiclo}g de 40g
+        <div class="reserva-periodo-card">
+            <span class="dashboard-eyebrow">Periodo vigente</span>
+            <strong>${escapeHtml(appState.cicloClubActual.etiqueta)}</strong>
+            <div class="reserva-periodo-resumen">
+                <span>${gramosRestantesCiclo}g disponibles</span>
+                <span>${reservasActivas.length} reservas activas</span>
+                <span>${historialRetirado} retiros completados</span>
+            </div>
         </div>
-        <div class="entrega-card">
-            <div class="entrega-titulo">Primer Jueves</div>
-            <div class="entrega-fecha">${appState.fechasEntrega.primerJueves.toLocaleDateString('es')}</div>
-            ${construirBadgeEstadoReservaHTML(reservaPrimer, puedePrimer)}
-            <div class="estado-reserva ${reservaPrimer?.estado === 'confirmado' ? 'estado-confirmado' : 'estado-pendiente'}">${reservaPrimer?.estado === 'confirmado' ? `Confirmado: ${reservaPrimer.cantidad_gramos}g` : 'Sin confirmar'}</div>
-            ${construirTimelineReservaHTML(reservaPrimer, puedePrimer)}
-            ${!reservaPrimer && puedePrimer ? construirOpcionesReservaHTML(gramosRestantesCiclo, 'primer') : (!puedePrimer && !reservaPrimer ? '<div class="estado-reserva estado-pendiente">Plazo vencido</div>' : '')}
-            ${construirAccionCancelarReservaHTML(reservaPrimer, 'primer', puedePrimer)}
-        </div>
-        <div class="entrega-card">
-            <div class="entrega-titulo">Ultimo Jueves</div>
-            <div class="entrega-fecha">${appState.fechasEntrega.ultimoJueves.toLocaleDateString('es')}</div>
-            ${construirBadgeEstadoReservaHTML(reservaUltimo, puedeUltimo)}
-            <div class="estado-reserva ${reservaUltimo?.estado === 'confirmado' ? 'estado-confirmado' : 'estado-pendiente'}">${reservaUltimo?.estado === 'confirmado' ? `Confirmado: ${reservaUltimo.cantidad_gramos}g` : 'Sin confirmar'}</div>
-            ${construirTimelineReservaHTML(reservaUltimo, puedeUltimo)}
-            ${!reservaUltimo && puedeUltimo ? construirOpcionesReservaHTML(gramosRestantesCiclo, 'ultimo') : (!puedeUltimo && !reservaUltimo ? '<div class="estado-reserva estado-pendiente">Plazo vencido</div>' : '')}
-            ${construirAccionCancelarReservaHTML(reservaUltimo, 'ultimo', puedeUltimo)}
-        </div>
+        ${construirTarjetaCalendarioReservaHTML({
+            titulo: 'Primer jueves',
+            fecha: appState.fechasEntrega.primerJueves,
+            reserva: reservaPrimer,
+            puedeReservar: puedePrimer,
+            tipo: 'primer',
+            gramosRestantesCiclo
+        })}
+        ${construirTarjetaCalendarioReservaHTML({
+            titulo: 'Ultimo jueves',
+            fecha: appState.fechasEntrega.ultimoJueves,
+            reserva: reservaUltimo,
+            puedeReservar: puedeUltimo,
+            tipo: 'ultimo',
+            gramosRestantesCiclo
+        })}
     `;
 
     document.querySelectorAll('.opcion-gramo').forEach((el) => el.addEventListener('click', async () => {
