@@ -843,7 +843,7 @@ async function cargarReservasAdmin() {
 async function cargarSociosParaMensajes() {
     const select = document.getElementById('mensajeDestinatario');
     if (!select) return;
-    const { data } = await supabaseClient.from('socios').select('id, nombre, apellido, telefono, telegram_enabled').eq('estado', 'activo');
+    const { data } = await supabaseClient.from('socios').select('id, nombre, apellido, telefono, telegram_enabled, telegram_chat_id').eq('estado', 'activo');
     select.innerHTML = '<option value="todos">Todos los socios</option>' + (data || []).map((socio) => `
         <option value="${socio.id}">${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}${socio.telegram_enabled ? ' · Telegram' : (socio.telefono ? ` · ${escapeHtml(socio.telefono)}` : '')}</option>
     `).join('');
@@ -890,12 +890,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const mensajeCompleto = asunto ? `${asunto}\n\n${texto}` : texto;
         if (destinatario === 'todos') {
-            const { data: socios } = await supabaseClient.from('socios').select('id').eq('estado', 'activo');
-            for (const socio of socios || []) {
+            const { data: socios } = await supabaseClient.from('socios').select('id, telegram_enabled, telegram_chat_id').eq('estado', 'activo');
+            const vinculados = (socios || []).filter((socio) => socio.telegram_enabled && socio.telegram_chat_id);
+            if (!vinculados.length) {
+                mostrarMensaje('No hay socios con Telegram vinculado todavia.', false);
+                return;
+            }
+            for (const socio of vinculados) {
                 await notificationService.send(socio.id, mensajeCompleto, { type: 'aviso_general', channel: 'telegram' });
             }
-            mostrarMensaje(`Mensaje cargado para ${socios?.length || 0} socios`, true);
+            mostrarMensaje(`Mensaje cargado para ${vinculados.length} socios con Telegram`, true);
         } else {
+            const { data: socio } = await supabaseClient
+                .from('socios')
+                .select('telegram_enabled, telegram_chat_id')
+                .eq('id', destinatario)
+                .maybeSingle();
+            if (!socio?.telegram_enabled || !socio?.telegram_chat_id) {
+                mostrarMensaje('Ese socio todavia no tiene Telegram vinculado.', false);
+                return;
+            }
             await notificationService.send(destinatario, mensajeCompleto, { type: 'aviso_general', channel: 'telegram' });
             mostrarMensaje('Mensaje cargado', true);
         }
