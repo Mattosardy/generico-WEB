@@ -64,7 +64,7 @@ async function actualizarUIporRol() {
         el.style.display = appState.rolUsuario !== 'invitado' ? 'inline-block' : 'none';
     });
     document.querySelectorAll('.admin-only').forEach((el) => {
-        el.style.display = appState.rolUsuario === 'admin' ? 'inline-block' : 'none';
+        el.style.display = (appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro') ? 'inline-block' : 'none';
     });
     document.querySelectorAll('.maestro-only').forEach((el) => {
         el.style.display = appState.rolUsuario === 'maestro' ? 'inline-block' : 'none';

@@ -2766,6 +2766,29 @@ body::before {
     font-size: 0.82rem;
 }
 
+.socio-edit-input {
+    width: 120px;
+    min-height: 36px;
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 7px 8px;
+    background: #ffffff;
+    color: var(--text-strong);
+    font-size: 0.82rem;
+}
+
+.socio-edit-input.email {
+    width: 180px;
+}
+
+.socio-edit-input.small {
+    width: 100px;
+}
+
+.socio-edit-input.tiny {
+    width: 82px;
+}
+
 .telefono-edit-row .btn-editar {
     min-height: 36px;
     padding: 7px 10px;

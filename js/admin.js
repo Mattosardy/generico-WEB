@@ -728,19 +728,35 @@ async function cargarSociosAdmin() {
     container.innerHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email</th><th>Nombre</th><th>Telefono</th><th>Rol</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Email</th><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
             <tbody>${data.map((socio) => `
                 <tr>
-                    <td>${escapeHtml(socio.email || '-')}</td>
-                    <td>${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}</td>
+                    <td><input type="email" class="socio-edit-input email" id="socioEmail_admin_${socio.id}" value="${escapeHtml(socio.email || '')}" placeholder="correo@ejemplo.com"></td>
+                    <td><input type="text" class="socio-edit-input" id="socioNombre_admin_${socio.id}" value="${escapeHtml(socio.nombre || '')}" placeholder="Nombre"></td>
+                    <td><input type="text" class="socio-edit-input" id="socioApellido_admin_${socio.id}" value="${escapeHtml(socio.apellido || '')}" placeholder="Apellido"></td>
+                    <td><input type="text" class="socio-edit-input small" id="socioCedula_admin_${socio.id}" value="${escapeHtml(socio.cedula || '')}" placeholder="Cedula"></td>
+                    <td><input type="number" class="socio-edit-input tiny" id="socioNumero_admin_${socio.id}" value="${escapeHtml(socio.numero_socio || '')}" placeholder="Nro."></td>
                     <td>
                         <div class="telefono-edit-row">
-                            <input type="tel" class="telefono-socio-input" id="telefonoAdmin_${socio.id}" value="${escapeHtml(socio.telefono || '')}" placeholder="09XXXXXXX">
-                            <button type="button" class="btn-editar" onclick="actualizarTelefonoSocio('${socio.id}', 'telefonoAdmin_${socio.id}', 'admin')">Guardar</button>
+                            <input type="tel" class="telefono-socio-input" id="socioTelefono_admin_${socio.id}" value="${escapeHtml(socio.telefono || '')}" placeholder="09XXXXXXX">
                         </div>
                     </td>
-                    <td>${escapeHtml(socio.rol || 'socio')}</td>
-                    <td>${escapeHtml(socio.estado || '-')}</td>
+                    <td>
+                        <select class="socio-edit-input tiny" id="socioRol_admin_${socio.id}">
+                            <option value="socio" ${(socio.rol || 'socio') === 'socio' ? 'selected' : ''}>Socio</option>
+                            <option value="admin" ${socio.rol === 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="maestro" ${socio.rol === 'maestro' ? 'selected' : ''}>Maestro</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="socio-edit-input small" id="socioEstado_admin_${socio.id}">
+                            <option value="activo" ${(socio.estado || 'activo') === 'activo' ? 'selected' : ''}>Activo</option>
+                            <option value="pendiente" ${socio.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="inactivo" ${socio.estado === 'inactivo' ? 'selected' : ''}>Inactivo</option>
+                            <option value="rechazado" ${socio.estado === 'rechazado' ? 'selected' : ''}>Rechazado</option>
+                        </select>
+                    </td>
+                    <td><button type="button" class="btn-editar" onclick="guardarSocioAdmin('${socio.id}', 'admin')">Guardar</button></td>
                 </tr>
             `).join('')}</tbody>
         </table>
@@ -752,28 +768,47 @@ function normalizarTelefonoSocioInput(valor) {
     return String(valor || '').replace(/[^\d+]/g, '').trim();
 }
 
-window.actualizarTelefonoSocio = async function(socioId, inputId, origen = 'admin') {
-    const input = document.getElementById(inputId);
-    if (!input) return;
+function obtenerValorCampoSocio(socioId, origen, campo) {
+    return document.getElementById(`socio${campo}_${origen}_${socioId}`)?.value?.trim() || '';
+}
 
-    const telefono = normalizarTelefonoSocioInput(input.value);
-    if (!telefono) {
-        mostrarMensaje('Ingresa un telefono para guardar.', false);
+window.guardarSocioAdmin = async function(socioId, origen = 'admin') {
+    const nombre = obtenerValorCampoSocio(socioId, origen, 'Nombre');
+    const apellido = obtenerValorCampoSocio(socioId, origen, 'Apellido');
+    const email = obtenerValorCampoSocio(socioId, origen, 'Email');
+    const cedula = obtenerValorCampoSocio(socioId, origen, 'Cedula');
+    const numeroSocio = obtenerValorCampoSocio(socioId, origen, 'Numero');
+    const telefono = normalizarTelefonoSocioInput(obtenerValorCampoSocio(socioId, origen, 'Telefono'));
+    const rol = obtenerValorCampoSocio(socioId, origen, 'Rol') || 'socio';
+    const estado = obtenerValorCampoSocio(socioId, origen, 'Estado') || 'activo';
+
+    if (!nombre || !apellido || !email) {
+        mostrarMensaje('Nombre, apellido y email son obligatorios.', false);
         return;
     }
+
+    const payload = {
+        nombre,
+        apellido,
+        email,
+        cedula: cedula || null,
+        numero_socio: numeroSocio ? Number(numeroSocio) : null,
+        telefono,
+        rol,
+        estado
+    };
 
     const { error } = await supabaseClient
         .from('socios')
-        .update({ telefono })
+        .update(payload)
         .eq('id', socioId);
 
     if (error) {
-        mostrarMensaje(`No se pudo actualizar el telefono: ${error.message}`, false);
+        mostrarMensaje(`No se pudo guardar el socio: ${error.message}`, false);
         return;
     }
 
-    input.value = telefono;
-    mostrarMensaje('Telefono actualizado', true);
+    mostrarMensaje('Socio actualizado', true);
     if (origen === 'admin') {
         await cargarSociosAdmin();
         await cargarSociosParaMensajes();

@@ -236,20 +236,38 @@ async function cargarMaestroSocios() {
     }
     container.innerHTML = `
         <h3>Socios</h3>
+        <p style="color:var(--text-muted); margin: 8px 0 14px;">El maestro comparte la misma edicion completa de usuarios que Admin.</p>
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email</th><th>Nombre</th><th>Telefono</th><th>Rol</th></tr></thead>
+            <thead><tr><th>Email</th><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
             <tbody>${(data || []).map((socio) => `
                 <tr>
-                    <td>${escapeHtml(socio.email || '-')}</td>
-                    <td>${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}</td>
+                    <td><input type="email" class="socio-edit-input email" id="socioEmail_maestro_${socio.id}" value="${escapeHtml(socio.email || '')}" placeholder="correo@ejemplo.com"></td>
+                    <td><input type="text" class="socio-edit-input" id="socioNombre_maestro_${socio.id}" value="${escapeHtml(socio.nombre || '')}" placeholder="Nombre"></td>
+                    <td><input type="text" class="socio-edit-input" id="socioApellido_maestro_${socio.id}" value="${escapeHtml(socio.apellido || '')}" placeholder="Apellido"></td>
+                    <td><input type="text" class="socio-edit-input small" id="socioCedula_maestro_${socio.id}" value="${escapeHtml(socio.cedula || '')}" placeholder="Cedula"></td>
+                    <td><input type="number" class="socio-edit-input tiny" id="socioNumero_maestro_${socio.id}" value="${escapeHtml(socio.numero_socio || '')}" placeholder="Nro."></td>
                     <td>
                         <div class="telefono-edit-row">
-                            <input type="tel" class="telefono-socio-input" id="telefonoMaestro_${socio.id}" value="${escapeHtml(socio.telefono || '')}" placeholder="09XXXXXXX">
-                            <button type="button" class="btn-editar" onclick="actualizarTelefonoSocio('${socio.id}', 'telefonoMaestro_${socio.id}', 'maestro')">Guardar</button>
+                            <input type="tel" class="telefono-socio-input" id="socioTelefono_maestro_${socio.id}" value="${escapeHtml(socio.telefono || '')}" placeholder="09XXXXXXX">
                         </div>
                     </td>
-                    <td>${escapeHtml(socio.rol || 'socio')}</td>
+                    <td>
+                        <select class="socio-edit-input tiny" id="socioRol_maestro_${socio.id}">
+                            <option value="socio" ${(socio.rol || 'socio') === 'socio' ? 'selected' : ''}>Socio</option>
+                            <option value="admin" ${socio.rol === 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="maestro" ${socio.rol === 'maestro' ? 'selected' : ''}>Maestro</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="socio-edit-input small" id="socioEstado_maestro_${socio.id}">
+                            <option value="activo" ${(socio.estado || 'activo') === 'activo' ? 'selected' : ''}>Activo</option>
+                            <option value="pendiente" ${socio.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="inactivo" ${socio.estado === 'inactivo' ? 'selected' : ''}>Inactivo</option>
+                            <option value="rechazado" ${socio.estado === 'rechazado' ? 'selected' : ''}>Rechazado</option>
+                        </select>
+                    </td>
+                    <td><button type="button" class="btn-editar" onclick="guardarSocioAdmin('${socio.id}', 'maestro')">Guardar</button></td>
                 </tr>
             `).join('')}</tbody>
         </table>
