@@ -179,7 +179,18 @@ function normalizarTelefonoAuth(telefono) {
 async function loginConTelefonoPassword(telefono, password) {
     try {
         const phone = normalizarTelefonoAuth(telefono);
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ phone, password });
+        const { data: emailTecnico, error: rpcError } = await supabaseClient.rpc('get_login_email_by_phone', {
+            p_phone: phone
+        });
+
+        if (rpcError) throw rpcError;
+        if (!emailTecnico) throw new Error('Telefono o contrasena incorrectos');
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: emailTecnico,
+            password
+        });
+
         if (error) throw error;
         return { success: true, data };
     } catch (error) {
