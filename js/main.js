@@ -211,11 +211,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     document.getElementById('formLoginPassword')?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const identificador = document.getElementById('loginTelefonoPassword').value.trim();
+        const telefono = document.getElementById('loginTelefonoPassword').value.trim();
         const password = document.getElementById('loginPassword').value;
-        const resultado = identificador.includes('@')
-            ? await supabaseClient.auth.signInWithPassword({ email: identificador, password }).then(({ data, error }) => error ? { success: false, error } : { success: true, data })
-            : await loginConTelefonoPassword(identificador, password);
+        const resultado = await loginConTelefonoPassword(telefono, password);
         if (!resultado.success) {
             mostrarMensaje('Telefono o contrasena incorrectos', false);
             return;
