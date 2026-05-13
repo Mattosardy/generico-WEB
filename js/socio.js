@@ -108,7 +108,6 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
         </div>
         <div id="telegramLinkPanel" class="telegram-link-panel"></div>
         <div class="dashboard-shortcuts">
-            <button type="button" class="dashboard-shortcut" data-section="productos"><i class="fas fa-leaf"></i> Catálogo</button>
             <button type="button" class="dashboard-shortcut" data-section="productos"><i class="fas fa-calendar-check"></i> Reservas</button>
             <button type="button" class="dashboard-shortcut" data-section="productos"><i class="fas fa-history"></i> Historial</button>
         </div>
@@ -305,3 +304,4 @@ async function cancelarReservaHandler(reservaId, tipo) {
 }
 
 console.log('Socio loaded');
+

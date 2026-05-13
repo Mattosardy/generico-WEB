@@ -303,6 +303,23 @@ body::before {
 .cifra-numero { display: block; font-size: 1.8rem; font-weight: bold; color: var(--accent-strong); font-family: 'Poppins', sans-serif; }
 .cifra-texto { font-size: 0.8rem; color: var(--text-muted); }
 .noticias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+.cururu-news-section {
+    margin-top: 30px;
+}
+
+.cururu-news-section .section-title {
+    margin-bottom: 14px;
+}
+
+.cururu-news-section .noticias-grid,
+.cururu-news-section .actividades-grid {
+    margin-top: 0;
+}
+
+.cururu-news-section .actividades-grid {
+    margin-top: 12px;
+}
+
 .noticia-card {
     background: var(--surface-soft);
     border-radius: 16px;
