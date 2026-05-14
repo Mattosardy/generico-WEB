@@ -76,7 +76,7 @@ function inicializarPedidoModal() {
     document.getElementById('btnRealizarPedido').onclick = realizarPedidoProducto;
 }
 
-function realizarPedidoProducto() {
+async function realizarPedidoProducto() {
     if (!appState.productoModalActual) {
         mostrarMensaje('Elegí una variedad antes de realizar el pedido.', false);
         return;
@@ -95,20 +95,37 @@ function realizarPedidoProducto() {
         return;
     }
 
-    const pedidos = obtenerPedidosProductos();
-    pedidos.push({
-        id: crypto.randomUUID?.() || `pedido_${Date.now()}`,
-        socio_id: obtenerIdentificadorSocioPedido(),
-        producto_id: appState.productoModalActual.id,
-        producto_nombre: appState.productoModalActual.nombre,
-        gramos: appState.gramosSeleccionadosPedido,
-        ciclo: obtenerCicloClub().clave,
-        fecha: new Date().toISOString(),
-        estado: 'pendiente'
-    });
-    guardarPedidosProductos(pedidos);
-    mostrarMensaje(`Pedido registrado: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g`, true);
+    if (!appState.socioData?.id) {
+        mostrarMensaje('No se pudo vincular el pedido con tu usuario. Volve a iniciar sesion.', false);
+        return;
+    }
+
+    const fechas = appState.fechasEntrega || calcularFechasEntrega();
+    const puedePrimer = puedeConfirmar(fechas.primerJueves, configSistema.horasLimitePrimer);
+    const puedeUltimo = puedeConfirmar(fechas.ultimoJueves, configSistema.horasLimiteUltimo);
+    const tipoEntrega = puedePrimer ? 'primer' : (puedeUltimo ? 'ultimo' : null);
+    const fechaEntrega = tipoEntrega === 'primer' ? fechas.primerJueves : fechas.ultimoJueves;
+    if (!tipoEntrega) {
+        mostrarMensaje('El plazo de reservas esta cerrado para este ciclo.', false);
+        return;
+    }
+
+    const resultado = await confirmarReserva(
+        appState.socioData.id,
+        appState.gramosSeleccionadosPedido,
+        tipoEntrega,
+        fechaEntrega,
+        appState.productoModalActual
+    );
+
+    if (!resultado.success) {
+        mostrarMensaje(`No se pudo registrar el pedido: ${resultado.message || 'error desconocido'}`, false);
+        return;
+    }
+
+    mostrarMensaje(`Pedido enviado: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g`, true);
     cerrarProductoModal();
+    if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
 }
 
 window.cambiarImagenGaleria = function(direccion) {

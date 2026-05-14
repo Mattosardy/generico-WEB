@@ -18,8 +18,88 @@ function generarTelegramLinkCode() {
     return Array.from(random, (value) => value.toString(16).padStart(2, '0')).join('');
 }
 
-function obtenerTelegramLinkUrl(code) {
-    return `https://t.me/${encodeURIComponent(TELEGRAM_BOT_USERNAME)}?start=${encodeURIComponent(code)}`;
+function obtenerTelegramBotUsernameLimpio(botUsername = TELEGRAM_BOT_USERNAME) {
+    return String(botUsername || '').trim().replace(/^@+/, '');
+}
+
+function esDispositivoIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent || '')
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function obtenerTelegramLinkUrl(code, botUsername = TELEGRAM_BOT_USERNAME) {
+    const username = obtenerTelegramBotUsernameLimpio(botUsername);
+    return `https://t.me/${encodeURIComponent(username)}?start=${encodeURIComponent(code)}`;
+}
+
+function obtenerTelegramAppLinkUrl(code, botUsername = TELEGRAM_BOT_USERNAME) {
+    const username = obtenerTelegramBotUsernameLimpio(botUsername);
+    return `tg://resolve?domain=${encodeURIComponent(username)}&start=${encodeURIComponent(code)}`;
+}
+
+async function copiarTextoAlPortapapeles(texto) {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(texto);
+        return true;
+    }
+
+    const input = document.createElement('textarea');
+    input.value = texto;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    const copiado = document.execCommand('copy');
+    document.body.removeChild(input);
+    return copiado;
+}
+
+function mostrarFallbackTelegram(linkUniversal, linkCode) {
+    const fallback = document.getElementById('telegramFallbackPanel');
+    if (!fallback) return;
+    fallback.innerHTML = `
+        <a class="dashboard-shortcut telegram-open-fallback" href="${linkUniversal}" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-telegram"></i> Abrir en Telegram
+        </a>
+        <button type="button" id="btnCopiarTelegramCode" class="dashboard-shortcut telegram-copy-code">
+            <i class="fas fa-copy"></i> Copiar codigo
+        </button>
+        <small>Si Telegram no se abre automaticamente, toca Abrir en Telegram y luego presiona Iniciar dentro del chat.</small>
+        <code>Codigo de vinculacion: ${escapeHtml(linkCode)}</code>
+    `;
+    fallback.style.display = 'grid';
+    console.warn('Fallback Telegram visible');
+    document.getElementById('btnCopiarTelegramCode')?.addEventListener('click', async () => {
+        try {
+            const copiado = await copiarTextoAlPortapapeles(linkCode);
+            mostrarMensaje(copiado ? 'Codigo copiado' : 'No se pudo copiar el codigo', copiado);
+        } catch (error) {
+            mostrarMensaje('No se pudo copiar el codigo', false);
+        }
+    });
+}
+
+function openTelegramLink(botUsername, linkCode) {
+    const username = obtenerTelegramBotUsernameLimpio(botUsername);
+    const linkUniversal = obtenerTelegramLinkUrl(linkCode, username);
+    const linkApp = obtenerTelegramAppLinkUrl(linkCode, username);
+    console.log('Intentando abrir Telegram');
+
+    const fallback = document.getElementById('telegramFallbackPanel');
+    if (fallback) {
+        fallback.style.display = 'none';
+        fallback.innerHTML = '';
+    }
+
+    if (esDispositivoIOS()) {
+        window.location.href = linkApp;
+        window.setTimeout(() => mostrarFallbackTelegram(linkUniversal, linkCode), 1200);
+        return;
+    }
+
+    window.open(linkUniversal, '_blank', 'noopener,noreferrer');
+    mostrarFallbackTelegram(linkUniversal, linkCode);
 }
 
 async function crearTelegramLinkCode(socioId) {
@@ -83,8 +163,14 @@ function renderTelegramLinkPanel() {
                 <small>${linked ? 'Canal de avisos activo.' : 'Vincula tu cuenta para recibir avisos del club.'}</small>
             </div>
             <button type="button" id="btnVincularTelegram" class="dashboard-shortcut">
-                <i class="fab fa-telegram"></i> ${linked ? 'Verificar' : 'Vincular Telegram'}
+                <i class="fab fa-telegram"></i> ${linked ? 'Verificar' : 'Activar Telegram'}
             </button>
+            ${linked ? '' : `
+                <div class="telegram-link-help">
+                    <small>Si Telegram no se abre automaticamente, toca Abrir en Telegram y luego presiona Iniciar dentro del chat.</small>
+                    <div id="telegramFallbackPanel" class="telegram-fallback-panel" style="display: none;"></div>
+                </div>
+            `}
         </div>
     `;
 
@@ -97,13 +183,13 @@ function renderTelegramLinkPanel() {
                 return;
             }
 
-            if (TELEGRAM_BOT_USERNAME === 'NOMBRE_DEL_BOT') {
+            if (obtenerTelegramBotUsernameLimpio() === 'NOMBRE_DEL_BOT') {
                 mostrarMensaje('Configura TELEGRAM_BOT_USERNAME antes de vincular Telegram.', false);
                 return;
             }
 
             const { code } = await crearTelegramLinkCode(appState.socioData.id);
-            window.open(obtenerTelegramLinkUrl(code), '_blank', 'noopener,noreferrer');
+            openTelegramLink(TELEGRAM_BOT_USERNAME, code);
             mostrarMensaje('Se abrio Telegram. Toca Start para activar avisos del club.', true);
         } catch (error) {
             console.error('Error al vincular Telegram:', error);
@@ -138,3 +224,4 @@ window.renderTelegramLinkPanel = renderTelegramLinkPanel;
 window.refrescarEstadoTelegramSocio = refrescarEstadoTelegramSocio;
 window.crearSolicitudMembresiaConTelegram = crearSolicitudMembresiaConTelegram;
 window.obtenerTelegramLinkUrl = obtenerTelegramLinkUrl;
+window.openTelegramLink = openTelegramLink;

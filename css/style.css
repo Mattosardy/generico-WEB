@@ -1399,6 +1399,7 @@ body::before {
 .nav-btn.active,
 .btn-inicio:hover,
 .dock-btn:hover,
+.dock-btn.active,
 .nav-admin-btn:hover,
 .nav-admin-btn.active,
 .nav-maestro-btn:hover,
@@ -2104,6 +2105,7 @@ input[type="file"] {
 
 .telegram-link-card {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
@@ -2111,6 +2113,34 @@ input[type="file"] {
     border: 1px solid rgba(100, 140, 75, 0.35);
     border-radius: 8px;
     background: rgba(8, 15, 6, 0.34);
+}
+
+.telegram-link-help {
+    flex-basis: 100%;
+    display: grid;
+    gap: 8px;
+}
+
+.telegram-fallback-panel {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
+.telegram-fallback-panel code {
+    display: block;
+    padding: 8px 10px;
+    border: 1px solid rgba(100, 140, 75, 0.22);
+    border-radius: 10px;
+    background: rgba(240, 247, 236, 0.86);
+    color: var(--text-strong);
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+}
+
+.telegram-open-fallback,
+.telegram-copy-code {
+    width: 100%;
 }
 
 .telegram-link-card.linked {
@@ -2187,7 +2217,8 @@ input[type="file"] {
 }
 
 .reserva-status-badge.estado-pendiente,
-.reserva-status-badge.estado-cerrada {
+.reserva-status-badge.estado-cerrada,
+.reserva-status-badge.estado-cancelado {
     color: var(--text-main);
     background: rgba(17, 43, 28, 0.78);
     border: 1px solid rgba(213, 189, 117, 0.18);
@@ -2502,6 +2533,25 @@ body::before {
     box-shadow: none !important;
 }
 
+.nav-btn,
+.dock-btn {
+    position: relative;
+}
+
+.nav-btn.nav-has-new::after,
+.dock-btn.nav-has-new::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #d72638;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 2px rgba(215, 38, 56, 0.16);
+}
+
 .nav-btn:hover,
 .nav-btn.active,
 .btn-inicio:hover,
@@ -2587,10 +2637,33 @@ body::before {
 }
 
 .producto-card.producto-card-compacta {
+    position: relative;
     overflow: hidden;
     min-width: 0;
     border-radius: 12px;
     cursor: pointer;
+}
+
+.producto-card.producto-nuevo {
+    position: relative;
+    border: 2px solid #d72638 !important;
+    box-shadow: 0 0 0 3px rgba(215, 38, 56, 0.12) !important;
+}
+
+.producto-card.producto-nuevo::after {
+    content: 'Nueva';
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    z-index: 4;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #d72638;
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
 }
 
 .producto-card.producto-card-compacta:hover,
@@ -2763,6 +2836,26 @@ body::before {
     max-height: min(34dvh, 300px);
     border-radius: 12px;
     background: #f4f6f2;
+}
+
+#productoModal .modal-galeria-frame {
+    aspect-ratio: 2 / 1;
+    width: 100%;
+    max-height: min(36dvh, 330px);
+    padding: 0 !important;
+    overflow: hidden;
+    background: #f4f6f2;
+}
+
+#productoModal .modal-imagen {
+    width: 100%;
+    height: 100% !important;
+    max-height: none !important;
+    margin-bottom: 0;
+    object-fit: cover;
+    object-position: center center;
+    border-radius: 12px;
+    display: block;
 }
 
 .telefono-edit-row {
@@ -3238,6 +3331,30 @@ body::before {
 .reserva-modal-detalles strong {
     color: var(--text-strong);
     font-size: 0.9rem;
+}
+
+.tabla-reservas-excel {
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.tabla-reservas-excel th,
+.tabla-reservas-excel td {
+    padding: 8px 10px;
+    border: 1px solid rgba(67, 105, 48, 0.18);
+    white-space: nowrap;
+}
+
+.tabla-reservas-excel th {
+    background: #eef5ea;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.tabla-reservas-excel td:nth-child(3) {
+    white-space: normal;
+    min-width: 150px;
 }
 
 @media (max-width: 520px) {

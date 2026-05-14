@@ -35,10 +35,11 @@ function construirAccionCancelarReservaHTML(reserva, tipo, puedeCancelar) {
 }
 
 function obtenerEtiquetaEstadoReserva(reserva, puedeReservar = true) {
+    if (reserva?.estado === 'cancelado') return 'Cancelado';
     if (!reservaEstaActiva(reserva)) return puedeReservar ? 'Pendiente' : 'Cerrada';
-    if (reserva.estado === 'confirmado') return 'Confirmada';
-    if (reserva.estado === 'entregado' || reserva.estado === 'retirado') return 'Retirada';
-    return 'Pendiente';
+    if (reserva.estado === 'confirmado') return 'Pedido recibido';
+    if (reserva.estado === 'entregado' || reserva.estado === 'retirado') return 'Entrega confirmada';
+    return 'Pendiente de confirmacion';
 }
 
 function construirBadgeEstadoReservaHTML(reserva, puedeReservar = true) {
@@ -49,7 +50,7 @@ function construirBadgeEstadoReservaHTML(reserva, puedeReservar = true) {
 
 function construirTimelineReservaHTML(reserva, puedeReservar) {
     const estadoActual = obtenerEtiquetaEstadoReserva(reserva, puedeReservar);
-    const pasos = ['Pendiente', 'Confirmada', 'Retirada'];
+    const pasos = ['Pendiente de confirmacion', 'Pedido recibido', 'Entrega confirmada'];
     const indiceActivo = Math.max(0, pasos.indexOf(estadoActual));
     return `
         <div class="reserva-timeline" aria-label="Estado de reserva">
@@ -75,7 +76,7 @@ function construirTarjetaCalendarioReservaHTML({ titulo, fecha, reserva, puedeRe
     const detalle = reserva
         ? `${reserva.cantidad_gramos}g reservados`
         : (puedeReservar ? 'Disponible para reservar' : 'Plazo cerrado');
-    const estadoClase = reserva?.estado === 'confirmado' ? 'estado-confirmado' : 'estado-pendiente';
+    const estadoClase = ['confirmado', 'entregado', 'retirado'].includes(reserva?.estado) ? 'estado-confirmado' : 'estado-pendiente';
 
     return `
         <article class="reserva-cal-card">
@@ -88,7 +89,7 @@ function construirTarjetaCalendarioReservaHTML({ titulo, fecha, reserva, puedeRe
                 <strong>${escapeHtml(fechaPartes.completa)}</strong>
                 ${construirBadgeEstadoReservaHTML(reserva, puedeReservar)}
                 <small>${escapeHtml(detalle)}</small>
-                <div class="estado-reserva ${estadoClase}">${reserva?.estado === 'confirmado' ? `Confirmado: ${reserva.cantidad_gramos}g` : 'Sin confirmar'}</div>
+                <div class="estado-reserva ${estadoClase}">${reserva ? `${obtenerEtiquetaEstadoReserva(reserva, puedeReservar)}: ${reserva.cantidad_gramos}g` : 'Sin confirmar'}</div>
                 ${construirTimelineReservaHTML(reserva, puedeReservar)}
                 ${!reserva && puedeReservar ? construirOpcionesReservaHTML(gramosRestantesCiclo, tipo) : (!puedeReservar && !reserva ? '<div class="estado-reserva estado-pendiente">Plazo vencido</div>' : '')}
                 ${construirAccionCancelarReservaHTML(reserva, tipo, puedeReservar)}
@@ -287,15 +288,15 @@ async function renderProximasEntregasEnProductos() {
         <div class="entrega-card">
             <div class="entrega-titulo">Primer Jueves</div>
             <div class="entrega-fecha">${fechas.primerJueves.toLocaleDateString('es')}</div>
-            <div class="estado-reserva ${reservaPrimer?.estado === 'confirmado' ? 'estado-confirmado' : 'estado-pendiente'}">
-                ${reservaPrimer?.estado === 'confirmado' ? `Confirmado: ${reservaPrimer.cantidad_gramos}g` : (appState.socioData ? (puedePrimer ? 'Pendiente' : 'Plazo vencido') : 'Para socios')}
+            <div class="estado-reserva ${['confirmado', 'entregado', 'retirado'].includes(reservaPrimer?.estado) ? 'estado-confirmado' : 'estado-pendiente'}">
+                ${reservaPrimer ? `${obtenerEtiquetaEstadoReserva(reservaPrimer, puedePrimer)}: ${reservaPrimer.cantidad_gramos}g` : (appState.socioData ? (puedePrimer ? 'Pendiente' : 'Plazo vencido') : 'Para socios')}
             </div>
         </div>
         <div class="entrega-card">
             <div class="entrega-titulo">Ultimo Jueves</div>
             <div class="entrega-fecha">${fechas.ultimoJueves.toLocaleDateString('es')}</div>
-            <div class="estado-reserva ${reservaUltimo?.estado === 'confirmado' ? 'estado-confirmado' : 'estado-pendiente'}">
-                ${reservaUltimo?.estado === 'confirmado' ? `Confirmado: ${reservaUltimo.cantidad_gramos}g` : (appState.socioData ? (puedeUltimo ? 'Pendiente' : 'Plazo vencido') : 'Para socios')}
+            <div class="estado-reserva ${['confirmado', 'entregado', 'retirado'].includes(reservaUltimo?.estado) ? 'estado-confirmado' : 'estado-pendiente'}">
+                ${reservaUltimo ? `${obtenerEtiquetaEstadoReserva(reservaUltimo, puedeUltimo)}: ${reservaUltimo.cantidad_gramos}g` : (appState.socioData ? (puedeUltimo ? 'Pendiente' : 'Plazo vencido') : 'Para socios')}
             </div>
         </div>
     `;
@@ -382,7 +383,7 @@ async function cargarReservasSocio() {
                         <tr>
                             <td>${new Date(reserva.fecha_retiro).toLocaleDateString('es')}</td>
                             <td>${reserva.cantidad_gramos}g</td>
-                            <td>${reserva.estado === 'confirmado' ? 'Confirmado' : (reserva.estado === 'cancelado' ? 'Cancelado' : 'Pendiente')}</td>
+                            <td>${escapeHtml(obtenerEtiquetaEstadoReserva(reserva, false))}</td>
                         </tr>
                     `).join('')}</tbody>
                 </table>
@@ -414,15 +415,16 @@ async function confirmarReservaHandler(tipo, gramos) {
     const resultado = await confirmarReserva(appState.socioData.id, gramos, tipo, fechaEntrega);
     if (resultado.success) {
         if (typeof notificationService !== 'undefined') {
-            const mensaje = notificationService.render('reserva_confirmada', {
+            const mensaje = notificationService.render('reserva_creada', {
                 grams: gramos,
+                estado: 'pendiente de confirmacion',
                 retiro: fechaEntrega.toLocaleDateString('es-UY')
             });
             notificationService
-                .send(appState.socioData.id, mensaje, { type: 'reserva_confirmada', channel: 'telegram' })
+                .send(appState.socioData.id, mensaje, { type: 'reserva_creada', channel: 'telegram' })
                 .catch((error) => console.warn('No se pudo encolar la notificacion de reserva:', error));
         }
-        mostrarMensaje(`Reserva confirmada: ${gramos}g`, true);
+        mostrarMensaje(`Pedido enviado: ${gramos}g. Queda pendiente de confirmacion del club.`, true);
         await cargarReservasSocio();
     } else {
         mostrarMensaje(`No se pudo confirmar la reserva: ${resultado.message || 'error desconocido'}`, false);

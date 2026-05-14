@@ -104,6 +104,104 @@ function obtenerDescripcionTipoCultivo(tipoCultivo) {
         : 'Cultivo asistido, seleccion cuidada y mayor control.';
 }
 
+const STORAGE_PRODUCTOS_VISTOS = 'cururu_productos_vistos_v1';
+const STORAGE_NOTICIAS_VISTAS = 'cururu_noticias_vistas_v1';
+const STORAGE_ACTIVIDADES_VISTAS = 'cururu_actividades_vistas_v1';
+const novedadesActuales = {
+    productos: [],
+    noticias: [],
+    actividades: []
+};
+
+function leerIdsVistos(clave) {
+    try {
+        return new Set(JSON.parse(localStorage.getItem(clave) || '[]').map(String));
+    } catch (error) {
+        return new Set();
+    }
+}
+
+function guardarIdsVistos(clave, ids) {
+    localStorage.setItem(clave, JSON.stringify([...new Set(ids.map(String))]));
+}
+
+function obtenerIdNovedad(prefijo, item) {
+    return `${prefijo}:${item?.id || item?.created_at || item?.fecha_publicacion || item?.fecha || item?.titulo || ''}`;
+}
+
+function asegurarBaseNovedades(clave, ids) {
+    if (localStorage.getItem(clave) === null) {
+        guardarIdsVistos(clave, ids);
+    }
+}
+
+function hayIdsNuevos(clave, ids) {
+    if (localStorage.getItem(clave) === null) return false;
+    const vistos = leerIdsVistos(clave);
+    return ids.some((id) => !vistos.has(String(id)));
+}
+
+function actualizarIndicadorSeccion(seccion, activo) {
+    document.querySelectorAll(`[data-section="${seccion}"]`).forEach((btn) => {
+        btn.classList.toggle('nav-has-new', Boolean(activo));
+    });
+}
+
+function actualizarIndicadoresNovedades() {
+    const productoIds = novedadesActuales.productos.map((producto) => String(producto.id));
+    const noticiaIds = novedadesActuales.noticias.map((noticia) => obtenerIdNovedad('noticia', noticia));
+    const actividadIds = novedadesActuales.actividades.map((actividad) => obtenerIdNovedad('actividad', actividad));
+
+    actualizarIndicadorSeccion('productos', hayIdsNuevos(STORAGE_PRODUCTOS_VISTOS, productoIds));
+    actualizarIndicadorSeccion(
+        'actividades',
+        hayIdsNuevos(STORAGE_NOTICIAS_VISTAS, noticiaIds) || hayIdsNuevos(STORAGE_ACTIVIDADES_VISTAS, actividadIds)
+    );
+}
+
+function registrarProductosParaNovedades(productos) {
+    novedadesActuales.productos = productos || [];
+    asegurarBaseNovedades(STORAGE_PRODUCTOS_VISTOS, novedadesActuales.productos.map((producto) => String(producto.id)));
+    actualizarIndicadoresNovedades();
+}
+
+function registrarNoticiasParaNovedades(noticias) {
+    novedadesActuales.noticias = noticias || [];
+    asegurarBaseNovedades(STORAGE_NOTICIAS_VISTAS, novedadesActuales.noticias.map((noticia) => obtenerIdNovedad('noticia', noticia)));
+    actualizarIndicadoresNovedades();
+}
+
+function registrarActividadesParaNovedades(actividades) {
+    novedadesActuales.actividades = actividades || [];
+    asegurarBaseNovedades(STORAGE_ACTIVIDADES_VISTAS, novedadesActuales.actividades.map((actividad) => obtenerIdNovedad('actividad', actividad)));
+    actualizarIndicadoresNovedades();
+}
+
+function productoEsNuevo(producto) {
+    if (!producto?.id || localStorage.getItem(STORAGE_PRODUCTOS_VISTOS) === null) return false;
+    return !leerIdsVistos(STORAGE_PRODUCTOS_VISTOS).has(String(producto.id));
+}
+
+window.marcarVariedadVista = function(productoId) {
+    if (!productoId) return;
+    const vistos = leerIdsVistos(STORAGE_PRODUCTOS_VISTOS);
+    vistos.add(String(productoId));
+    guardarIdsVistos(STORAGE_PRODUCTOS_VISTOS, [...vistos]);
+    const selectorId = String(productoId).replace(/"/g, '\\"');
+    document.querySelectorAll(`.producto-card[data-producto-id="${selectorId}"]`).forEach((card) => {
+        card.classList.remove('producto-nuevo');
+    });
+    actualizarIndicadoresNovedades();
+};
+
+window.marcarActividadesVistas = function() {
+    const noticiaIds = novedadesActuales.noticias.map((noticia) => obtenerIdNovedad('noticia', noticia));
+    const actividadIds = novedadesActuales.actividades.map((actividad) => obtenerIdNovedad('actividad', actividad));
+    guardarIdsVistos(STORAGE_NOTICIAS_VISTAS, [...leerIdsVistos(STORAGE_NOTICIAS_VISTAS), ...noticiaIds]);
+    guardarIdsVistos(STORAGE_ACTIVIDADES_VISTAS, [...leerIdsVistos(STORAGE_ACTIVIDADES_VISTAS), ...actividadIds]);
+    actualizarIndicadoresNovedades();
+};
+
 function inicializarAcordeonesProductos() {
     document.querySelectorAll('.productos-toggle').forEach((toggle) => {
         toggle.addEventListener('click', () => {
@@ -145,9 +243,10 @@ function renderizarTarjetaProducto(producto) {
     const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción');
     const disponible = producto.disponible !== false;
     const indicaSativa = producto.indica_sativa || '50% Indica - 50% Sativa';
+    const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
 
     return `
-        <div class="producto-card" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
+        <div class="producto-card${claseNuevo}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
             <div class="producto-miniatura">
                 <span class="producto-disponibilidad-badge ${disponible ? 'disponible' : 'agotado'}">${disponible ? 'Disponible' : 'Agotado'}</span>
                 <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
@@ -169,8 +268,10 @@ function renderizarTarjetaProductoCompacta(producto) {
     const imagenes = normalizarListaImagenes(producto.imagen_url);
     const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcciÃ³n');
 
+    const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
+
     return `
-        <div class="producto-card producto-card-compacta" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
+        <div class="producto-card producto-card-compacta${claseNuevo}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
             <div class="producto-miniatura">
                 <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcciÃ³n')}';">
                 <div class="producto-overlay">
@@ -187,6 +288,7 @@ async function cargarNoticias() {
     if (!container) return;
 
     const noticias = await obtenerNoticias();
+    registrarNoticiasParaNovedades(noticias || []);
     if (!noticias?.length) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-newspaper"></i><strong>Sin novedades por ahora</strong><span>Cuando haya comunicados del club, los vas a ver acá.</span></div>';
         return;
@@ -224,6 +326,7 @@ async function cargarActividadesPublicas() {
     if (!container) return;
 
     const actividades = await obtenerActividades();
+    registrarActividadesParaNovedades(actividades || []);
     if (!actividades?.length) {
         container.innerHTML = '';
         container.style.display = 'none';
@@ -264,6 +367,7 @@ async function cargarProductosPublicos() {
     }));
 
     const productosOrdenados = ordenarProductosParaCatalogo(productosConCalificaciones);
+    registrarProductosParaNovedades(productosOrdenados);
     const grupos = { invernaculo: [], exterior: [] };
 
     productosOrdenados.forEach((producto) => {
@@ -299,7 +403,9 @@ async function cargarProductosPublicos() {
     document.querySelectorAll('.producto-card').forEach((card) => {
         card.addEventListener('click', (event) => {
             if (event.target.closest('button')) return;
-            abrirModal(JSON.parse(card.dataset.producto));
+            const producto = JSON.parse(card.dataset.producto);
+            abrirModal(producto);
+            if (typeof marcarVariedadVista === 'function') marcarVariedadVista(producto.id);
         });
     });
 }
@@ -308,7 +414,10 @@ window.mostrarMasInfo = async function(productoId) {
     try {
         const { data, error } = await supabaseClient.from('productos').select('*').eq('id', productoId).single();
         if (error) throw error;
-        if (data) abrirModal(data);
+        if (data) {
+            abrirModal(data);
+            if (typeof marcarVariedadVista === 'function') marcarVariedadVista(data.id);
+        }
     } catch (error) {
         mostrarMensaje('No se pudo cargar la información del producto', false);
     }

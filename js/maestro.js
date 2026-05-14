@@ -1,4 +1,4 @@
-const seccionesMaestroImplementadas = ['historia', 'socios', 'config'];
+const seccionesMaestroImplementadas = ['historia', 'socios', 'reservas', 'config'];
 
 async function subirArchivoPublico(bucket, file, prefijo) {
     if (!file) return '';
@@ -296,6 +296,26 @@ async function cargarMaestroConfig() {
     `;
 }
 
+async function cargarMaestroReservas() {
+    const container = document.getElementById('maestro-reservas');
+    if (!container) return;
+    const { data, error } = await supabaseClient
+        .from('reservas_mensuales')
+        .select('*, socios(nombre, apellido)')
+        .order('fecha_retiro', { ascending: false });
+    if (error) {
+        container.innerHTML = '<p>No se pudieron cargar las reservas.</p>';
+        return;
+    }
+    container.innerHTML = `
+        <h3>Reservas</h3>
+        <p style="color:var(--text-muted); margin: 8px 0 14px;">Vista de control tipo planilla para confirmar pedidos y cerrar entregas.</p>
+        ${typeof renderizarTablaReservasAdmin === 'function' ? renderizarTablaReservasAdmin(data, 'maestro') : '<div class="loading">No se pudo renderizar la tabla.</div>'}
+    `;
+}
+
+window.cargarMaestroReservas = cargarMaestroReservas;
+
 window.guardarConfigMaestro = async function() {
     const h1 = document.getElementById('confHorasPrimer').value;
     const h2 = document.getElementById('confHorasUltimo').value;
@@ -331,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (section === 'historia') cargarMaestroHistoria();
             if (section === 'socios') cargarMaestroSocios();
+            if (section === 'reservas') cargarMaestroReservas();
             if (section === 'config') cargarMaestroConfig();
         });
     });

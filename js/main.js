@@ -1,6 +1,7 @@
-const mainSections = ['inicio', 'productos', 'admin', 'maestro', 'login'];
+const mainSections = ['inicio', 'productos', 'actividades', 'admin', 'maestro', 'login'];
 const restrictedSections = {
     productos: ['socio', 'admin', 'maestro'],
+    actividades: ['socio', 'admin', 'maestro'],
     admin: ['admin', 'maestro'],
     maestro: ['maestro']
 };
@@ -77,6 +78,12 @@ async function mostrarSeccion(seccionId) {
     document.querySelectorAll('.nav-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.section === destino);
     });
+    document.querySelectorAll('.dock-btn[data-section]').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.section === destino);
+    });
+    if (destino === 'actividades' && typeof marcarActividadesVistas === 'function') {
+        marcarActividadesVistas();
+    }
 }
 
 async function ejecutarCargaSegura(etiqueta, fn) {

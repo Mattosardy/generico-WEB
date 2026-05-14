@@ -317,7 +317,7 @@ async function cargarAdminData() {
         supabaseClient.from('solicitudes_membresia').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
         supabaseClient.from('noticias').select('*', { count: 'exact', head: true }),
         supabaseClient.from('productos').select('*', { count: 'exact', head: true }),
-        supabaseClient.from('reservas_mensuales').select('*', { count: 'exact', head: true }).eq('estado', 'confirmado')
+        supabaseClient.from('reservas_mensuales').select('*', { count: 'exact', head: true }).neq('estado', 'cancelado')
     ]);
 
     cards.innerHTML = `
@@ -819,6 +819,52 @@ window.guardarSocioAdmin = async function(socioId, origen = 'admin') {
     }
 };
 
+function obtenerVariedadReservaAdmin(reserva) {
+    return reserva?.producto_nombre || reserva?.variedad || reserva?.variety || reserva?.productos?.nombre || 'Sin variedad registrada';
+}
+
+function obtenerEtiquetaEstadoReservaAdmin(estado) {
+    const etiquetas = {
+        pendiente: 'Pendiente de confirmacion',
+        confirmado: 'Pedido recibido',
+        entregado: 'Entrega confirmada',
+        retirado: 'Entrega confirmada',
+        cancelado: 'Cancelado'
+    };
+    return etiquetas[String(estado || 'pendiente').toLowerCase()] || estado || 'Pendiente';
+}
+
+function construirAccionesReservaAdmin(reserva, origen = 'admin') {
+    const estado = String(reserva.estado || 'pendiente').toLowerCase();
+    if (estado === 'cancelado') return '<span class="metric-label">Cancelada</span>';
+    if (estado === 'entregado' || estado === 'retirado') return '<span class="metric-label">Cerrada</span>';
+    if (estado === 'confirmado') {
+        return `<button type="button" class="btn-aprobar" onclick="actualizarEstadoReservaAdmin('${reserva.id}', 'entregado', '${origen}')">Confirmar entrega</button>`;
+    }
+    return `<button type="button" class="btn-aprobar" onclick="actualizarEstadoReservaAdmin('${reserva.id}', 'confirmado', '${origen}')">Confirmar</button>`;
+}
+
+function renderizarTablaReservasAdmin(data, origen = 'admin') {
+    return (data || []).length ? `
+        <div class="admin-tabla-scroll">
+        <table class="tabla-datos tabla-reservas-excel">
+            <thead><tr><th>Fecha retiro</th><th>Socio</th><th>Variedad</th><th>Cantidad</th><th>Estado</th><th>Registrada</th><th>Accion</th></tr></thead>
+            <tbody>${data.map((reserva) => `
+                <tr>
+                    <td>${reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : '-'}</td>
+                    <td>${escapeHtml(reserva.socios?.nombre || '-')} ${escapeHtml(reserva.socios?.apellido || '')}</td>
+                    <td>${escapeHtml(obtenerVariedadReservaAdmin(reserva))}</td>
+                    <td>${Number(reserva.cantidad_gramos || 0)}g</td>
+                    <td><span class="reserva-status-badge estado-${escapeHtml(String(reserva.estado || 'pendiente').toLowerCase())}">${escapeHtml(obtenerEtiquetaEstadoReservaAdmin(reserva.estado))}</span></td>
+                    <td>${reserva.created_at ? new Date(reserva.created_at).toLocaleDateString('es-UY') : '-'}</td>
+                    <td>${construirAccionesReservaAdmin(reserva, origen)}</td>
+                </tr>
+            `).join('')}</tbody>
+        </table>
+        </div>
+    ` : '<div class="loading">No hay reservas.</div>';
+}
+
 async function cargarReservasAdmin() {
     const container = document.getElementById('admin-reservasAdmin');
     if (!container) return;
@@ -827,22 +873,48 @@ async function cargarReservasAdmin() {
         container.innerHTML = '<div class="loading">No se pudieron cargar las reservas.</div>';
         return;
     }
-    container.innerHTML = (data || []).length ? `
-        <div class="admin-tabla-scroll">
-        <table class="tabla-datos">
-            <thead><tr><th>Fecha</th><th>Socio</th><th>Cantidad</th><th>Estado</th></tr></thead>
-            <tbody>${data.map((reserva) => `
-                <tr>
-                    <td>${new Date(reserva.fecha_retiro).toLocaleDateString('es')}</td>
-                    <td>${escapeHtml(reserva.socios?.nombre || '-')} ${escapeHtml(reserva.socios?.apellido || '')}</td>
-                    <td>${reserva.cantidad_gramos}g</td>
-                    <td>${escapeHtml(reserva.estado)}</td>
-                </tr>
-            `).join('')}</tbody>
-        </table>
-        </div>
-    ` : '<div class="loading">No hay reservas.</div>';
+    container.innerHTML = `
+        <h3 style="color:var(--text-strong); margin-bottom: 12px;">Reservas</h3>
+        <p style="color:var(--text-muted); margin: 0 0 12px;">Vista rapida tipo planilla: variedad, gramos, fecha y estado operativo.</p>
+        ${renderizarTablaReservasAdmin(data, 'admin')}
+    `;
 }
+
+window.actualizarEstadoReservaAdmin = async function(reservaId, estado, origen = 'admin') {
+    const { data: reserva, error: loadError } = await supabaseClient
+        .from('reservas_mensuales')
+        .select('id, socio_id, cantidad_gramos, fecha_retiro, estado')
+        .eq('id', reservaId)
+        .single();
+    if (loadError || !reserva) {
+        mostrarMensaje('No se pudo cargar la reserva.', false);
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from('reservas_mensuales')
+        .update({ estado })
+        .eq('id', reservaId);
+    if (error) {
+        mostrarMensaje(`No se pudo actualizar la reserva: ${error.message}`, false);
+        return;
+    }
+
+    if (typeof notificationService !== 'undefined' && reserva.socio_id) {
+        const tipo = estado === 'entregado' ? 'retiro_disponible' : 'reserva_confirmada';
+        const mensaje = notificationService.render(tipo, {
+            grams: reserva.cantidad_gramos,
+            retiro: reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : ''
+        });
+        notificationService
+            .send(reserva.socio_id, mensaje, { type: tipo, channel: 'telegram', metadata: { reserva_id: reservaId, estado } })
+            .catch((notifyError) => console.warn('No se pudo encolar notificacion de reserva admin:', notifyError));
+    }
+
+    mostrarMensaje(estado === 'entregado' ? 'Entrega confirmada' : 'Pedido recibido confirmado', true);
+    await cargarReservasAdmin();
+    if (typeof cargarMaestroReservas === 'function') await cargarMaestroReservas();
+};
 
 async function cargarSociosParaMensajes() {
     const select = document.getElementById('mensajeDestinatario');
@@ -881,6 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (el) el.style.display = key === section ? 'block' : 'none';
             });
             if (section === 'historia' && typeof cargarHistoriaAdmin === 'function') cargarHistoriaAdmin();
+            if (section === 'reservasAdmin' && typeof cargarReservasAdmin === 'function') cargarReservasAdmin();
         });
     });
 
