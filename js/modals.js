@@ -11,7 +11,21 @@ function guardarPedidosProductos(pedidos) {
 }
 
 function normalizarTipoCultivoEdicion(tipoCultivo) {
-    return String(tipoCultivo || '').trim().toLowerCase() === 'exterior' ? 'exterior' : 'invernaculo';
+    const valor = String(tipoCultivo || '').trim().toLowerCase();
+    if (valor === 'exterior') return 'exterior';
+    if (valor === 'dispositivos_pipas' || valor === 'parafernalia_accesorios') return valor;
+    return 'invernaculo';
+}
+
+function productoEdicionEsArticuloTipo(tipoCultivo) {
+    const normalizado = normalizarTipoCultivoEdicion(tipoCultivo);
+    return normalizado === 'dispositivos_pipas' || normalizado === 'parafernalia_accesorios';
+}
+
+function obtenerTipoCatalogoProductoEdicion(producto = {}) {
+    const cepa = String(producto.cepa || '').trim();
+    if (cepa.startsWith('ARTICULO:')) return normalizarTipoCultivoEdicion(cepa.slice('ARTICULO:'.length));
+    return normalizarTipoCultivoEdicion(producto.tipo_cultivo);
 }
 
 function obtenerTotalPedidoMesActual() {
@@ -258,6 +272,7 @@ async function abrirModal(producto) {
     appState.reservaEditandoGramos = 0;
     const precioBase = producto.precio_por_10g || 1600;
     const disponible = producto.disponible !== false;
+    const esArticulo = typeof productoEsArticulo === 'function' && productoEsArticulo(producto);
 
     let imagenesArray = [];
     if (typeof obtenerImagenesProducto === 'function') {
@@ -288,12 +303,24 @@ async function abrirModal(producto) {
     habilitarSwipeGaleriaProducto();
 
     document.getElementById('modalTitulo').textContent = producto.nombre;
-    document.getElementById('modalCepa').textContent = producto.cepa || 'Cepa especial';
+    document.getElementById('modalCepa').textContent = esArticulo
+        ? (typeof obtenerTituloTipoCultivo === 'function' && typeof obtenerTipoCatalogoProducto === 'function' ? obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(producto)) : 'Artículo destacado')
+        : (producto.cepa || 'Cepa especial');
     document.getElementById('modalDescripcion').textContent = producto.descripcion || '';
-    document.getElementById('modalThc').textContent = `THC: ${producto.thc_porcentaje || '?'}% | CBD: ${producto.cbd_porcentaje || '?'}%`;
+    document.getElementById('modalThc').textContent = esArticulo
+        ? `${disponible ? 'Disponible' : 'No disponible'}${precioBase ? ` | $${Number(precioBase).toFixed(0)}` : ''}`
+        : `THC: ${producto.thc_porcentaje || '?'}% | CBD: ${producto.cbd_porcentaje || '?'}%`;
     document.getElementById('panelCalificacion').style.display = 'none';
     document.getElementById('calificacionMensaje').innerHTML = '';
     calificacionSeleccionada = 0;
+
+    const pedidoBox = document.querySelector('#productoModal .modal-pedido-box');
+    if (pedidoBox) pedidoBox.style.display = esArticulo ? 'none' : '';
+
+    if (esArticulo) {
+        document.getElementById('productoModal').style.display = 'flex';
+        return;
+    }
 
     const opcionesDisponibles = [20, 40];
     const opcionesContainer = document.getElementById('opcionesPedido');
@@ -339,6 +366,8 @@ async function abrirModal(producto) {
 
 function cerrarProductoModal() {
     document.getElementById('productoModal').style.display = 'none';
+    const pedidoBox = document.querySelector('#productoModal .modal-pedido-box');
+    if (pedidoBox) pedidoBox.style.display = '';
     document.getElementById('panelCalificacion').style.display = 'none';
     document.getElementById('calificacionMensaje').innerHTML = '';
     appState.productoModalActual = null;
@@ -357,7 +386,9 @@ window.editarProductoAdmin = async function(id) {
     }
     appState.productoEditandoId = id;
     document.getElementById('editNombre').value = data.nombre || '';
-    document.getElementById('editCepa').value = data.cepa || '';
+    const tipoCatalogo = obtenerTipoCatalogoProductoEdicion(data);
+    const esArticulo = productoEdicionEsArticuloTipo(tipoCatalogo);
+    document.getElementById('editCepa').value = esArticulo ? '' : (data.cepa || '');
     document.getElementById('editThc').value = data.thc_porcentaje || '';
     document.getElementById('editCbd').value = data.cbd_porcentaje || '';
     const perfilIndicaSativa = typeof parsearPerfilIndicaSativa === 'function'
@@ -366,7 +397,7 @@ window.editarProductoAdmin = async function(id) {
     document.getElementById('editIndicaPorcentaje').value = perfilIndicaSativa.indica ?? '';
     document.getElementById('editSativaPorcentaje').value = perfilIndicaSativa.sativa ?? '';
     sincronizarPerfilDesdeIndica();
-    document.getElementById('editTipoCultivo').value = normalizarTipoCultivoEdicion(data.tipo_cultivo);
+    document.getElementById('editTipoCultivo').value = tipoCatalogo;
     document.getElementById('editPrecio').value = data.precio_por_10g || 1600;
     document.getElementById('editDescripcion').value = data.descripcion || '';
     document.getElementById('editImagenUrl').value = data.imagen_url || '';
@@ -490,18 +521,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
         }
+        const tipoSeleccionado = normalizarTipoCultivoEdicion(document.getElementById('editTipoCultivo').value);
+        const esArticulo = productoEdicionEsArticuloTipo(tipoSeleccionado);
         const updates = {
             nombre: document.getElementById('editNombre').value,
-            cepa: document.getElementById('editCepa').value,
-            thc_porcentaje: parseFloat(document.getElementById('editThc').value) || null,
-            cbd_porcentaje: parseFloat(document.getElementById('editCbd').value) || null,
+            cepa: esArticulo ? `ARTICULO:${tipoSeleccionado}` : document.getElementById('editCepa').value,
+            thc_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('editThc').value) || null),
+            cbd_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('editCbd').value) || null),
             indica_sativa: typeof construirPerfilIndicaSativa === 'function'
                 ? construirPerfilIndicaSativa(
                     document.getElementById('editIndicaPorcentaje').value,
                     document.getElementById('editSativaPorcentaje').value
                 )
                 : null,
-            tipo_cultivo: normalizarTipoCultivoEdicion(document.getElementById('editTipoCultivo').value),
+            tipo_cultivo: esArticulo ? 'invernaculo' : tipoSeleccionado,
             precio_por_10g: parseFloat(document.getElementById('editPrecio').value) || 1600,
             descripcion: document.getElementById('editDescripcion').value,
             imagen_url: imagenUrlEditada

@@ -97,15 +97,38 @@ function ordenarProductosParaCatalogo(productos) {
     });
 }
 
+const TIPOS_ARTICULOS_PRODUCTOS = ['dispositivos_pipas', 'parafernalia_accesorios'];
+const PREFIJO_ARTICULO_PRODUCTO = 'ARTICULO:';
+
 function normalizarTipoCultivo(tipoCultivo) {
-    return String(tipoCultivo || '').trim().toLowerCase() === 'exterior' ? 'exterior' : 'invernaculo';
+    const valor = String(tipoCultivo || '').trim().toLowerCase();
+    if (valor === 'exterior') return 'exterior';
+    if (TIPOS_ARTICULOS_PRODUCTOS.includes(valor)) return valor;
+    return 'invernaculo';
+}
+
+function obtenerTipoCatalogoProducto(producto) {
+    const cepa = String(producto?.cepa || '').trim();
+    if (cepa.startsWith(PREFIJO_ARTICULO_PRODUCTO)) {
+        return normalizarTipoCultivo(cepa.slice(PREFIJO_ARTICULO_PRODUCTO.length));
+    }
+    return normalizarTipoCultivo(producto?.tipo_cultivo);
+}
+
+function productoEsArticulo(producto) {
+    return TIPOS_ARTICULOS_PRODUCTOS.includes(obtenerTipoCatalogoProducto(producto));
 }
 
 function obtenerTituloTipoCultivo(tipoCultivo) {
-    return tipoCultivo === 'exterior' ? 'STANDARD' : 'PREMIUM';
+    if (tipoCultivo === 'exterior') return 'STANDARD';
+    if (tipoCultivo === 'dispositivos_pipas') return 'Dispositivos y pipas';
+    if (tipoCultivo === 'parafernalia_accesorios') return 'Parafernalia y Accesorios';
+    return 'PREMIUM';
 }
 
 function obtenerDescripcionTipoCultivo(tipoCultivo) {
+    if (tipoCultivo === 'dispositivos_pipas') return 'Opciones de uso y cuidado personal.';
+    if (tipoCultivo === 'parafernalia_accesorios') return 'Complementos para socios del club.';
     return tipoCultivo === 'exterior'
         ? 'Cultivo exterior, perfil clasico y acceso simple.'
         : 'Cultivo asistido, seleccion cuidada y mayor control.';
@@ -361,48 +384,37 @@ function inicializarAcordeonesProductos() {
     });
 }
 
-function obtenerCategoriasArticulosDestacados() {
-    return [
-        {
-            id: 'dispositivos-pipas',
-            titulo: 'Dispositivos y pipas',
-            descripcion: 'Opciones de uso y cuidado personal.',
-            icono: 'fa-smoking',
-            articulos: [
-                { nombre: 'Pipa de vidrio compacta', detalle: 'Muestra referencial hasta cargar stock.', estado: 'Próximamente' },
-                { nombre: 'Dispositivo portátil', detalle: 'Ficha de ejemplo para la categoría.', estado: 'Próximamente' }
-            ]
-        },
-        {
-            id: 'parafernalia-accesorios',
-            titulo: 'Parafernalia y Accesorios',
-            descripcion: 'Complementos para socios del club.',
-            icono: 'fa-toolbox',
-            articulos: [
-                { nombre: 'Picador metálico', detalle: 'Muestra referencial hasta cargar stock.', estado: 'Próximamente' },
-                { nombre: 'Bandeja organizadora', detalle: 'Ficha de ejemplo para la categoría.', estado: 'Próximamente' }
-            ]
-        }
-    ];
+function obtenerCategoriasArticulosDestacados(articulosPorCategoria = {}) {
+    return TIPOS_ARTICULOS_PRODUCTOS.map((tipo) => ({
+        id: tipo,
+        titulo: obtenerTituloTipoCultivo(tipo),
+        descripcion: obtenerDescripcionTipoCultivo(tipo),
+        articulos: articulosPorCategoria[tipo] || []
+    }));
 }
 
 function renderizarTarjetaArticuloDestacado(articulo) {
+    const imagenes = normalizarListaImagenes(articulo.imagen_url);
+    const imagenPrincipal = imagenes[0] || obtenerImagenFallback(articulo) || '';
+    const precio = Number(articulo.precio_por_10g || 0);
+    const disponible = articulo.disponible !== false;
     return `
-        <article class="articulo-destacado-card">
+        <article class="articulo-destacado-card" data-producto-id="${escapeHtml(String(articulo.id))}" data-producto='${JSON.stringify(articulo).replace(/'/g, '&#39;')}'>
             <div class="articulo-destacado-media">
-                <i class="fas fa-box-open" aria-hidden="true"></i>
+                ${imagenPrincipal ? `<img src="${imagenPrincipal}" alt="${escapeHtml(articulo.nombre)}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=&quot;fas fa-box-open&quot; aria-hidden=&quot;true&quot;></i>';">` : '<i class="fas fa-box-open" aria-hidden="true"></i>'}
             </div>
             <div class="articulo-destacado-body">
-                <span>${escapeHtml(articulo.estado)}</span>
+                <span>${disponible ? 'Disponible' : 'No disponible'}</span>
                 <strong>${escapeHtml(articulo.nombre)}</strong>
-                <p>${escapeHtml(articulo.detalle)}</p>
+                <p>${escapeHtml(articulo.descripcion || obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(articulo)))}</p>
+                ${precio ? `<em>$${precio.toFixed(0)}</em>` : ''}
             </div>
         </article>
     `;
 }
 
-function construirArticulosDestacadosHTML() {
-    const categorias = obtenerCategoriasArticulosDestacados();
+function construirArticulosDestacadosHTML(articulosPorCategoria = {}) {
+    const categorias = obtenerCategoriasArticulosDestacados(articulosPorCategoria);
     return `
         <div class="productos-subsection articulos-destacados-section">
             <h2 class="section-title"><i class="fas fa-star"></i> Artículos destacados</h2>
@@ -423,7 +435,9 @@ function construirArticulosDestacadosHTML() {
                 ${categorias.map((categoria) => `
                     <div class="productos-panel articulos-panel" data-tipo-cultivo="${categoria.id}" hidden>
                         <div class="productos-lista articulos-destacados-lista">
-                            ${categoria.articulos.map((articulo) => renderizarTarjetaArticuloDestacado(articulo)).join('')}
+                            ${categoria.articulos.length
+                                ? categoria.articulos.map((articulo) => renderizarTarjetaArticuloDestacado(articulo)).join('')
+                                : '<div class="empty-state productos-vacio"><i class="fas fa-box-open"></i><strong>Sin artículos cargados</strong><span>Agregalos desde el panel de administración.</span></div>'}
                         </div>
                     </div>
                 `).join('')}
@@ -591,9 +605,18 @@ async function cargarProductosPublicos() {
     const productosOrdenados = ordenarProductosParaCatalogo(productosConCalificaciones);
     registrarProductosParaNovedades(productosOrdenados);
     const grupos = { invernaculo: [], exterior: [] };
+    const articulosPorCategoria = {
+        dispositivos_pipas: [],
+        parafernalia_accesorios: []
+    };
 
     productosOrdenados.forEach((producto) => {
-        grupos[normalizarTipoCultivo(producto.tipo_cultivo)].push(producto);
+        const tipo = obtenerTipoCatalogoProducto(producto);
+        if (TIPOS_ARTICULOS_PRODUCTOS.includes(tipo)) {
+            articulosPorCategoria[tipo].push(producto);
+        } else {
+            grupos[tipo].push(producto);
+        }
     });
 
     const tiposCultivo = ['invernaculo', 'exterior'];
@@ -620,12 +643,12 @@ async function cargarProductosPublicos() {
                 </div>
             `).join('')}
         </div>
-        ${construirArticulosDestacadosHTML()}
+        ${construirArticulosDestacadosHTML(articulosPorCategoria)}
     `;
 
     inicializarAcordeonesProductos();
 
-    document.querySelectorAll('.producto-card').forEach((card) => {
+    container.querySelectorAll('.producto-card, .articulo-destacado-card').forEach((card) => {
         card.addEventListener('click', (event) => {
             if (event.target.closest('button')) return;
             const producto = JSON.parse(card.dataset.producto);

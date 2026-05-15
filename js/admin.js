@@ -179,11 +179,33 @@ function construirPerfilIndicaSativa(indica, sativa) {
 }
 
 function normalizarTipoCultivoAdmin(tipoCultivo) {
-    return String(tipoCultivo || '').trim().toLowerCase() === 'exterior' ? 'exterior' : 'invernaculo';
+    const valor = String(tipoCultivo || '').trim().toLowerCase();
+    if (valor === 'exterior') return 'exterior';
+    if (valor === 'dispositivos_pipas' || valor === 'parafernalia_accesorios') return valor;
+    return 'invernaculo';
+}
+
+function productoAdminEsArticuloTipo(tipoCultivo) {
+    const normalizado = normalizarTipoCultivoAdmin(tipoCultivo);
+    return normalizado === 'dispositivos_pipas' || normalizado === 'parafernalia_accesorios';
+}
+
+function obtenerTipoCatalogoProductoAdmin(producto = {}) {
+    const cepa = String(producto.cepa || '').trim();
+    if (cepa.startsWith('ARTICULO:')) return normalizarTipoCultivoAdmin(cepa.slice('ARTICULO:'.length));
+    return normalizarTipoCultivoAdmin(producto.tipo_cultivo);
 }
 
 function obtenerEtiquetaTipoCultivoAdmin(tipoCultivo) {
-    return normalizarTipoCultivoAdmin(tipoCultivo) === 'exterior' ? 'STANDARD' : 'PREMIUM';
+    const normalizado = normalizarTipoCultivoAdmin(tipoCultivo);
+    if (normalizado === 'exterior') return 'STANDARD';
+    if (normalizado === 'dispositivos_pipas') return 'Dispositivos y pipas';
+    if (normalizado === 'parafernalia_accesorios') return 'Parafernalia y Accesorios';
+    return 'PREMIUM';
+}
+
+function obtenerEtiquetaProductoAdmin(producto = {}) {
+    return obtenerEtiquetaTipoCultivoAdmin(obtenerTipoCatalogoProductoAdmin(producto));
 }
 
 function errorEsColumnaTipoCultivoFaltante(error) {
@@ -681,7 +703,7 @@ async function cargarProductosAdmin() {
     container.innerHTML = `
         <form id="formProductoAdmin">
             <h3>Nuevo producto</h3>
-            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">Cargá nombre, tipo de cultivo, precio base e imágenes. La variedad se mostrará en el catálogo dentro de PREMIUM o STANDARD según la opción elegida.</p>
+            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">Cargá variedades o artículos. Las variedades van a PREMIUM/STANDARD y los artículos aparecen en Artículos destacados.</p>
             <div class="form-grid">
                 <div class="form-group full-width"><input type="text" id="productoNombreAdmin" placeholder="Nombre" required></div>
                 <div class="form-group"><input type="text" id="productoCepaAdmin" placeholder="Cepa"></div>
@@ -691,6 +713,8 @@ async function cargarProductosAdmin() {
                     <select id="productoTipoCultivoAdmin">
                         <option value="invernaculo">PREMIUM</option>
                         <option value="exterior">STANDARD</option>
+                        <option value="dispositivos_pipas">Dispositivos y pipas</option>
+                        <option value="parafernalia_accesorios">Parafernalia y Accesorios</option>
                     </select>
                 </div>
                 <div class="form-group"><input type="number" step="0.01" id="productoPrecioAdmin" placeholder="Precio base" value="1600"></div>
@@ -712,7 +736,7 @@ async function cargarProductosAdmin() {
                 <tbody>${productos.map((producto) => `
                     <tr>
                         <td>${escapeHtml(producto.nombre)}</td>
-                        <td>${escapeHtml(obtenerEtiquetaTipoCultivoAdmin(producto.tipo_cultivo))}</td>
+                        <td>${escapeHtml(obtenerEtiquetaProductoAdmin(producto))}</td>
                         <td><input type="number" step="0.01" value="${producto.precio_por_10g || 1600}" class="admin-productos-precio" style="background:rgba(8,15,6,0.8);border:1px solid #7ca35a;border-radius:8px;padding:5px;color:#e0ecd0;" onchange="actualizarPrecioProductoAdmin('${producto.id}', this.value)"></td>
                         <td><input type="checkbox" ${producto.disponible !== false ? 'checked' : ''} onchange="actualizarDisponibilidadProductoAdmin('${producto.id}', this.checked)"></td>
                         <td><div class="admin-productos-acciones"><button class="btn-editar" onclick="editarProductoAdmin('${producto.id}')">Editar</button><button class="btn-eliminar" onclick="eliminarProductoAdminClick('${producto.id}')">Eliminar</button></div></td>
@@ -744,12 +768,14 @@ async function cargarProductosAdmin() {
             }
         }
 
+        const tipoSeleccionado = normalizarTipoCultivoAdmin(document.getElementById('productoTipoCultivoAdmin').value);
+        const esArticulo = productoAdminEsArticuloTipo(tipoSeleccionado);
         const payloadProducto = {
             nombre: document.getElementById('productoNombreAdmin').value,
-            cepa: document.getElementById('productoCepaAdmin').value,
-            thc_porcentaje: parseFloat(document.getElementById('productoThcAdmin').value) || null,
-            cbd_porcentaje: parseFloat(document.getElementById('productoCbdAdmin').value) || null,
-            tipo_cultivo: normalizarTipoCultivoAdmin(document.getElementById('productoTipoCultivoAdmin').value),
+            cepa: esArticulo ? `ARTICULO:${tipoSeleccionado}` : document.getElementById('productoCepaAdmin').value,
+            thc_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('productoThcAdmin').value) || null),
+            cbd_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('productoCbdAdmin').value) || null),
+            tipo_cultivo: esArticulo ? 'invernaculo' : tipoSeleccionado,
             precio_por_10g: parseFloat(document.getElementById('productoPrecioAdmin').value) || 1600,
             descripcion: document.getElementById('productoDescripcionAdmin').value,
             imagen_url: imagenes[0] || null,
