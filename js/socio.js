@@ -4,40 +4,6 @@ function sumarGramosReservadosEnCiclo(reservas = [], ciclo = obtenerCicloClub())
         .reduce((total, reserva) => total + Number(reserva?.cantidad_gramos || 0), 0);
 }
 
-function construirResumenCarritoMensual(reservas = [], gramosRestantesCiclo = 40) {
-    const ciclo = appState.cicloClubActual || obtenerCicloClub();
-    const activas = (reservas || [])
-        .filter((reserva) => reservaEstaActiva(reserva) && fechaEstaEnCicloClub(reserva.fecha_retiro, ciclo));
-    const gramosUsados = Math.max(0, 40 - Number(gramosRestantesCiclo || 0));
-    if (!activas.length) {
-        return `
-            <details class="actividad-carrito-submenu">
-                <summary>Pedido mensual <span>${gramosRestantesCiclo}g disponibles</span></summary>
-                <div class="actividad-carrito-vacio">Todavia no tenes pedidos activos para este ciclo.</div>
-            </details>
-        `;
-    }
-    return `
-        <details class="actividad-carrito-submenu" open>
-            <summary>Pedido mensual <span>${gramosUsados}g usados - ${gramosRestantesCiclo}g disponibles</span></summary>
-            <div class="actividad-carrito-lista">
-                ${activas.map((reserva) => {
-                    const variedad = reserva.producto_nombre || 'Variedad a definir';
-                    const tipoReserva = obtenerTipoReservaUI(reserva);
-                    const fecha = reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : '';
-                    return `
-                        <button type="button" class="carrito-reserva-btn" data-reserva-id="${reserva.id}" data-tipo="${tipoReserva}">
-                            <strong>${escapeHtml(variedad)}</strong>
-                            <span>${Number(reserva.cantidad_gramos || 0)}g pedidos</span>
-                            <small>${escapeHtml(fecha)} · Modificar pedido</small>
-                        </button>
-                    `;
-                }).join('')}
-            </div>
-        </details>
-    `;
-}
-
 function reservaEstaActiva(reserva) {
     return reserva && reserva.estado !== 'cancelado';
 }
@@ -111,22 +77,15 @@ function obtenerDetalleEntregaConfigurada(fecha, indiceFallback = 0) {
 
 function construirEventoCalendarioReservaUsuario(evento, indice) {
     const detalleEntrega = obtenerDetalleEntregaConfigurada(evento.fecha, indice);
-    const estado = reservaEstaActiva(evento.reserva)
-        ? obtenerEtiquetaEstadoReserva(evento.reserva, evento.puedeReservar)
-        : (evento.puedeReservar ? 'Pendiente' : 'Plazo cerrado');
-    const detalle = evento.reserva ? `${evento.reserva.cantidad_gramos}g pedidos` : 'Sin pedido';
     return {
         fecha: evento.fecha,
         titulo: evento.titulo,
         hora: detalleEntrega.hora,
-        detalle: `${estado} · ${detalle}`,
+        detalle: detalleEntrega.hora ? 'Retiro coordinado por el club' : 'Horario a confirmar',
         lugar: detalleEntrega.lugar || 'Lugar de Siempre',
         actionId: evento.tipo,
-        destacado: reservaEstaActiva(evento.reserva),
-        fechaTexto: evento.fecha.toLocaleDateString('es-UY'),
-        reservaResumen: reservaEstaActiva(evento.reserva)
-            ? `Pedido mensual - ${evento.reserva.cantidad_gramos}g`
-            : 'Sin pedido'
+        destacado: false,
+        fechaTexto: evento.fecha.toLocaleDateString('es-UY')
     };
 }
 
@@ -135,20 +94,17 @@ function renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo,
     if (!container || !appState.socioData?.id || !appState.fechasEntrega || !appState.cicloClubActual) return;
 
     const eventos = [
-        { tipo: 'primer', titulo: '1a Entrega Mensual', fecha: appState.fechasEntrega.primerJueves, reserva: reservaPrimer, puedeReservar: puedePrimer },
-        { tipo: 'ultimo', titulo: '2a Entrega Mensual', fecha: appState.fechasEntrega.ultimoJueves, reserva: reservaUltimo, puedeReservar: puedeUltimo }
+        { tipo: 'primer', titulo: 'Primera entrega', fecha: appState.fechasEntrega.primerJueves, reserva: reservaPrimer, puedeReservar: puedePrimer },
+        { tipo: 'ultimo', titulo: 'Segunda entrega', fecha: appState.fechasEntrega.ultimoJueves, reserva: reservaUltimo, puedeReservar: puedeUltimo }
     ];
-    const reservasActivas = [reservaPrimer, reservaUltimo].filter(reservaEstaActiva).length;
-    const historialRetirado = (reservas || []).filter((reserva) => reserva.estado === 'entregado' || reserva.estado === 'retirado').length;
 
     container.style.display = '';
     container.innerHTML = `
         <div class="reservas-activity-head">
             <span class="dashboard-eyebrow">Calendario de entregas</span>
-            <strong>${escapeHtml(obtenerResumenEntregaUsuario(reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo))}</strong>
-            <small>${40 - gramosRestantesCiclo}g usados - ${gramosRestantesCiclo}g disponibles - ${reservasActivas} pedidos activos - ${historialRetirado} retiros</small>
+            <strong>Próximas fechas de retiro</strong>
+            <small>El calendario muestra únicamente las entregas creadas por administración. Tus productos reservados están en el carrito.</small>
         </div>
-        ${construirResumenCarritoMensual(reservas, gramosRestantesCiclo)}
         <div class="reservas-activity-events">
             ${construirCalendarioEntregasHTML(eventos.map(construirEventoCalendarioReservaUsuario))}
         </div>
@@ -195,9 +151,6 @@ function abrirReservaActividadModal(evento) {
     const detalleEntrega = obtenerDetalleEntregaConfigurada(evento.fecha, evento.tipo === 'ultimo' ? 1 : 0);
     const horario = formatearHoraRangoEntrega(detalleEntrega.hora) || 'Horario a confirmar';
     const lugar = detalleEntrega.lugar || 'Lugar de Siempre';
-    const reservado = reservaEstaActiva(evento.reserva)
-        ? `Pedido mensual - ${evento.reserva.cantidad_gramos}g`
-        : 'Sin pedido';
 
     body.innerHTML = `
         <div class="reserva-modal-fecha">
@@ -210,7 +163,6 @@ function abrirReservaActividadModal(evento) {
             <div><span>Fecha</span><strong>${escapeHtml(fecha.completa)}</strong></div>
             <div><span>Horario</span><strong>${escapeHtml(horario)}</strong></div>
             <div><span>Lugar</span><strong class="reserva-modal-lugar">${escapeHtml(lugar)}</strong></div>
-            <div><span>Pedido</span><strong>${escapeHtml(reservado)}</strong></div>
         </div>
     `;
     modal.style.display = 'flex';
@@ -218,6 +170,102 @@ function abrirReservaActividadModal(evento) {
 
 function cerrarReservaActividadModal() {
     const modal = document.getElementById('reservaActividadModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function obtenerReservasActivasCarrito(reservas = []) {
+    const ciclo = appState.cicloClubActual || obtenerCicloClub();
+    return (reservas || [])
+        .filter((reserva) => reservaEstaActiva(reserva) && fechaEstaEnCicloClub(reserva.fecha_retiro, ciclo))
+        .sort((a, b) => new Date(a.fecha_retiro).getTime() - new Date(b.fecha_retiro).getTime());
+}
+
+function construirItemCarritoReservaHTML(reserva) {
+    const tipoReserva = obtenerTipoReservaUI(reserva);
+    const fecha = reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : 'Fecha a confirmar';
+    const nombre = reserva.producto_nombre || 'Variedad a definir';
+    const estado = obtenerEtiquetaEstadoReserva(reserva, true);
+    return `
+        <button type="button" class="carrito-modal-item" data-reserva-id="${escapeHtml(String(reserva.id))}" data-tipo="${escapeHtml(tipoReserva)}">
+            <span class="carrito-modal-item-icon"><i class="fas fa-leaf"></i></span>
+            <span class="carrito-modal-item-copy">
+                <strong>${escapeHtml(nombre)}</strong>
+                <small>${Number(reserva.cantidad_gramos || 0)}g - ${escapeHtml(fecha)} - ${escapeHtml(estado)}</small>
+            </span>
+            <i class="fas fa-pen carrito-modal-item-action" aria-hidden="true"></i>
+        </button>
+    `;
+}
+
+function asegurarCarritoSocioModal() {
+    let modal = document.getElementById('carritoSocioModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'carritoSocioModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content carrito-socio-modal-content">
+            <span class="cerrar-modal" id="cerrarCarritoSocioModal">&times;</span>
+            <div id="carritoSocioModalBody"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#cerrarCarritoSocioModal')?.addEventListener('click', cerrarCarritoSocioModal);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) cerrarCarritoSocioModal();
+    });
+    return modal;
+}
+
+async function abrirCarritoSocio() {
+    if (!appState.socioData?.id) {
+        mostrarMensaje('Inicia sesion para ver tu carrito.', false);
+        return;
+    }
+    const modal = asegurarCarritoSocioModal();
+    const body = modal.querySelector('#carritoSocioModalBody');
+    body.innerHTML = '<div class="loading">Cargando carrito...</div>';
+    modal.style.display = 'flex';
+
+    const reservas = await obtenerReservas(appState.socioData.id);
+    appState.reservasSocio = reservas;
+    const ciclo = appState.cicloClubActual || obtenerCicloClub();
+    const activas = obtenerReservasActivasCarrito(reservas);
+    const gramosUsados = activas.reduce((total, reserva) => total + Number(reserva.cantidad_gramos || 0), 0);
+    const gramosRestantes = Math.max(0, 40 - gramosUsados);
+    const articulos = [];
+
+    body.innerHTML = `
+        <span class="dashboard-eyebrow">Carrito del socio</span>
+        <h2 class="modal-titulo">Carrito de ${escapeHtml(appState.socioData.nombre || 'socio')}</h2>
+        <div class="carrito-modal-summary">
+            <strong>${gramosUsados}g reservados</strong>
+            <span>${gramosRestantes}g disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
+        </div>
+        <section class="carrito-modal-section">
+            <h3>Variedades reservadas</h3>
+            <div class="carrito-modal-list">
+                ${activas.length ? activas.map(construirItemCarritoReservaHTML).join('') : '<div class="carrito-modal-empty">Todavia no tenes variedades reservadas.</div>'}
+            </div>
+        </section>
+        <section class="carrito-modal-section">
+            <h3>Artículos</h3>
+            <div class="carrito-modal-list">
+                ${articulos.length ? '' : '<div class="carrito-modal-empty">Los artículos que reserves aparecerán acá cuando activemos esa sección.</div>'}
+            </div>
+        </section>
+    `;
+
+    body.querySelectorAll('.carrito-modal-item').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            cerrarCarritoSocioModal();
+            await modificarReservaHandler(btn.dataset.reservaId, btn.dataset.tipo);
+        });
+    });
+}
+
+function cerrarCarritoSocioModal() {
+    const modal = document.getElementById('carritoSocioModal');
     if (modal) modal.style.display = 'none';
 }
 
@@ -300,6 +348,7 @@ async function cargarReservasSocio() {
     appState.fechasEntrega = calcularFechasEntrega();
     appState.cicloClubActual = obtenerCicloClub();
     const reservas = await obtenerReservas(appState.socioData.id);
+    appState.reservasSocio = reservas;
     const reservaPrimer = obtenerReservaActivaPorEntrega(reservas, 'primer_jueves', appState.fechasEntrega.primerJueves);
     const reservaUltimo = obtenerReservaActivaPorEntrega(reservas, 'ultimo_jueves', appState.fechasEntrega.ultimoJueves);
     const puedePrimer = puedeConfirmar(appState.fechasEntrega.primerJueves, configSistema.horasLimitePrimer);

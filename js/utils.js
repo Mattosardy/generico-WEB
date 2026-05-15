@@ -137,9 +137,7 @@ function construirEventoEntregaCalendarioHTML(evento, opciones = {}) {
         ? ` type="button" data-reserva-evento="${escapeHtml(evento.actionId)}"`
         : '';
     const horario = evento.horario || formatearHoraRangoEntrega(evento.hora);
-    const titulo = evento.fechaTexto
-        ? `Entrega ${evento.fechaTexto}`
-        : (evento.titulo || 'Entrega');
+    const titulo = evento.titulo || (evento.fechaTexto ? `Entrega ${evento.fechaTexto}` : 'Entrega');
     const detalle = evento.reservaResumen || evento.detalle;
     return `
         <${tag}${actionAttrs} class="entrega-calendar-event ${evento.destacado ? 'destacado' : ''}">
@@ -178,7 +176,7 @@ function construirCalendarioMesEntregasHTML(fechaMes, eventos = [], pendientes =
         const eventosDia = eventosPorDia[clave] || [];
         const eventoPrincipal = eventosDia.find((evento) => evento.actionId);
         const accionDiaAttrs = eventoPrincipal?.actionId
-            ? ` role="button" tabindex="0" data-entrega-day-action="true" data-reserva-evento="${escapeHtml(eventoPrincipal.actionId)}" aria-label="Ver reserva del ${escapeHtml(fecha.toLocaleDateString('es-UY'))}"`
+            ? ` role="button" tabindex="0" data-entrega-day-action="true" data-reserva-evento="${escapeHtml(eventoPrincipal.actionId)}" aria-label="Ver entrega del ${escapeHtml(fecha.toLocaleDateString('es-UY'))}"`
             : '';
         const fueraMes = fecha.getMonth() !== inicioMes.getMonth();
         return `

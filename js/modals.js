@@ -143,7 +143,7 @@ async function realizarPedidoProducto() {
         return;
     }
 
-    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g. Revisá el estado en Agenda y pedidos.`, true);
+    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g. Revisá el detalle en tu carrito.`, true);
     cerrarProductoModal();
     if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
 }

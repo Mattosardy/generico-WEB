@@ -212,6 +212,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnLogin')?.addEventListener('click', iniciarSesion);
     document.getElementById('btnLogout')?.addEventListener('click', cerrarSesionHandler);
     document.getElementById('dockBtnLogin')?.addEventListener('click', iniciarSesion);
+    document.getElementById('userName')?.addEventListener('click', async () => {
+        if (typeof abrirCarritoSocio === 'function') await abrirCarritoSocio();
+    });
+    document.getElementById('userName')?.addEventListener('keydown', async (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        if (typeof abrirCarritoSocio === 'function') await abrirCarritoSocio();
+    });
 
     document.querySelectorAll('.nav-btn[data-section]').forEach((btn) => {
         btn.addEventListener('click', async () => {

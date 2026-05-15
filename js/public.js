@@ -339,17 +339,18 @@ function inicializarAcordeonesProductos() {
         toggle.addEventListener('click', () => {
             const tipoCultivo = toggle.dataset.tipoCultivo;
             const columna = toggle.closest('.productos-columna');
-            const panel = document.querySelector(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`);
+            const acordeon = toggle.closest('.productos-acordeon') || document;
+            const panel = acordeon.querySelector(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`);
             if (!columna || !panel) return;
 
             const expandido = toggle.getAttribute('aria-expanded') === 'true';
-            document.querySelectorAll('.productos-columna.activa').forEach((columnaActiva) => {
+            acordeon.querySelectorAll('.productos-columna.activa').forEach((columnaActiva) => {
                 if (columnaActiva === columna) return;
                 const toggleActivo = columnaActiva.querySelector('.productos-toggle');
                 if (toggleActivo) toggleActivo.setAttribute('aria-expanded', 'false');
                 columnaActiva.classList.remove('activa');
             });
-            document.querySelectorAll('.productos-panel').forEach((panelActivo) => {
+            acordeon.querySelectorAll('.productos-panel').forEach((panelActivo) => {
                 if (panelActivo !== panel) panelActivo.hidden = true;
             });
 
@@ -358,6 +359,77 @@ function inicializarAcordeonesProductos() {
             columna.classList.toggle('activa', !expandido);
         });
     });
+}
+
+function obtenerCategoriasArticulosDestacados() {
+    return [
+        {
+            id: 'dispositivos-pipas',
+            titulo: 'Dispositivos y pipas',
+            descripcion: 'Opciones de uso y cuidado personal.',
+            icono: 'fa-smoking',
+            articulos: [
+                { nombre: 'Pipa de vidrio compacta', detalle: 'Muestra referencial hasta cargar stock.', estado: 'Próximamente' },
+                { nombre: 'Dispositivo portátil', detalle: 'Ficha de ejemplo para la categoría.', estado: 'Próximamente' }
+            ]
+        },
+        {
+            id: 'parafernalia-accesorios',
+            titulo: 'Parafernalia y Accesorios',
+            descripcion: 'Complementos para socios del club.',
+            icono: 'fa-toolbox',
+            articulos: [
+                { nombre: 'Picador metálico', detalle: 'Muestra referencial hasta cargar stock.', estado: 'Próximamente' },
+                { nombre: 'Bandeja organizadora', detalle: 'Ficha de ejemplo para la categoría.', estado: 'Próximamente' }
+            ]
+        }
+    ];
+}
+
+function renderizarTarjetaArticuloDestacado(articulo) {
+    return `
+        <article class="articulo-destacado-card">
+            <div class="articulo-destacado-media">
+                <i class="fas fa-box-open" aria-hidden="true"></i>
+            </div>
+            <div class="articulo-destacado-body">
+                <span>${escapeHtml(articulo.estado)}</span>
+                <strong>${escapeHtml(articulo.nombre)}</strong>
+                <p>${escapeHtml(articulo.detalle)}</p>
+            </div>
+        </article>
+    `;
+}
+
+function construirArticulosDestacadosHTML() {
+    const categorias = obtenerCategoriasArticulosDestacados();
+    return `
+        <div class="productos-subsection articulos-destacados-section">
+            <h2 class="section-title"><i class="fas fa-star"></i> Artículos destacados</h2>
+            <div class="productos-acordeon productos-acordeon-articulos">
+                <div class="productos-controles">
+                    ${categorias.map((categoria) => `
+                        <div class="productos-columna">
+                            <h3 class="productos-columna-titulo">
+                                <button type="button" class="productos-toggle articulos-toggle" data-tipo-cultivo="${categoria.id}" aria-expanded="false">
+                                    <span class="productos-toggle-titulo">${escapeHtml(categoria.titulo)}</span>
+                                    <span class="productos-toggle-descripcion">${escapeHtml(categoria.descripcion)}</span>
+                                    <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                                </button>
+                            </h3>
+                        </div>
+                    `).join('')}
+                </div>
+                ${categorias.map((categoria) => `
+                    <div class="productos-panel articulos-panel" data-tipo-cultivo="${categoria.id}" hidden>
+                        <div class="productos-lista articulos-destacados-lista">
+                            ${categoria.articulos.map((articulo) => renderizarTarjetaArticuloDestacado(articulo)).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function construirEstadoProductoHTML(producto) {
@@ -498,7 +570,11 @@ async function cargarProductosPublicos() {
 
     const productos = await obtenerProductos();
     if (!productos?.length) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-leaf"></i><strong>Catálogo en preparación</strong><span>Las variedades disponibles se mostrarán acá.</span></div>';
+        container.innerHTML = `
+            <div class="empty-state"><i class="fas fa-leaf"></i><strong>Catálogo en preparación</strong><span>Las variedades disponibles se mostrarán acá.</span></div>
+            ${construirArticulosDestacadosHTML()}
+        `;
+        inicializarAcordeonesProductos();
         return;
     }
 
@@ -522,26 +598,29 @@ async function cargarProductosPublicos() {
 
     const tiposCultivo = ['invernaculo', 'exterior'];
     container.innerHTML = `
-        <div class="productos-controles">
+        <div class="productos-acordeon productos-acordeon-variedades">
+            <div class="productos-controles">
+                ${tiposCultivo.map((tipoCultivo) => `
+                    <div class="productos-columna">
+                        <h3 class="productos-columna-titulo">
+                            <button type="button" class="productos-toggle" data-tipo-cultivo="${tipoCultivo}" aria-expanded="false">
+                                <span class="productos-toggle-titulo">${obtenerTituloTipoCultivo(tipoCultivo)}</span>
+                                <span class="productos-toggle-descripcion">${obtenerDescripcionTipoCultivo(tipoCultivo)}</span>
+                                <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                            </button>
+                        </h3>
+                    </div>
+                `).join('')}
+            </div>
             ${tiposCultivo.map((tipoCultivo) => `
-                <div class="productos-columna">
-                    <h3 class="productos-columna-titulo">
-                        <button type="button" class="productos-toggle" data-tipo-cultivo="${tipoCultivo}" aria-expanded="false">
-                            <span class="productos-toggle-titulo">${obtenerTituloTipoCultivo(tipoCultivo)}</span>
-                            <span class="productos-toggle-descripcion">${obtenerDescripcionTipoCultivo(tipoCultivo)}</span>
-                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
-                        </button>
-                    </h3>
+                <div class="productos-panel" data-tipo-cultivo="${tipoCultivo}" hidden>
+                    <div class="productos-lista">
+                        ${grupos[tipoCultivo].length ? grupos[tipoCultivo].map((producto) => renderizarTarjetaProductoCompacta(producto)).join('') : '<div class="empty-state productos-vacio"><i class="fas fa-seedling"></i><strong>Sin variedades en esta categoría</strong><span>Probá revisar la otra sección del catálogo.</span></div>'}
+                    </div>
                 </div>
             `).join('')}
         </div>
-        ${tiposCultivo.map((tipoCultivo) => `
-            <div class="productos-panel" data-tipo-cultivo="${tipoCultivo}" hidden>
-                <div class="productos-lista">
-                    ${grupos[tipoCultivo].length ? grupos[tipoCultivo].map((producto) => renderizarTarjetaProductoCompacta(producto)).join('') : '<div class="empty-state productos-vacio"><i class="fas fa-seedling"></i><strong>Sin variedades en esta categoría</strong><span>Probá revisar la otra sección del catálogo.</span></div>'}
-                </div>
-            </div>
-        `).join('')}
+        ${construirArticulosDestacadosHTML()}
     `;
 
     inicializarAcordeonesProductos();

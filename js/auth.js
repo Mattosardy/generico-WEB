@@ -33,7 +33,9 @@ function actualizarNombreUsuarioNav(partes = ['Invitado']) {
     const userName = document.getElementById('userName');
     if (!userName) return;
     const limpias = partes.map((parte) => String(parte || '').trim()).filter(Boolean);
-    const visibles = limpias.length ? limpias : ['Invitado'];
+    const nombreBase = limpias[0] || 'Invitado';
+    const nombrePila = nombreBase.includes('@') ? nombreBase.split('@')[0] : nombreBase.split(/\s+/)[0];
+    const visibles = nombrePila && nombrePila !== 'Invitado' ? [`Carrito de ${nombrePila}`] : ['Invitado'];
     userName.textContent = '';
     visibles.forEach((parte) => {
         const token = document.createElement('span');
@@ -41,7 +43,10 @@ function actualizarNombreUsuarioNav(partes = ['Invitado']) {
         token.textContent = parte;
         userName.appendChild(token);
     });
-    userName.title = visibles.join(' ');
+    userName.title = visibles[0];
+    userName.setAttribute('role', nombrePila && nombrePila !== 'Invitado' ? 'button' : 'status');
+    userName.setAttribute('tabindex', nombrePila && nombrePila !== 'Invitado' ? '0' : '-1');
+    userName.setAttribute('aria-label', nombrePila && nombrePila !== 'Invitado' ? `Abrir carrito de ${nombrePila}` : 'Usuario invitado');
 }
 
 async function actualizarUIporRol() {
@@ -58,7 +63,7 @@ async function actualizarUIporRol() {
         if (socio.success && socio.data) {
             appState.rolUsuario = socio.data.rol || 'socio';
             appState.socioData = socio.data;
-            actualizarNombreUsuarioNav([socio.data.nombre, socio.data.apellido]);
+            actualizarNombreUsuarioNav([socio.data.nombre]);
         } else {
             appState.rolUsuario = 'socio';
             appState.socioData = null;
