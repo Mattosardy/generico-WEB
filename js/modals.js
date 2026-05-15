@@ -23,7 +23,9 @@ function obtenerTotalPedidoMesActual() {
             if (pedido.ciclo === cicloActual.clave) return true;
             return fechaEstaEnCicloClub(pedido.fecha, cicloActual);
         })
-        .reduce((acc, pedido) => acc + Number(pedido.gramos || 0), 0) + Number(appState.gramosReservadosCiclo || 0);
+        .reduce((acc, pedido) => acc + Number(pedido.gramos || 0), 0)
+        + Number(appState.gramosReservadosCiclo || 0)
+        - Number(appState.reservaEditandoGramos || 0);
 }
 
 function actualizarEstadoPedidoModal() {
@@ -44,20 +46,22 @@ function actualizarEstadoPedidoModal() {
 
     if (!appState.gramosSeleccionadosPedido) {
         botonEl.disabled = true;
-        botonEl.innerHTML = 'Realizar pedido';
+        botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar reserva' : 'Realizar pedido';
         return;
     }
-
     if (appState.gramosSeleccionadosPedido > restante) {
         alertaEl.textContent = `No podés pedir ${appState.gramosSeleccionadosPedido}g. Te quedan ${restante}g en este ciclo.`;
         botonEl.disabled = true;
         return;
     }
+    const seleccion = document.querySelector(`#opcionesPedido .opcion-pedido[data-gramos="${appState.gramosSeleccionadosPedido}"]`);
+    botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar reserva' : 'Realizar pedido'}${seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
     botonEl.disabled = false;
 }
-
 function inicializarPedidoModal() {
-    appState.gramosSeleccionadosPedido = null;
+    if (!appState.reservaEditandoId) {
+        appState.gramosSeleccionadosPedido = null;
+    }
     actualizarEstadoPedidoModal();
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         btn.onclick = () => {
@@ -69,7 +73,7 @@ function inicializarPedidoModal() {
                 return;
             }
             appState.gramosSeleccionadosPedido = gramos;
-            document.getElementById('btnRealizarPedido').innerHTML = `Realizar pedido - $${precio}`;
+            document.getElementById('btnRealizarPedido').innerHTML = `${appState.reservaEditandoId ? 'Modificar reserva' : 'Realizar pedido'} - $${precio}`;
             actualizarEstadoPedidoModal();
         };
     });
@@ -89,11 +93,6 @@ async function realizarPedidoProducto() {
         mostrarMensaje('Seleccioná una cantidad para continuar.', false);
         return;
     }
-    const totalActual = obtenerTotalPedidoMesActual();
-    if (totalActual + appState.gramosSeleccionadosPedido > 40) {
-        mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${totalActual}g en este ciclo.`, false);
-        return;
-    }
 
     if (!appState.socioData?.id) {
         mostrarMensaje('No se pudo vincular el pedido con tu usuario. Volve a iniciar sesion.', false);
@@ -101,29 +100,48 @@ async function realizarPedidoProducto() {
     }
 
     const fechas = appState.fechasEntrega || calcularFechasEntrega();
+    const tipoEditando = ['primer', 'ultimo'].includes(appState.reservaEditandoTipo) ? appState.reservaEditandoTipo : '';
     const puedePrimer = puedeConfirmar(fechas.primerJueves, configSistema.horasLimitePrimer);
     const puedeUltimo = puedeConfirmar(fechas.ultimoJueves, configSistema.horasLimiteUltimo);
-    const tipoEntrega = puedePrimer ? 'primer' : (puedeUltimo ? 'ultimo' : null);
+    const tipoEntrega = tipoEditando || (puedePrimer ? 'primer' : (puedeUltimo ? 'ultimo' : null));
     const fechaEntrega = tipoEntrega === 'primer' ? fechas.primerJueves : fechas.ultimoJueves;
-    if (!tipoEntrega) {
+    const horasLimite = tipoEntrega === 'primer' ? configSistema.horasLimitePrimer : configSistema.horasLimiteUltimo;
+    if (!tipoEntrega || !puedeConfirmar(fechaEntrega, horasLimite)) {
         mostrarMensaje('El plazo de reservas esta cerrado para este ciclo.', false);
         return;
     }
 
-    const resultado = await confirmarReserva(
-        appState.socioData.id,
-        appState.gramosSeleccionadosPedido,
-        tipoEntrega,
-        fechaEntrega,
-        appState.productoModalActual
-    );
+    const reservas = await obtenerReservas(appState.socioData.id);
+    const reservaExistente = appState.reservaEditandoId
+        ? reservas.find((reserva) => String(reserva.id) === String(appState.reservaEditandoId))
+        : (typeof obtenerReservaActivaPorEntrega === 'function'
+            ? obtenerReservaActivaPorEntrega(reservas, tipoEntrega === 'primer' ? 'primer_jueves' : 'ultimo_jueves', fechaEntrega)
+            : null);
+    const totalActual = obtenerTotalPedidoMesActual();
+    if (totalActual + appState.gramosSeleccionadosPedido > 40) {
+        mostrarMensaje(`Limite mensual alcanzado. Ya llevas ${totalActual}g en este ciclo.`, false);
+        return;
+    }
+
+    const resultado = reservaExistente
+        ? await modificarReserva(reservaExistente.id, appState.socioData.id, {
+            gramos: appState.gramosSeleccionadosPedido,
+            producto: appState.productoModalActual
+        })
+        : await confirmarReserva(
+            appState.socioData.id,
+            appState.gramosSeleccionadosPedido,
+            tipoEntrega,
+            fechaEntrega,
+            appState.productoModalActual
+        );
 
     if (!resultado.success) {
         mostrarMensaje(`No se pudo registrar el pedido: ${resultado.message || 'error desconocido'}`, false);
         return;
     }
 
-    mostrarMensaje(`Pedido enviado: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g`, true);
+    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g`, true);
     cerrarProductoModal();
     if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
 }
@@ -235,6 +253,7 @@ function habilitarSwipeGaleriaProducto() {
 async function abrirModal(producto) {
     appState.productoModalActual = producto;
     appState.gramosSeleccionadosPedido = null;
+    appState.reservaEditandoGramos = 0;
     const precioBase = producto.precio_por_10g || 1600;
     const disponible = producto.disponible !== false;
 
@@ -291,6 +310,27 @@ async function abrirModal(producto) {
         document.getElementById('pedidoAlerta').textContent = '';
     }
 
+    if (appState.socioData?.id) {
+        try {
+            const fechas = appState.fechasEntrega || calcularFechasEntrega();
+            const tipoEditando = appState.reservaEditandoTipo === 'ultimo' ? 'ultimo_jueves'
+                : (appState.reservaEditandoTipo === 'primer' ? 'primer_jueves' : '');
+            const tipoEntrega = tipoEditando || (puedeConfirmar(fechas.primerJueves, configSistema.horasLimitePrimer) ? 'primer_jueves'
+                : (puedeConfirmar(fechas.ultimoJueves, configSistema.horasLimiteUltimo) ? 'ultimo_jueves' : null));
+            const fechaEntrega = tipoEntrega === 'primer_jueves' ? fechas.primerJueves : fechas.ultimoJueves;
+            const reservas = tipoEntrega ? await obtenerReservas(appState.socioData.id) : [];
+            const reserva = appState.reservaEditandoId
+                ? reservas.find((item) => String(item.id) === String(appState.reservaEditandoId))
+                : (tipoEntrega ? obtenerReservaActivaPorEntrega(reservas, tipoEntrega, fechaEntrega) : null);
+            appState.reservaEditandoGramos = Number(reserva?.cantidad_gramos || 0);
+            if (appState.reservaEditandoId && appState.reservaEditandoGramos > 0) {
+                appState.gramosSeleccionadosPedido = appState.reservaEditandoGramos;
+            }
+        } catch (error) {
+            appState.reservaEditandoGramos = 0;
+        }
+    }
+
     document.getElementById('productoModal').style.display = 'flex';
     inicializarPedidoModal();
 }
@@ -301,6 +341,9 @@ function cerrarProductoModal() {
     document.getElementById('calificacionMensaje').innerHTML = '';
     appState.productoModalActual = null;
     appState.gramosSeleccionadosPedido = null;
+    appState.reservaEditandoGramos = 0;
+    appState.reservaEditandoId = null;
+    appState.reservaEditandoTipo = null;
     calificacionSeleccionada = 0;
 }
 
@@ -488,5 +531,3 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === document.getElementById('editProductoModal')) cerrarEditProducto();
     });
 });
-
-console.log('Modals loaded');

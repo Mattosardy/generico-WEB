@@ -15,7 +15,6 @@ function mostrarPanelForgot() {
     document.getElementById('panelRegister').style.display = 'none';
     document.getElementById('panelForgot').style.display = 'block';
 }
-
 function actualizarBotonesSesion(autenticado) {
     const desktopLogin = document.getElementById('btnLogin');
     const dockLogin = document.getElementById('dockBtnLogin');
@@ -23,11 +22,26 @@ function actualizarBotonesSesion(autenticado) {
     const dockProductos = document.getElementById('dockBtnProductos');
     const desktopLogout = document.getElementById('btnLogout');
 
-    if (desktopLogin) desktopLogin.style.display = autenticado ? 'none' : 'inline-block';
+    if (desktopLogin) desktopLogin.style.display = autenticado ? 'none' : 'inline-flex';
     if (dockLogin) dockLogin.style.display = autenticado ? 'none' : 'flex';
     if (productosNav) productosNav.style.display = autenticado ? '' : 'none';
     if (dockProductos) dockProductos.style.display = autenticado ? 'flex' : 'none';
-    if (desktopLogout) desktopLogout.style.display = autenticado ? 'inline-block' : 'none';
+    if (desktopLogout) desktopLogout.style.display = autenticado ? 'inline-flex' : 'none';
+}
+
+function actualizarNombreUsuarioNav(partes = ['Invitado']) {
+    const userName = document.getElementById('userName');
+    if (!userName) return;
+    const limpias = partes.map((parte) => String(parte || '').trim()).filter(Boolean);
+    const visibles = limpias.length ? limpias : ['Invitado'];
+    userName.textContent = '';
+    visibles.forEach((parte) => {
+        const token = document.createElement('span');
+        token.className = 'nav-user-token';
+        token.textContent = parte;
+        userName.appendChild(token);
+    });
+    userName.title = visibles.join(' ');
 }
 
 async function actualizarUIporRol() {
@@ -44,13 +58,13 @@ async function actualizarUIporRol() {
         if (socio.success && socio.data) {
             appState.rolUsuario = socio.data.rol || 'socio';
             appState.socioData = socio.data;
-            document.getElementById('userName').textContent = `${escapeHtml(socio.data.nombre)} ${escapeHtml(socio.data.apellido)}`;
+            actualizarNombreUsuarioNav([socio.data.nombre, socio.data.apellido]);
         } else {
             appState.rolUsuario = 'socio';
             appState.socioData = null;
             const dashboard = document.getElementById('socioDashboard');
             if (dashboard) dashboard.style.display = 'none';
-            document.getElementById('userName').textContent = escapeHtml(usuario.email);
+            actualizarNombreUsuarioNav([usuario.email]);
         }
         actualizarBotonesSesion(true);
     } else {
@@ -60,7 +74,7 @@ async function actualizarUIporRol() {
         appState.cicloClubActual = null;
         const dashboard = document.getElementById('socioDashboard');
         if (dashboard) dashboard.style.display = 'none';
-        document.getElementById('userName').textContent = 'Invitado';
+        actualizarNombreUsuarioNav(['Invitado']);
         actualizarBotonesSesion(false);
         mostrarPanelLogin();
     }
@@ -69,10 +83,10 @@ async function actualizarUIporRol() {
         el.style.display = appState.rolUsuario !== 'invitado' ? 'inline-block' : 'none';
     });
     document.querySelectorAll('.admin-only').forEach((el) => {
-        el.style.display = (appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro') ? 'inline-block' : 'none';
+        el.style.display = appState.rolUsuario === 'admin' ? '' : 'none';
     });
     document.querySelectorAll('.maestro-only').forEach((el) => {
-        el.style.display = appState.rolUsuario === 'maestro' ? 'inline-block' : 'none';
+        el.style.display = appState.rolUsuario === 'maestro' ? '' : 'none';
     });
     document.querySelectorAll('.auth-only').forEach((el) => {
         el.style.display = appState.rolUsuario === 'invitado' ? 'none' : '';
@@ -81,7 +95,7 @@ async function actualizarUIporRol() {
     if (appState.rolUsuario !== 'invitado' && appState.socioData?.id && typeof cargarReservasSocio === 'function') {
         await cargarReservasSocio();
     }
-    if ((appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro') && typeof cargarAdminData === 'function') {
+    if (appState.rolUsuario === 'admin' && typeof cargarAdminData === 'function') {
         await cargarAdminData();
     }
     if (appState.rolUsuario === 'maestro' && typeof cargarMaestroDataCompleta === 'function') {
@@ -90,7 +104,10 @@ async function actualizarUIporRol() {
 }
 
 async function iniciarSesion() {
-    if (typeof mostrarSeccion === 'function') mostrarSeccion('login');
+    if (typeof guardarDestinoPostLogin === 'function' && typeof obtenerSeccionVisibleActual === 'function') {
+        guardarDestinoPostLogin(obtenerSeccionVisibleActual());
+    }
+    if (typeof mostrarSeccion === 'function') await mostrarSeccion('login');
     mostrarPanelLogin();
 }
 
@@ -101,9 +118,8 @@ async function cerrarSesionHandler() {
         return;
     }
     localStorage.setItem('cururu_seccion_activa', 'inicio');
+    localStorage.removeItem('cururu_post_login_section');
     await verificarSesion();
     mostrarMensaje('Sesión cerrada', true);
     if (typeof mostrarSeccion === 'function') mostrarSeccion('inicio');
 }
-
-console.log('Auth loaded');

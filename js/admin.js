@@ -325,7 +325,7 @@ async function cargarAdminData() {
         <div class="card"><div class="card-number">${solicitudes.count || 0}</div><div class="card-label">Solicitudes</div></div>
         <div class="card"><div class="card-number">${noticias.count || 0}</div><div class="card-label">Noticias</div></div>
         <div class="card"><div class="card-number">${productos.count || 0}</div><div class="card-label">Productos</div></div>
-        <div class="card"><div class="card-number">${reservas.count || 0}</div><div class="card-label">Reservas</div></div>
+        <div class="card"><div class="card-number">${reservas.count || 0}</div><div class="card-label">Pedidos</div></div>
     `;
 
     await Promise.all([
@@ -521,6 +521,157 @@ window.eliminarActividadAdmin = async function(id) {
     await cargarActividadesAdmin();
     if (typeof cargarActividadesPublicas === 'function') await cargarActividadesPublicas();
 };
+
+function calcularRangoHorarioEntrega(horaInicio = '18:00') {
+    const match = String(horaInicio || '').match(/^(\d{2}):(\d{2})$/);
+    if (!match) return { inicio: '18:00', fin: '20:00', texto: '18:00 a 20:00' };
+    const inicioMinutos = Number(match[1]) * 60 + Number(match[2]);
+    const finMinutos = (inicioMinutos + 120) % (24 * 60);
+    const inicio = `${String(Math.floor(inicioMinutos / 60)).padStart(2, '0')}:${String(inicioMinutos % 60).padStart(2, '0')}`;
+    const fin = `${String(Math.floor(finMinutos / 60)).padStart(2, '0')}:${String(finMinutos % 60).padStart(2, '0')}`;
+    return { inicio, fin, texto: `${inicio} a ${fin}` };
+}
+
+function renderEntregasPeriodoAdmin(configMap, lugarEntrega) {
+    return obtenerMesesEntregaProximos(3).map((periodo) => `
+        <div class="form-group full-width entrega-periodo-admin">
+            <h4>${escapeHtml(periodo.etiqueta)}</h4>
+            <div class="entrega-periodo-grid">
+                ${[1, 2].map((indice) => {
+                    const entrega = obtenerEntregaPeriodoConfig(configMap, periodo.mesClave, indice);
+                    const rango = calcularRangoHorarioEntrega(entrega.hora);
+                    return `
+                        <div class="entrega-slot-admin" data-mes-clave="${escapeHtml(periodo.mesClave)}" data-indice="${indice}">
+                            <strong>Entrega ${indice}</strong>
+                            <label>Fecha de entrega</label>
+                            <input type="date" class="entrega-fecha-admin" value="${escapeHtml(entrega.fecha)}">
+                            <label>Hora de inicio</label>
+                            <input type="time" class="entrega-hora-admin" value="${escapeHtml(rango.inicio)}">
+                            <label>Horario visible</label>
+                            <input type="text" class="entrega-rango-admin" value="${escapeHtml(rango.texto)}" readonly>
+                            <label>Lugar</label>
+                            <input type="text" class="entrega-lugar-admin" value="${escapeHtml(entrega.lugar || lugarEntrega)}">
+                            <label>Mensaje automatico para socios</label>
+                            <textarea class="entrega-mensaje-admin" rows="3">${escapeHtml(entrega.mensaje)}</textarea>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+async function cargarEntregasAdmin() {
+    const container = document.getElementById('admin-entregas');
+    if (!container) return;
+    const configMap = await cargarContenidoInstitucional();
+    const lugarEntrega = configMap.lugar_entrega || 'Lugar de Siempre';
+
+    container.innerHTML = `
+        <h3 style="color:var(--text-strong); margin-bottom: 12px;">Entregas</h3>
+        <p style="color:var(--text-muted); margin: 0 0 16px;">Configurá hasta dos entregas por mes. Actividades muestra los próximos 3 periodos; si una fecha no está cargada, aparece como entrega a confirmar.</p>
+        <form id="formEntregaAdmin">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Aviso automatico</label>
+                    <input type="text" value="Tenes hasta 48 horas antes de la entrega para realizar tu reserva" readonly>
+                </div>
+                <div class="form-group full-width">
+                    <label>Lugar por defecto visible en Actividades</label>
+                    <input type="text" id="entregaLugarDefaultAdmin" value="${escapeHtml(lugarEntrega)}" required>
+                </div>
+                ${renderEntregasPeriodoAdmin(configMap, lugarEntrega)}
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-submit">Guardar calendario de entregas</button>
+                </div>
+            </div>
+        </form>
+    `;
+
+    container.querySelectorAll('.entrega-hora-admin').forEach((input) => {
+        input.addEventListener('input', (event) => {
+            const slot = event.target.closest('.entrega-slot-admin');
+            const rango = calcularRangoHorarioEntrega(event.target.value);
+            const visible = slot?.querySelector('.entrega-rango-admin');
+            if (visible) visible.value = rango.texto;
+        });
+    });
+
+    document.getElementById('formEntregaAdmin')?.addEventListener('submit', guardarEntregaAdmin);
+}
+
+async function guardarEntregaAdmin(event) {
+    event.preventDefault();
+    const lugarDefault = document.getElementById('entregaLugarDefaultAdmin')?.value?.trim() || 'Lugar de Siempre';
+    const updates = [
+        { clave: 'lugar_entrega', valor: lugarDefault },
+        { clave: 'horas_limite_primer', valor: '48' },
+        { clave: 'horas_limite_ultimo', valor: '48' }
+    ];
+
+    document.querySelectorAll('#admin-entregas .entrega-slot-admin').forEach((slot) => {
+        const mesClave = slot.dataset.mesClave;
+        const indice = slot.dataset.indice;
+        const fecha = slot.querySelector('.entrega-fecha-admin')?.value || '';
+        const hora = slot.querySelector('.entrega-hora-admin')?.value || '18:00';
+        const lugar = slot.querySelector('.entrega-lugar-admin')?.value?.trim() || lugarDefault;
+        const mensaje = slot.querySelector('.entrega-mensaje-admin')?.value?.trim() || '';
+        updates.push(
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'fecha'), valor: fecha },
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'hora'), valor: calcularRangoHorarioEntrega(hora).inicio },
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'lugar'), valor: lugar },
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'mensaje'), valor: mensaje }
+        );
+    });
+
+    const configPreview = {
+        ...(appState.configMap || {}),
+        ...Object.fromEntries(updates.map((item) => [item.clave, item.valor]))
+    };
+    const proximas = obtenerEntregasConfiguradasFuturas(configPreview, 3);
+    updates.push(
+        { clave: 'fecha_entrega_primer', valor: '' },
+        { clave: 'mensaje_entrega_primer', valor: '' },
+        { clave: 'fecha_entrega_ultimo', valor: '' },
+        { clave: 'mensaje_entrega_ultimo', valor: '' }
+    );
+    if (proximas[0]) {
+        updates.push(
+            { clave: 'fecha_entrega_primer', valor: proximas[0].fecha },
+            { clave: 'mensaje_entrega_primer', valor: proximas[0].mensaje || '' }
+        );
+    }
+    if (proximas[1]) {
+        updates.push(
+            { clave: 'fecha_entrega_ultimo', valor: proximas[1].fecha },
+            { clave: 'mensaje_entrega_ultimo', valor: proximas[1].mensaje || '' }
+        );
+    }
+
+    const fechasInvalidas = updates
+        .filter((item) => item.clave.endsWith('_fecha') && item.valor && !parsearFechaConfigEntrega(item.valor));
+    if (fechasInvalidas.length) {
+        mostrarMensaje('Hay una fecha de entrega invalida.', false);
+        return;
+    }
+
+    for (const item of updates) {
+        const { error } = await supabaseClient.from('configuracion_sistema').upsert(item, { onConflict: 'clave' });
+        if (error) {
+            mostrarMensaje(`No se pudo guardar el calendario: ${error.message}`, false);
+            return;
+        }
+    }
+
+    appState.configMap = {
+        ...(appState.configMap || {}),
+        ...Object.fromEntries(updates.map((item) => [item.clave, item.valor]))
+    };
+
+    mostrarMensaje('Calendario de entregas guardado', true);
+    if (typeof cargarActividadesPublicas === 'function') await cargarActividadesPublicas();
+    await cargarEntregasAdmin();
+}
 
 async function cargarProductosAdmin() {
     const container = document.getElementById('admin-productos');
@@ -820,7 +971,8 @@ window.guardarSocioAdmin = async function(socioId, origen = 'admin') {
 };
 
 function obtenerVariedadReservaAdmin(reserva) {
-    return reserva?.producto_nombre || reserva?.variedad || reserva?.variety || reserva?.productos?.nombre || 'Sin variedad registrada';
+    const principal = reserva?.producto_nombre || reserva?.variedad || reserva?.variety || reserva?.productos?.nombre || 'Sin variedad registrada';
+    return principal;
 }
 
 function obtenerEtiquetaEstadoReservaAdmin(estado) {
@@ -874,7 +1026,7 @@ async function cargarReservasAdmin() {
         return;
     }
     container.innerHTML = `
-        <h3 style="color:var(--text-strong); margin-bottom: 12px;">Reservas</h3>
+        <h3 style="color:var(--text-strong); margin-bottom: 12px;">Pedidos</h3>
         <p style="color:var(--text-muted); margin: 0 0 12px;">Vista rapida tipo planilla: variedad, gramos, fecha y estado operativo.</p>
         ${renderizarTablaReservasAdmin(data, 'admin')}
     `;
@@ -948,11 +1100,20 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.nav-admin-btn').forEach((other) => other.classList.remove('active'));
             btn.classList.add('active');
             const section = btn.dataset.adminSection;
-            ['historia', 'noticias', 'productos', 'actividades', 'solicitudes', 'socios', 'reservasAdmin', 'mensajes'].forEach((key) => {
+            const tone = getComputedStyle(btn).getPropertyValue('--admin-tone').trim() || 'rgba(124, 163, 90, 0.28)';
+            const admin = document.getElementById('admin');
+            if (admin) {
+                admin.classList.add('admin-panel-selected');
+                admin.style.setProperty('--admin-panel-bg', tone);
+            }
+            const empty = document.getElementById('admin-empty');
+            if (empty) empty.style.display = 'none';
+            ['historia', 'noticias', 'productos', 'actividades', 'entregas', 'solicitudes', 'socios', 'reservasAdmin', 'mensajes'].forEach((key) => {
                 const el = document.getElementById(`admin-${key}`);
                 if (el) el.style.display = key === section ? 'block' : 'none';
             });
             if (section === 'historia' && typeof cargarHistoriaAdmin === 'function') cargarHistoriaAdmin();
+            if (section === 'entregas') cargarEntregasAdmin();
             if (section === 'reservasAdmin' && typeof cargarReservasAdmin === 'function') cargarReservasAdmin();
         });
     });
@@ -995,5 +1156,3 @@ document.addEventListener('DOMContentLoaded', () => {
         await cargarHistorialMensajes();
     });
 });
-
-console.log('Admin loaded');

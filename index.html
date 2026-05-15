@@ -6,12 +6,14 @@
     <meta name="theme-color" content="#2f4d23">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Cururú Club">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <title>Cururú Club - Club Canábico</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=20260513-actividades">
+    <link rel="stylesheet" href="css/style.css?v=20260515-t3-card-link">
     <link rel="icon" href="data:,">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -21,43 +23,31 @@
 <div class="container">
     <div class="header">
         <div class="header-main">
-            <div class="header-left">
-                <div class="logo">
-                    <h1><img src="assets/images/logo.png" alt="Logo Cururú Club" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
-                    <p>Club Canábico · Cultura · Comunidad</p>
-                </div>
+            <div class="logo">
+                <h1><img src="assets/images/logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
+                <p>Club Canábico · Cultura · Comunidad</p>
             </div>
-            <div class="header-right">
-                <div class="user-info" id="userInfo">
-                    <span id="userName">Invitado</span>
-                    <button class="nav-btn nav-audio-btn" id="btnAudioToggle" type="button" aria-label="Silenciar música" title="Silenciar música">
-                        <i class="fas fa-volume-high"></i>
-                    </button>
-                    <div class="mobile-hidden-dock">
-                        <button class="dock-btn" data-section="inicio" id="dockBtnInicio"><i class="fas fa-house"></i><span>Inicio</span></button>
-                        <button class="dock-btn" data-section="productos" id="dockBtnProductos"><i class="fas fa-leaf"></i><span>Variedades</span></button>
-                        <button class="dock-btn auth-only" data-section="actividades" id="dockBtnActividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
-                        <button class="dock-btn admin-only" data-section="admin" id="dockBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Admin</span></button>
-                        <button id="dockBtnLogin" class="dock-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i><span>Ingresar</span></button>
-                    </div>
-                    <button id="btnLogin" class="btn-inicio" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-                    <button id="btnLogout" class="btn-cerrar" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-                </div>
+            <div class="mobile-hidden-dock" aria-hidden="true">
+                <button class="dock-btn" data-section="inicio" id="dockBtnInicio"><i class="fas fa-house"></i><span>Inicio</span></button>
+                <button class="dock-btn" data-section="productos" id="dockBtnProductos"><i class="fas fa-leaf"></i><span>Variedades</span></button>
+                <button class="dock-btn auth-only" data-section="actividades" id="dockBtnActividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
+                <button class="dock-btn admin-only" data-section="admin" id="dockBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Admin</span></button>
+                <button class="dock-btn maestro-only" data-section="maestro" id="dockBtnMaestro" style="display: none;"><i class="fas fa-crown"></i><span>Maestro</span></button>
+                <button id="dockBtnLogin" class="dock-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i><span>Ingresar</span></button>
             </div>
         </div>
         <div class="header-nav" id="navContainer">
-            <div class="mobile-brand">
-                <img src="assets/images/logo.png" alt="Logo Cururú Club" class="logo-mark" onerror="this.style.display='none'">
-                <div class="mobile-brand-copy">
-                    <span class="mobile-brand-title">Cururú Club</span>
-                    <small>Club Canábico · Cultura · Comunidad</small>
-                </div>
-            </div>
             <button class="nav-btn active" data-section="inicio"><i class="fas fa-house"></i><span>Inicio</span></button>
             <button class="nav-btn" data-section="productos"><i class="fas fa-leaf"></i><span>Variedades</span></button>
             <button class="nav-btn auth-only" data-section="actividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
             <button class="nav-btn admin-only" data-section="admin" id="navBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Admin</span></button>
             <button class="nav-btn maestro-only" data-section="maestro" id="navBtnMaestro" style="display: none;"><i class="fas fa-crown"></i><span>Maestro</span></button>
+            <button id="btnLogin" class="btn-inicio nav-session-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
+            <button id="btnLogout" class="btn-cerrar nav-session-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+            <span id="userName" class="nav-user-name">Invitado</span>
+            <button class="nav-btn nav-audio-btn" id="btnAudioToggle" type="button" aria-label="Silenciar música" title="Silenciar música">
+                <i class="fas fa-volume-high"></i>
+            </button>
         </div>
     </div>
 
@@ -133,23 +123,14 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     <div id="productos" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-leaf"></i> Variedades</h2>
         <div id="productos-container" class="productos-grid"><div class="loading">Cargando productos...</div></div>
-        <div id="productosProximasEntregas" class="productos-subsection" style="display: none;">
-            <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Próximas Entregas</h2>
-            <div id="calendarioProductos" class="calendario-grid"><div class="loading">Cargando fechas...</div></div>
-        </div>
-        <div id="productosMisReservas" class="productos-subsection" style="display: none;">
-            <h2 class="section-title"><i class="fas fa-history"></i> Historial</h2>
-            <div id="calendarioContainer" class="calendario-grid"><div class="loading">Cargando fechas...</div></div>
-            <div id="historialContainer"><div class="loading">Cargando historial...</div></div>
-        </div>
     </div>
     
     <!-- LOGIN -->
     <div id="login" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-lock"></i> Acceso Socios</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(100,140,75,0.3); padding-bottom: 10px;">
-            <button id="tabLogin" class="btn-submit" style="background: #7ca35a;">🔐 Iniciar Sesión</button>
-            <button id="tabRegister" class="btn-submit" style="background: rgba(100,140,75,0.3);">📝 Registrarse</button>
+            <button id="tabLogin" class="btn-submit" style="background: #7ca35a;"><i class="fas fa-lock"></i> Iniciar Sesión</button>
+            <button id="tabRegister" class="btn-submit" style="background: rgba(100,140,75,0.3);"><i class="fas fa-user-plus"></i> Registrarse</button>
         </div>
         <div id="panelLogin">
             <p style="color: var(--text-main); margin-bottom: 20px;">Ingresá con tu teléfono y contraseña.</p>
@@ -183,7 +164,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                 <button type="submit" class="btn-submit"><i class="fas fa-envelope"></i> Enviar enlace de restablecimiento</button>
             </form>
             <div id="forgotMessage" style="display: none; margin-top: 20px; padding: 15px; background: rgba(100,140,75,0.2); border-radius: 12px;">
-                <p style="color: var(--text-strong);">📧 Se ha enviado un enlace a <strong id="forgotEmailSent"></strong></p>
+                <p style="color: var(--text-strong);"><i class="fas fa-envelope"></i> Se ha enviado un enlace a <strong id="forgotEmailSent"></strong></p>
                 <p style="color: var(--text-muted); font-size: 0.85rem;">Hacé clic en el enlace para restablecer tu contraseña.</p>
             </div>
             <p style="margin-top: 15px; font-size: 0.85rem;"><a href="#" id="backToLoginFromForgot" style="color: var(--accent-strong);">← Volver a iniciar sesión</a></p>
@@ -195,28 +176,35 @@ Cururú Club Cannábico - calidad y transparencia.</div>
         <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de Administración</h2>
         <div class="dashboard-grid" id="adminCards"><div class="loading">Cargando estadísticas...</div></div>
         <div class="nav-admin-bar">
-            <button class="nav-admin-btn active" data-admin-section="historia"><i class="fas fa-book-open"></i> Historia</button>
+            <button class="nav-admin-btn" data-admin-section="historia"><i class="fas fa-book-open"></i> Historia</button>
             <button class="nav-admin-btn" data-admin-section="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
             <button class="nav-admin-btn" data-admin-section="productos"><i class="fas fa-leaf"></i> Productos</button>
             <button class="nav-admin-btn" data-admin-section="actividades"><i class="fas fa-calendar-alt"></i> Actividades</button>
+            <button class="nav-admin-btn" data-admin-section="entregas"><i class="fas fa-truck"></i> Entregas</button>
             <button class="nav-admin-btn" data-admin-section="solicitudes"><i class="fas fa-user-plus"></i> Solicitudes</button>
             <button class="nav-admin-btn" data-admin-section="socios"><i class="fas fa-users"></i> Socios</button>
-            <button class="nav-admin-btn" data-admin-section="reservasAdmin"><i class="fas fa-box"></i> Reservas</button>
+            <button class="nav-admin-btn" data-admin-section="reservasAdmin"><i class="fas fa-box"></i> Pedidos</button>
             <button class="nav-admin-btn" data-admin-section="mensajes"><i class="fas fa-envelope"></i> Mensajes</button>
         </div>
-        <div id="admin-historia"><div class="loading">Cargando...</div></div>
+        <div id="admin-empty" class="admin-empty-state">
+            <i class="fas fa-sliders"></i>
+            <strong>Panel de administración</strong>
+            <span>Elegí una sección del menú para empezar.</span>
+        </div>
+        <div id="admin-historia" style="display: none;"><div class="loading">Cargando...</div></div>
         <div id="admin-noticias" style="display: none;"><div class="loading">Cargando...</div></div>
         <div id="admin-productos" style="display: none;"><div class="loading">Cargando...</div></div>
         <div id="admin-actividades" style="display: none;"><div class="loading">Cargando...</div></div>
+        <div id="admin-entregas" style="display: none;"><div class="loading">Cargando...</div></div>
         <div id="admin-solicitudes" style="display: none;"><div class="loading">Cargando...</div></div>
         <div id="admin-socios" style="display: none;"><div class="loading">Cargando...</div></div>
         <div id="admin-reservasAdmin" style="display: none;"><div class="loading">Cargando...</div></div>
         <div id="admin-mensajes" style="display: none;">
             <div class="section" style="background: rgba(8, 15, 6, 0.35); margin-top: 10px;">
-                <h3 style="color:var(--text-strong); margin-bottom: 18px;">📨 Enviar mensaje a socios</h3>
+                <h3 style="color:var(--text-strong); margin-bottom: 18px;"><i class="fas fa-paper-plane"></i> Enviar mensaje a socios</h3>
                 <p style="color:var(--text-muted); margin: 0 0 18px; line-height: 1.5;">Elegí el destinatario, agregá un asunto claro y escribí el mensaje final antes de enviarlo. El historial de abajo muestra los envíos recientes para referencia.</p>
                 <div class="form-grid">
-                    <div class="form-group full-width"><label>Destinatario</label><select id="mensajeDestinatario"><option value="todos">📢 Todos los socios</option></select></div>
+                    <div class="form-group full-width"><label>Destinatario</label><select id="mensajeDestinatario"><option value="todos">Todos los socios</option></select></div>
                     <div class="form-group full-width"><label>Asunto</label><input type="text" id="mensajeAsunto" placeholder="Asunto del mensaje"></div>
                     <div class="form-group full-width"><label>Mensaje</label><textarea id="mensajeTexto" rows="5" placeholder="Escribí el mensaje para los socios..."></textarea></div>
                     <div class="form-group full-width"><button id="enviarMensajeBtn" type="button" class="btn-submit">Enviar mensaje</button></div>
@@ -264,6 +252,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     <div class="footer">
         <p>🌿 Cururú Club · Cultura · Comunidad 🌿</p>
         <p style="font-size: 0.7rem;">© 2025 - Todos los derechos reservados</p>
+        <p class="footer-cameo"><a href="https://mattosardy.github.io/telecomt3-card/" class="footer-cameo-link" target="_blank" rel="noopener noreferrer">Conectividad y soporte digital · <strong>Telecom T3</strong></a></p>
     </div>
 </div>
 
@@ -272,7 +261,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     <div class="modal-content">
         <span class="cerrar-modal">&times;</span>
         <div id="modalMedia">
-            <img id="modalImagen" class="modal-imagen" src="" alt="">
+            <img id="modalImagen" class="modal-imagen" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="">
         </div>
         <h2 id="modalTitulo" class="modal-titulo"></h2>
         <div id="modalCepa" class="modal-cepa"></div>
@@ -344,24 +333,24 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                 <div class="form-group full-width"><div id="editImagenPreview" style="margin-top: 4px;"></div></div>
             </div>
             <div class="edit-product-actions">
-                <button type="button" class="btn-submit" onclick="cerrarEditProducto()">Cancelar</button>
-                <button type="submit" class="btn-submit">Guardar Cambios</button>
+                <button type="button" class="btn-submit btn-edit-cancel" onclick="cerrarEditProducto()">Cancelar</button>
+                <button type="submit" class="btn-submit btn-edit-save">Guardar Cambios</button>
             </div>
         </form>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-client.js"></script>
+<script src="js/supabase-client.js?v=20260515-t3-card-link"></script>
 
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/notifications.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/public.js"></script>
-<script src="js/socio.js"></script>
-<script src="js/modals.js"></script>
-<script src="js/admin.js"></script>
-<script src="js/maestro.js"></script>
-<script src="js/main.js"></script>
+<script src="js/config.js?v=20260515-t3-card-link"></script>
+<script src="js/utils.js?v=20260515-t3-card-link"></script>
+<script src="js/notifications.js?v=20260515-t3-card-link"></script>
+<script src="js/auth.js?v=20260515-t3-card-link"></script>
+<script src="js/public.js?v=20260515-t3-card-link"></script>
+<script src="js/socio.js?v=20260515-t3-card-link"></script>
+<script src="js/modals.js?v=20260515-t3-card-link"></script>
+<script src="js/admin.js?v=20260515-t3-card-link"></script>
+<script src="js/maestro.js?v=20260515-t3-card-link"></script>
+<script src="js/main.js?v=20260515-t3-card-link"></script>
 </body>
 </html>

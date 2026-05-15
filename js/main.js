@@ -2,7 +2,7 @@ const mainSections = ['inicio', 'productos', 'actividades', 'admin', 'maestro', 
 const restrictedSections = {
     productos: ['socio', 'admin', 'maestro'],
     actividades: ['socio', 'admin', 'maestro'],
-    admin: ['admin', 'maestro'],
+    admin: ['admin'],
     maestro: ['maestro']
 };
 
@@ -59,10 +59,38 @@ function usuarioPuedeVerSeccion(seccionId) {
     return rolesPermitidos.includes(appState.rolUsuario);
 }
 
+function obtenerSeccionVisibleActual() {
+    const visible = mainSections.find((id) => {
+        const el = document.getElementById(id);
+        return el && el.style.display !== 'none';
+    });
+    return visible || localStorage.getItem('cururu_seccion_activa') || 'inicio';
+}
+
+function guardarDestinoPostLogin(seccionId) {
+    const destino = mainSections.includes(seccionId) ? seccionId : '';
+    if (destino && destino !== 'inicio' && destino !== 'login') {
+        localStorage.setItem('cururu_post_login_section', destino);
+    }
+}
+
+function obtenerDestinoPostLogin() {
+    const destinoGuardado = localStorage.getItem('cururu_post_login_section') || localStorage.getItem('cururu_seccion_activa');
+    localStorage.removeItem('cururu_post_login_section');
+    if (destinoGuardado && destinoGuardado !== 'inicio' && destinoGuardado !== 'login' && usuarioPuedeVerSeccion(destinoGuardado)) {
+        return destinoGuardado;
+    }
+    if (appState.rolUsuario === 'maestro') return 'maestro';
+    if (appState.rolUsuario === 'admin') return 'admin';
+    return 'productos';
+}
+
 async function mostrarSeccion(seccionId) {
     const seccionValida = mainSections.includes(seccionId) ? seccionId : 'inicio';
-    const destino = usuarioPuedeVerSeccion(seccionValida) ? seccionValida : 'inicio';
-    if (destino === 'admin' && (appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro') && typeof cargarAdminData === 'function') {
+    const accesoPermitido = usuarioPuedeVerSeccion(seccionValida);
+    const destino = accesoPermitido ? seccionValida : 'inicio';
+    if (!accesoPermitido) guardarDestinoPostLogin(seccionValida);
+    if (destino === 'admin' && appState.rolUsuario === 'admin' && typeof cargarAdminData === 'function') {
         await ejecutarCargaSegura('cargarAdminData', cargarAdminData);
     }
     if (destino === 'maestro' && appState.rolUsuario === 'maestro' && typeof cargarMaestroDataCompleta === 'function') {
@@ -74,8 +102,8 @@ async function mostrarSeccion(seccionId) {
     });
     const sectionEl = document.getElementById(destino);
     if (sectionEl) sectionEl.style.display = 'block';
-    if (destino !== 'login') localStorage.setItem('cururu_seccion_activa', destino);
-    document.querySelectorAll('.nav-btn').forEach((btn) => {
+    if (destino !== 'login' && accesoPermitido) localStorage.setItem('cururu_seccion_activa', destino);
+    document.querySelectorAll('.nav-btn[data-section]').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.section === destino);
     });
     document.querySelectorAll('.dock-btn[data-section]').forEach((btn) => {
@@ -168,13 +196,12 @@ async function cargarGraficosDashboard() {
 }
 
 async function verificarSesion() {
-    await ejecutarCargaSegura('actualizarUIporRol', actualizarUIporRol);
     await ejecutarCargaSegura('cargarContenidoInstitucional', cargarContenidoInstitucional);
+    await ejecutarCargaSegura('actualizarUIporRol', actualizarUIporRol);
     await ejecutarCargaSegura('cargarNoticias', cargarNoticias);
     await ejecutarCargaSegura('cargarActividadesPublicas', cargarActividadesPublicas);
     await ejecutarCargaSegura('cargarProductosPublicos', cargarProductosPublicos);
     await ejecutarCargaSegura('cargarConfigWhatsApp', cargarConfigWhatsApp);
-    await ejecutarCargaSegura('renderProximasEntregasEnProductos', renderProximasEntregasEnProductos);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -186,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnLogout')?.addEventListener('click', cerrarSesionHandler);
     document.getElementById('dockBtnLogin')?.addEventListener('click', iniciarSesion);
 
-    document.querySelectorAll('.nav-btn').forEach((btn) => {
+    document.querySelectorAll('.nav-btn[data-section]').forEach((btn) => {
         btn.addEventListener('click', async () => {
             await mostrarSeccion(btn.dataset.section);
             if (btn.dataset.scrollTarget) {
@@ -239,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         mostrarMensaje('Inicio de sesión exitoso', true);
         await verificarSesion();
-        await mostrarSeccion('inicio');
+        await mostrarSeccion(obtenerDestinoPostLogin());
     });
 
     document.getElementById('formRegisterMagic')?.addEventListener('submit', async (event) => {
@@ -274,5 +301,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     await verificarSesion();
     await mostrarSeccion(localStorage.getItem('cururu_seccion_activa') || 'inicio');
 });
-
-console.log('Main loaded');

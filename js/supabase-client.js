@@ -27,30 +27,6 @@ function limpiarSesionLocalSupabase() {
 }
 
 // ============================================
-// PRUEBA DE CONEXIÓN
-// ============================================
-
-async function testConexion() {
-    console.log('🔌 Probando conexión con Supabase...');
-    
-    try {
-        const { data, error } = await supabaseClient
-            .from('noticias')
-            .select('*')
-            .limit(3);
-        
-        if (error) throw error;
-        
-        console.log('✅ Conexión exitosa!');
-        console.log('📰 Noticias:', data);
-        return true;
-    } catch (error) {
-        console.error('❌ Error:', error.message);
-        return false;
-    }
-}
-
-// ============================================
 // FUNCIONES PÚBLICAS
 // ============================================
 
@@ -285,7 +261,7 @@ async function obtenerReservas(socioId) {
 }
 
 // Confirmar reserva
-async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = null) {
+async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = null, extras = {}) {
     try {
         const fechaReserva = new Date(fechaRetiro);
         const reserva = {
@@ -302,7 +278,6 @@ async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = n
             reserva.producto_id = producto.id;
             reserva.producto_nombre = producto.nombre || null;
         }
-        
         let { data, error } = await supabaseClient
             .from('reservas_mensuales')
             .insert([reserva]);
@@ -323,37 +298,17 @@ async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = n
     }
 }
 
-// ============================================
-// AUTENTICACIÓN CON WHATSAPP (MANTENIDA)
-// ============================================
-
-// Cambio funcional solicitado: cancelar solo reservas propias y solo mientras siga abierto el plazo de reserva.
-async function cancelarReserva(reservaId, socioId) {
+async function modificarReserva(reservaId, socioId, cambios = {}) {
     try {
-        const { data: reservaActual, error: loadError } = await supabaseClient
-            .from('reservas_mensuales')
-            .select('*')
-            .eq('id', reservaId)
-            .eq('socio_id', socioId)
-            .single();
-
-        if (loadError) throw loadError;
-        if (!reservaActual || reservaActual.estado === 'cancelado') {
-            return { success: false, message: 'La reserva no está activa.' };
+        const payload = { estado: 'pendiente' };
+        if (Number.isFinite(Number(cambios.gramos))) payload.cantidad_gramos = Number(cambios.gramos);
+        if (cambios.producto) {
+            payload.producto_id = cambios.producto.id || null;
+            payload.producto_nombre = cambios.producto.nombre || null;
         }
-
-        const fechaRetiro = new Date(reservaActual.fecha_retiro);
-        const horasLimite = reservaActual.tipo_entrega === 'primer_jueves'
-            ? configSistema.horasLimitePrimer
-            : configSistema.horasLimiteUltimo;
-
-        if (!puedeConfirmar(fechaRetiro, horasLimite)) {
-            return { success: false, message: 'El plazo para cancelar esta reserva ya venció.' };
-        }
-
-        const { data, error } = await supabaseClient
+        let { data, error } = await supabaseClient
             .from('reservas_mensuales')
-            .update({ estado: 'cancelado' })
+            .update(payload)
             .eq('id', reservaId)
             .eq('socio_id', socioId)
             .select();
@@ -361,10 +316,14 @@ async function cancelarReserva(reservaId, socioId) {
         if (error) throw error;
         return { success: true, data };
     } catch (error) {
-        console.error('Error al cancelar reserva:', error.message);
+        console.error('Error al modificar reserva:', error.message);
         return { success: false, message: error.message };
     }
 }
+
+// ============================================
+// AUTENTICACIÓN CON WHATSAPP (MANTENIDA)
+// ============================================
 
 async function loginConWhatsapp(telefono) {
     try {
@@ -416,7 +375,6 @@ window.eliminarImagenProducto = eliminarImagenProducto;
 
 // Funciones públicas
 window.supabaseClient = supabaseClient;
-window.testConexion = testConexion;
 window.obtenerNoticias = obtenerNoticias;
 window.obtenerProductos = obtenerProductos;
 window.obtenerActividades = obtenerActividades;
@@ -436,7 +394,7 @@ window.obtenerSocioPorAuthId = obtenerSocioPorAuthId;
 window.obtenerSocioPorEmail = obtenerSocioPorEmail;
 window.obtenerReservas = obtenerReservas;
 window.confirmarReserva = confirmarReserva;
-window.cancelarReserva = cancelarReserva;
+window.modificarReserva = modificarReserva;
 
 // Autenticación WhatsApp (mantenida)
 window.loginConWhatsapp = loginConWhatsapp;
@@ -515,8 +473,3 @@ window.obtenerCalificacionUsuario = obtenerCalificacionUsuario;
 window.calificarProducto = calificarProducto;
 window.calcularPromedioEstrellas = calcularPromedioEstrellas;
 window.renderizarEstrellas = renderizarEstrellas;
-
-
-
-
-console.log('Cururu Club - Client listo (con login por telefono)');

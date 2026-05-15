@@ -1,0 +1,18 @@
+.git
+.git/**
+.assetsignore
+.wrangler
+.wrangler/**
+.vscode
+.vscode/**
+supabase
+supabase/**
+workers
+workers/**
+cururu-documentacion.md
+index copy 2.html
+login.html
+test.js
+worker.js
+wrangler.jsonc
+*.sql

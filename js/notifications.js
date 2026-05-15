@@ -84,8 +84,6 @@ function openTelegramLink(botUsername, linkCode) {
     const username = obtenerTelegramBotUsernameLimpio(botUsername);
     const linkUniversal = obtenerTelegramLinkUrl(linkCode, username);
     const linkApp = obtenerTelegramAppLinkUrl(linkCode, username);
-    console.log('Intentando abrir Telegram');
-
     const fallback = document.getElementById('telegramFallbackPanel');
     if (fallback) {
         fallback.style.display = 'none';

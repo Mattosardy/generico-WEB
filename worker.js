@@ -1,4 +1,32 @@
 const VERIFY_TOKEN = "cururu123";
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-cache, no-store, must-revalidate",
+  "Pragma": "no-cache",
+  "Expires": "0",
+};
+
+function getCacheHeadersForPath(pathname) {
+  const normalizedPath = pathname === "/" ? "/index.html" : pathname.toLowerCase();
+  if (normalizedPath.endsWith(".html") || normalizedPath.endsWith(".js") || normalizedPath.endsWith(".css")) {
+    return NO_CACHE_HEADERS;
+  }
+  return { "Cache-Control": "public, max-age=86400" };
+}
+
+function applyAssetCacheHeaders(response, pathname) {
+  const headers = new Headers(response.headers);
+  const cacheHeaders = getCacheHeadersForPath(pathname);
+
+  Object.entries(cacheHeaders).forEach(([name, value]) => {
+    headers.set(name, value);
+  });
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 function getRelevantHeaders(request) {
   const names = [
@@ -78,7 +106,7 @@ function logDetectedWhatsAppEvents(context, body) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     const context = buildRequestContext(request, url);
 
@@ -140,6 +168,14 @@ export default {
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
 
-    return new Response("Cururu WhatsApp Webhook OK", { status: 200 });
+    if (env?.ASSETS) {
+      const assetResponse = await env.ASSETS.fetch(request);
+      return applyAssetCacheHeaders(assetResponse, url.pathname);
+    }
+
+    return new Response("Cururu WhatsApp Webhook OK", {
+      status: 200,
+      headers: NO_CACHE_HEADERS,
+    });
   },
 };

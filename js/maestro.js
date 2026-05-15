@@ -278,16 +278,23 @@ async function cargarMaestroConfig() {
     const container = document.getElementById('maestro-config');
     if (!container) return;
     await cargarContenidoInstitucional();
+    const fechasEntrega = calcularFechasEntrega();
+    const fechaPrimer = configSistema.fechaEntregaPrimer || formatearFechaClave(fechasEntrega.primerJueves);
+    const fechaUltimo = configSistema.fechaEntregaUltimo || formatearFechaClave(fechasEntrega.ultimoJueves);
     container.innerHTML = `
         <h3>Configuracion</h3>
         <div class="form-grid">
             <div class="form-group">
-                <label>Horas limite 1er jueves</label>
-                <input type="number" id="confHorasPrimer" value="${configSistema.horasLimitePrimer}">
+                <label>Fecha primera entrega</label>
+                <input type="date" id="confFechaPrimer" value="${escapeHtml(fechaPrimer)}">
             </div>
             <div class="form-group">
-                <label>Horas limite ultimo jueves</label>
-                <input type="number" id="confHorasUltimo" value="${configSistema.horasLimiteUltimo}">
+                <label>Fecha ultima entrega</label>
+                <input type="date" id="confFechaUltimo" value="${escapeHtml(fechaUltimo)}">
+            </div>
+            <div class="form-group full-width">
+                <label>Limite de reserva</label>
+                <input type="text" value="48 horas antes de la fecha de entrega" readonly>
             </div>
             <div class="form-group full-width">
                 <button class="btn-submit" onclick="guardarConfigMaestro()">Guardar</button>
@@ -308,7 +315,7 @@ async function cargarMaestroReservas() {
         return;
     }
     container.innerHTML = `
-        <h3>Reservas</h3>
+        <h3>Pedidos</h3>
         <p style="color:var(--text-muted); margin: 8px 0 14px;">Vista de control tipo planilla para confirmar pedidos y cerrar entregas.</p>
         ${typeof renderizarTablaReservasAdmin === 'function' ? renderizarTablaReservasAdmin(data, 'maestro') : '<div class="loading">No se pudo renderizar la tabla.</div>'}
     `;
@@ -317,11 +324,27 @@ async function cargarMaestroReservas() {
 window.cargarMaestroReservas = cargarMaestroReservas;
 
 window.guardarConfigMaestro = async function() {
-    const h1 = document.getElementById('confHorasPrimer').value;
-    const h2 = document.getElementById('confHorasUltimo').value;
+    const fechaPrimer = document.getElementById('confFechaPrimer')?.value || '';
+    const fechaUltimo = document.getElementById('confFechaUltimo')?.value || '';
+    const primerDate = parsearFechaConfigEntrega(fechaPrimer);
+    const ultimoDate = parsearFechaConfigEntrega(fechaUltimo);
+
+    if (!primerDate || !ultimoDate) {
+        mostrarMensaje('Elegí fechas válidas para las entregas.', false);
+        return;
+    }
+
+    const diferenciaDias = Math.round((ultimoDate.getTime() - primerDate.getTime()) / (24 * 60 * 60 * 1000));
+    if (diferenciaDias < 7) {
+        mostrarMensaje('La ultima entrega debe quedar al menos una semana despues de la primera.', false);
+        return;
+    }
+
     const updates = [
-        { clave: 'horas_limite_primer', valor: h1 },
-        { clave: 'horas_limite_ultimo', valor: h2 }
+        { clave: 'fecha_entrega_primer', valor: fechaPrimer },
+        { clave: 'fecha_entrega_ultimo', valor: fechaUltimo },
+        { clave: 'horas_limite_primer', valor: '48' },
+        { clave: 'horas_limite_ultimo', valor: '48' }
     ];
     for (const item of updates) {
         const { error } = await supabaseClient.from('configuracion_sistema').upsert(item, { onConflict: 'clave' });
@@ -330,8 +353,11 @@ window.guardarConfigMaestro = async function() {
             return;
         }
     }
-    configSistema.horasLimitePrimer = parseInt(h1, 10);
-    configSistema.horasLimiteUltimo = parseInt(h2, 10);
+    configSistema.fechaEntregaPrimer = fechaPrimer;
+    configSistema.fechaEntregaUltimo = fechaUltimo;
+    configSistema.horasLimitePrimer = 48;
+    configSistema.horasLimiteUltimo = 48;
+    if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
     mostrarMensaje('Configuración guardada', true);
 };
 
@@ -356,5 +382,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-
-console.log('Maestro loaded');

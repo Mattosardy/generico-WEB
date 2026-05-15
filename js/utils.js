@@ -24,7 +24,40 @@ function formatearTelefonoUruguay(telefono) {
     return limpio;
 }
 
+function parsearFechaConfigEntrega(valor) {
+    const match = String(valor || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    const fecha = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    fecha.setHours(0, 0, 0, 0);
+    if (
+        fecha.getFullYear() !== Number(match[1]) ||
+        fecha.getMonth() !== Number(match[2]) - 1 ||
+        fecha.getDate() !== Number(match[3])
+    ) {
+        return null;
+    }
+    return fecha;
+}
+
 function calcularFechasEntrega() {
+    const entregasFuturas = typeof appState !== 'undefined'
+        ? obtenerEntregasConfiguradasFuturas(appState.configMap || {}, 3)
+        : [];
+    if (entregasFuturas.length >= 2) {
+        return {
+            primerJueves: entregasFuturas[0].fechaDate,
+            ultimoJueves: entregasFuturas[1].fechaDate
+        };
+    }
+
+    const fechaPrimerConfig = parsearFechaConfigEntrega(configSistema.fechaEntregaPrimer);
+    const fechaUltimoConfig = parsearFechaConfigEntrega(configSistema.fechaEntregaUltimo);
+    const hoyConfig = new Date();
+    hoyConfig.setHours(0, 0, 0, 0);
+    if (fechaPrimerConfig && fechaUltimoConfig && fechaUltimoConfig >= hoyConfig) {
+        return { primerJueves: fechaPrimerConfig, ultimoJueves: fechaUltimoConfig };
+    }
+
     const hoy = new Date();
     let anio = hoy.getFullYear();
     let mes = hoy.getMonth();
@@ -67,6 +100,278 @@ function formatearFechaClave(fecha) {
     return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
 }
 
+function normalizarFechaEventoCalendario(fecha) {
+    if (fecha instanceof Date) return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    return parsearFechaConfigEntrega(fecha) || new Date(fecha);
+}
+
+function obtenerEtiquetaDiaCalendario(fecha) {
+    return fecha.toLocaleDateString('es-UY', { weekday: 'short' }).replace('.', '');
+}
+
+function obtenerMesesDesdeEventosCalendario(eventos = []) {
+    const meses = new Map();
+    eventos.forEach((evento) => {
+        const fecha = normalizarFechaEventoCalendario(evento.fechaDate || evento.fecha);
+        if (Number.isNaN(fecha.getTime())) return;
+        const mes = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+        meses.set(formatearFechaClave(mes), mes);
+    });
+    return [...meses.values()].sort((a, b) => a.getTime() - b.getTime());
+}
+
+function formatearHoraRangoEntrega(horaInicio = '') {
+    const match = String(horaInicio || '').match(/^(\d{2}):(\d{2})/);
+    if (!match) return '';
+    const inicioMinutos = Number(match[1]) * 60 + Number(match[2]);
+    const finMinutos = (inicioMinutos + 120) % (24 * 60);
+    const inicio = `${String(Math.floor(inicioMinutos / 60)).padStart(2, '0')}:${String(inicioMinutos % 60).padStart(2, '0')}`;
+    const fin = `${String(Math.floor(finMinutos / 60)).padStart(2, '0')}:${String(finMinutos % 60).padStart(2, '0')}`;
+    return `${inicio} a ${fin}`;
+}
+
+function construirEventoEntregaCalendarioHTML(evento, opciones = {}) {
+    const eventoClickeable = evento.actionId && !opciones.accionEnDia;
+    const tag = eventoClickeable ? 'button' : 'div';
+    const actionAttrs = eventoClickeable
+        ? ` type="button" data-reserva-evento="${escapeHtml(evento.actionId)}"`
+        : '';
+    const horario = evento.horario || formatearHoraRangoEntrega(evento.hora);
+    const titulo = evento.fechaTexto
+        ? `Entrega ${evento.fechaTexto}`
+        : (evento.titulo || 'Entrega');
+    const detalle = evento.reservaResumen || evento.detalle;
+    return `
+        <${tag}${actionAttrs} class="entrega-calendar-event ${evento.destacado ? 'destacado' : ''}">
+            <strong>${escapeHtml(titulo)}</strong>
+            ${horario ? `<span>${escapeHtml(horario)}</span>` : ''}
+            ${detalle ? `<small>${escapeHtml(detalle)}</small>` : ''}
+            ${evento.lugar ? `<em class="entrega-calendar-place">${escapeHtml(evento.lugar)}</em>` : ''}
+        </${tag}>
+    `;
+}
+
+function construirCalendarioMesEntregasHTML(fechaMes, eventos = [], pendientes = [], opciones = {}) {
+    const inicioMes = new Date(fechaMes.getFullYear(), fechaMes.getMonth(), 1);
+    const offsetLunes = (inicioMes.getDay() + 6) % 7;
+    const inicioGrilla = new Date(inicioMes);
+    inicioGrilla.setDate(inicioMes.getDate() - offsetLunes);
+    const hoyClave = formatearFechaClave(new Date());
+    const eventosPorDia = eventos.reduce((mapa, evento) => {
+        const fecha = normalizarFechaEventoCalendario(evento.fechaDate || evento.fecha);
+        if (Number.isNaN(fecha.getTime())) return mapa;
+        const clave = formatearFechaClave(fecha);
+        mapa[clave] = [...(mapa[clave] || []), evento];
+        return mapa;
+    }, {});
+    const pendientesMes = pendientes.filter((evento) => {
+        const fecha = normalizarFechaEventoCalendario(evento.fechaDate || evento.fecha);
+        return !Number.isNaN(fecha.getTime())
+            && fecha.getFullYear() === fechaMes.getFullYear()
+            && fecha.getMonth() === fechaMes.getMonth();
+    });
+
+    const celdas = Array.from({ length: 42 }, (_, indice) => {
+        const fecha = new Date(inicioGrilla);
+        fecha.setDate(inicioGrilla.getDate() + indice);
+        const clave = formatearFechaClave(fecha);
+        const eventosDia = eventosPorDia[clave] || [];
+        const eventoPrincipal = eventosDia.find((evento) => evento.actionId);
+        const accionDiaAttrs = eventoPrincipal?.actionId
+            ? ` role="button" tabindex="0" data-entrega-day-action="true" data-reserva-evento="${escapeHtml(eventoPrincipal.actionId)}" aria-label="Ver reserva del ${escapeHtml(fecha.toLocaleDateString('es-UY'))}"`
+            : '';
+        const fueraMes = fecha.getMonth() !== inicioMes.getMonth();
+        return `
+            <div class="entrega-calendar-day ${fueraMes ? 'fuera-mes' : ''} ${clave === hoyClave ? 'hoy' : ''} ${eventosDia.length ? 'con-entrega' : ''} ${eventoPrincipal?.actionId ? 'entrega-day-clickable' : ''}"${accionDiaAttrs}>
+                <div class="entrega-calendar-date">
+                    <span>${escapeHtml(obtenerEtiquetaDiaCalendario(fecha))}</span>
+                    <strong>${fecha.getDate()}</strong>
+                </div>
+                ${eventosDia.length ? `<div class="entrega-calendar-events">${eventosDia.map((evento) => construirEventoEntregaCalendarioHTML(evento, { accionEnDia: Boolean(eventoPrincipal?.actionId) })).join('')}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <section class="entrega-calendar-month">
+            ${opciones.ocultarTitulo ? '' : `
+                <div class="entrega-calendar-month-title">
+                    <strong>${escapeHtml(inicioMes.toLocaleDateString('es-UY', { month: 'long', year: 'numeric' }))}</strong>
+                    ${pendientesMes.length ? `<span>${pendientesMes.length} entrega${pendientesMes.length > 1 ? 's' : ''} a confirmar</span>` : ''}
+                </div>
+            `}
+            <div class="entrega-calendar-weekdays">
+                ${['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].map((dia) => `<span>${dia}</span>`).join('')}
+            </div>
+            <div class="entrega-calendar-grid">
+                ${celdas}
+            </div>
+        </section>
+    `;
+}
+
+function construirCalendarioEntregasHTML(eventos = [], opciones = {}) {
+    const eventosConFecha = (eventos || [])
+        .map((evento) => ({
+            ...evento,
+            fechaDate: normalizarFechaEventoCalendario(evento.fechaDate || evento.fecha)
+        }))
+        .filter((evento) => !Number.isNaN(evento.fechaDate.getTime()));
+    const eventosConfirmados = eventosConFecha.filter((evento) => !evento.entregaAConfirmar);
+    const eventosPendientes = eventosConFecha.filter((evento) => evento.entregaAConfirmar);
+    const meses = (opciones.meses?.length ? opciones.meses : obtenerMesesDesdeEventosCalendario(eventosConFecha))
+        .map((fecha) => normalizarFechaEventoCalendario(fecha))
+        .filter((fecha) => !Number.isNaN(fecha.getTime()))
+        .map((fecha) => new Date(fecha.getFullYear(), fecha.getMonth(), 1));
+    const claves = new Set();
+    const mesesUnicos = meses
+        .filter((fecha) => {
+            const clave = formatearFechaClave(fecha);
+            if (claves.has(clave)) return false;
+            claves.add(clave);
+            return true;
+        })
+        .sort((a, b) => a.getTime() - b.getTime());
+    const mesesRender = mesesUnicos.length ? mesesUnicos : [new Date(new Date().getFullYear(), new Date().getMonth(), 1)];
+    const indiceInicial = Math.max(0, Math.min(Number(opciones.indiceInicial || 0), mesesRender.length - 1));
+    const mesInicial = mesesRender[indiceInicial];
+    const tituloInicial = mesInicial.toLocaleDateString('es-UY', { month: 'long', year: 'numeric' });
+
+    return `
+        <div class="entrega-google-calendar entrega-google-calendar-single" data-entrega-calendar data-active-index="${indiceInicial}">
+            <div class="entrega-calendar-shell-head">
+                <button type="button" class="entrega-calendar-nav" data-entrega-calendar-nav="-1" aria-label="Mes anterior" ${indiceInicial === 0 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="entrega-calendar-shell-title">
+                    <strong data-entrega-calendar-title>${escapeHtml(tituloInicial)}</strong>
+                    <span data-entrega-calendar-count>${indiceInicial + 1} de ${mesesRender.length}</span>
+                </div>
+                <button type="button" class="entrega-calendar-nav" data-entrega-calendar-nav="1" aria-label="Mes siguiente" ${indiceInicial >= mesesRender.length - 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="entrega-calendar-panes">
+                ${mesesRender.map((mes, index) => {
+                    const titulo = mes.toLocaleDateString('es-UY', { month: 'long', year: 'numeric' });
+                    return `
+                        <div class="entrega-calendar-pane ${index === indiceInicial ? 'active' : ''}" data-entrega-calendar-pane="${index}" data-month-title="${escapeHtml(titulo)}" data-month-count="${index + 1} de ${mesesRender.length}">
+                            ${construirCalendarioMesEntregasHTML(mes, eventosConfirmados, eventosPendientes, { ocultarTitulo: true })}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function actualizarCalendarioEntregasVisible(calendar) {
+    if (!calendar) return;
+    const panes = [...calendar.querySelectorAll('[data-entrega-calendar-pane]')];
+    if (!panes.length) return;
+    const activeIndex = Math.max(0, Math.min(Number(calendar.dataset.activeIndex || 0), panes.length - 1));
+    calendar.dataset.activeIndex = String(activeIndex);
+    panes.forEach((pane, index) => pane.classList.toggle('active', index === activeIndex));
+    const activePane = panes[activeIndex];
+    const title = calendar.querySelector('[data-entrega-calendar-title]');
+    const count = calendar.querySelector('[data-entrega-calendar-count]');
+    if (title) title.textContent = activePane.dataset.monthTitle || '';
+    if (count) count.textContent = activePane.dataset.monthCount || `${activeIndex + 1} de ${panes.length}`;
+    calendar.querySelectorAll('[data-entrega-calendar-nav]').forEach((btn) => {
+        const direction = Number(btn.dataset.entregaCalendarNav || 0);
+        btn.disabled = (direction < 0 && activeIndex === 0) || (direction > 0 && activeIndex === panes.length - 1);
+    });
+}
+
+if (typeof document !== 'undefined' && !window.__cururuDeliveryCalendarBound) {
+    window.__cururuDeliveryCalendarBound = true;
+    document.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-entrega-calendar-nav]');
+        if (!btn) return;
+        const calendar = btn.closest('[data-entrega-calendar]');
+        if (!calendar) return;
+        const panes = calendar.querySelectorAll('[data-entrega-calendar-pane]');
+        const direction = Number(btn.dataset.entregaCalendarNav || 0);
+        const nextIndex = Math.max(0, Math.min(Number(calendar.dataset.activeIndex || 0) + direction, panes.length - 1));
+        calendar.dataset.activeIndex = String(nextIndex);
+        actualizarCalendarioEntregasVisible(calendar);
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const day = event.target.closest('[data-entrega-day-action]');
+        if (!day) return;
+        event.preventDefault();
+        day.click();
+    });
+}
+
+function obtenerClaveMesEntrega(fecha) {
+    return `${fecha.getFullYear()}_${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function obtenerClaveEntregaPeriodo(mesClave, indice, campo) {
+    return `entrega_${mesClave}_${indice}_${campo}`;
+}
+
+function obtenerMesesEntregaProximos(cantidad = 3, fechaReferencia = new Date()) {
+    const meses = [];
+    const base = new Date(fechaReferencia.getFullYear(), fechaReferencia.getMonth(), 1);
+    base.setHours(0, 0, 0, 0);
+    for (let i = 0; i < cantidad; i += 1) {
+        const fechaMes = new Date(base.getFullYear(), base.getMonth() + i, 1);
+        const mesClave = obtenerClaveMesEntrega(fechaMes);
+        meses.push({
+            mesClave,
+            fechaMes,
+            etiqueta: fechaMes.toLocaleDateString('es-UY', { month: 'long', year: 'numeric' })
+        });
+    }
+    return meses;
+}
+
+function obtenerEntregaPeriodoConfig(configMap = {}, mesClave, indice) {
+    let fecha = configMap[obtenerClaveEntregaPeriodo(mesClave, indice, 'fecha')] || '';
+    let hora = configMap[obtenerClaveEntregaPeriodo(mesClave, indice, 'hora')] || '18:00';
+    let mensaje = configMap[obtenerClaveEntregaPeriodo(mesClave, indice, 'mensaje')] || '';
+    const legacyFecha = indice === 1 ? configMap.fecha_entrega_primer : configMap.fecha_entrega_ultimo;
+    const legacyMensaje = indice === 1 ? configMap.mensaje_entrega_primer : configMap.mensaje_entrega_ultimo;
+    if (!fecha && legacyFecha) {
+        const legacyDate = parsearFechaConfigEntrega(legacyFecha);
+        if (legacyDate && obtenerClaveMesEntrega(legacyDate) === mesClave) {
+            fecha = legacyFecha;
+            mensaje = mensaje || legacyMensaje || '';
+        }
+    }
+    return {
+        mesClave,
+        indice,
+        fecha,
+        hora,
+        lugar: configMap[obtenerClaveEntregaPeriodo(mesClave, indice, 'lugar')] || configMap.lugar_entrega || 'Lugar de Siempre',
+        mensaje
+    };
+}
+
+function obtenerEntregasConfiguradasFuturas(configMap = {}, cantidadMeses = 3, fechaReferencia = new Date()) {
+    const hoy = normalizarFechaSinHora(fechaReferencia);
+    return obtenerMesesEntregaProximos(cantidadMeses, fechaReferencia)
+        .flatMap((periodo) => [1, 2].map((indice) => {
+            const entrega = obtenerEntregaPeriodoConfig(configMap, periodo.mesClave, indice);
+            const fechaDate = parsearFechaConfigEntrega(entrega.fecha);
+            return {
+                ...entrega,
+                fechaDate,
+                mesEtiqueta: periodo.etiqueta
+            };
+        }))
+        .filter((entrega) => entrega.fechaDate && entrega.fechaDate >= hoy)
+        .sort((a, b) => {
+            const diferencia = a.fechaDate.getTime() - b.fechaDate.getTime();
+            if (diferencia !== 0) return diferencia;
+            return Number(a.indice || 0) - Number(b.indice || 0);
+        });
+}
+
 function obtenerCicloClub(fechaReferencia = new Date()) {
     const referencia = normalizarFechaSinHora(fechaReferencia);
     const ultimoJuevesMesActual = obtenerUltimoJuevesDelMes(referencia.getFullYear(), referencia.getMonth());
@@ -94,7 +399,7 @@ function obtenerCicloClub(fechaReferencia = new Date()) {
 
 function fechaEstaEnCicloClub(fecha, ciclo = obtenerCicloClub()) {
     if (!fecha) return false;
-    const valor = new Date(fecha);
+    const valor = parsearFechaConfigEntrega(fecha) || new Date(fecha);
     return valor >= ciclo.inicio && valor <= ciclo.fin;
 }
 
@@ -411,7 +716,6 @@ function inicializarPlaceholders() {
     localStorage.setItem('cururu_placeholders', JSON.stringify(placeholders));
 }
 
-console.log('Utils loaded');
 
 window.crearPlaceholderConstruccion = crearPlaceholderConstruccion;
 window.normalizarListaImagenes = normalizarListaImagenes;

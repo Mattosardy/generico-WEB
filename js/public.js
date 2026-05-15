@@ -6,9 +6,15 @@ async function cargarContenidoInstitucional() {
         const configMap = {};
         (data || []).forEach((item) => {
             configMap[item.clave] = item.valor;
-            if (item.clave === 'horas_limite_primer') configSistema.horasLimitePrimer = parseInt(item.valor, 10);
-            if (item.clave === 'horas_limite_ultimo') configSistema.horasLimiteUltimo = parseInt(item.valor, 10);
+            if (item.clave === 'fecha_entrega_primer') configSistema.fechaEntregaPrimer = item.valor || '';
+            if (item.clave === 'fecha_entrega_ultimo') configSistema.fechaEntregaUltimo = item.valor || '';
         });
+        appState.configMap = configMap;
+        const entregasFuturas = obtenerEntregasConfiguradasFuturas(configMap, 3);
+        if (entregasFuturas[0]?.fecha) configSistema.fechaEntregaPrimer = entregasFuturas[0].fecha;
+        if (entregasFuturas[1]?.fecha) configSistema.fechaEntregaUltimo = entregasFuturas[1].fecha;
+        configSistema.horasLimitePrimer = 48;
+        configSistema.horasLimiteUltimo = 48;
         const videoGuardado = localStorage.getItem('cururu_historia_video_url') || '';
         const videoHistoria = String(configMap.historia_video_url || videoGuardado || window.defaultHistoriaVideoUrl || '').trim();
         if (videoHistoria) {
@@ -22,6 +28,7 @@ async function cargarContenidoInstitucional() {
     } catch (error) {
         console.warn('No se pudo cargar la configuración del sitio', error);
         const configMap = {};
+        appState.configMap = configMap;
         const videoGuardado = localStorage.getItem('cururu_historia_video_url') || '';
         const videoHistoria = String(videoGuardado || window.defaultHistoriaVideoUrl || '').trim();
         if (videoHistoria) {
@@ -159,6 +166,131 @@ function actualizarIndicadoresNovedades() {
     );
 }
 
+function calcularRangoHorarioActividad(horaInicio = '') {
+    const match = String(horaInicio || '').match(/^(\d{2}):(\d{2})/);
+    if (!match) return '--:--';
+    const inicioMinutos = Number(match[1]) * 60 + Number(match[2]);
+    const finMinutos = (inicioMinutos + 120) % (24 * 60);
+    const inicio = `${String(Math.floor(inicioMinutos / 60)).padStart(2, '0')}:${String(inicioMinutos % 60).padStart(2, '0')}`;
+    const fin = `${String(Math.floor(finMinutos / 60)).padStart(2, '0')}:${String(finMinutos % 60).padStart(2, '0')}`;
+    return `${inicio} a ${fin}`;
+}
+
+function construirCalendarioEntregasPublicoHTML(actividadesEntrega = []) {
+    if (!actividadesEntrega.length || typeof construirCalendarioEntregasHTML !== 'function') return '';
+    const meses = actividadesEntrega.map((actividad) => normalizarFechaEventoCalendario(actividad.fecha));
+    const eventos = actividadesEntrega.map((actividad) => {
+        const horario = calcularRangoHorarioActividad(actividad.hora);
+        const lugar = actividad.ubicacion && actividad.ubicacion !== 'Cururu Club' ? actividad.ubicacion : 'Lugar de Siempre';
+        const titulo = `${actividad.entregaIndice || ''}a Entrega Mensual`.trim();
+        return {
+            fecha: actividad.fecha,
+            entregaAConfirmar: actividad.entregaAConfirmar,
+            titulo: actividad.entregaAConfirmar ? titulo : 'Proxima entrega',
+            hora: actividad.hora,
+            horario: actividad.entregaAConfirmar ? '' : horario,
+            detalle: actividad.entregaAConfirmar
+                ? `${titulo} pendiente de confirmacion`
+                : `${titulo} · ${obtenerResumenEntregaActividad()}`,
+            lugar: actividad.entregaAConfirmar ? '' : lugar,
+            destacado: !actividad.entregaAConfirmar
+        };
+    });
+    return `
+        <div class="actividad-entrega-calendar-block">
+            <div class="actividad-entrega-calendar-title">
+                <span class="dashboard-eyebrow">Calendario de entregas</span>
+                <strong>Proximas fechas configuradas</strong>
+            </div>
+            ${construirCalendarioEntregasHTML(eventos, { meses })}
+        </div>
+    `;
+}
+
+function formatearFechaEntregaActividad(fecha) {
+    const fechaDate = parsearFechaConfigEntrega(fecha) || new Date(fecha);
+    if (Number.isNaN(fechaDate.getTime())) return '--/--/----';
+    return fechaDate.toLocaleDateString('es-UY');
+}
+
+function fechaEntregaEsFutura(fecha) {
+    const fechaDate = parsearFechaConfigEntrega(fecha) || new Date(fecha);
+    if (Number.isNaN(fechaDate.getTime())) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaDate.setHours(0, 0, 0, 0);
+    return fechaDate >= hoy;
+}
+
+function obtenerResumenEntregaActividad() {
+    const disponibles = Number.isFinite(Number(appState.gramosRestantesCiclo)) ? Number(appState.gramosRestantesCiclo) : 40;
+    const reservas = Number.isFinite(Number(appState.reservasActivasCount)) ? Number(appState.reservasActivasCount) : 0;
+    const retiros = Number.isFinite(Number(appState.historialRetiradoCount)) ? Number(appState.historialRetiradoCount) : 0;
+    return `${disponibles}g disponibles · ${reservas} reservas · ${retiros} retiros`;
+}
+
+function construirActividadesEntregaCalendario(configMap = appState.configMap || {}) {
+    return obtenerMesesEntregaProximos(3).flatMap((periodo) => [1, 2].map((indice) => {
+        const entrega = obtenerEntregaPeriodoConfig(configMap, periodo.mesClave, indice);
+        const fechaFutura = entrega.fecha && fechaEntregaEsFutura(entrega.fecha);
+        return {
+            id: `entrega:${periodo.mesClave}:${indice}`,
+            tipo: 'entrega',
+            titulo: `Calendario de entregas - ${periodo.etiqueta}`,
+            fecha: fechaFutura ? entrega.fecha : formatearFechaClave(periodo.fechaMes),
+            hora: entrega.hora,
+            ubicacion: entrega.lugar,
+            descripcion: entrega.mensaje,
+            mesClave: periodo.mesClave,
+            mesEtiqueta: periodo.etiqueta,
+            entregaIndice: indice,
+            entregaAConfirmar: !fechaFutura
+        };
+    }))
+        .sort((a, b) => {
+            const fechaA = parsearFechaConfigEntrega(a.fecha) || new Date(a.fecha);
+            const fechaB = parsearFechaConfigEntrega(b.fecha) || new Date(b.fecha);
+            const diferencia = fechaA.getTime() - fechaB.getTime();
+            if (diferencia !== 0) return diferencia;
+            return Number(a.entregaIndice || 0) - Number(b.entregaIndice || 0);
+        })
+        .slice(0, 3);
+}
+
+function renderActividadPublica(actividad, iconosTipo) {
+    const tipo = String(actividad.tipo || '').toLowerCase();
+    if (tipo === 'entrega') {
+        const fecha = formatearFechaEntregaActividad(actividad.fecha);
+        const horario = calcularRangoHorarioActividad(actividad.hora);
+        const lugar = actividad.ubicacion && actividad.ubicacion !== 'Cururu Club' ? actividad.ubicacion : 'Lugar de Siempre';
+        const estado = actividad.entregaAConfirmar
+            ? `Entrega a confirmar (${actividad.mesEtiqueta || 'proximo periodo'})`
+            : `Proxima Entrega: ${fecha} de ${horario}`;
+        return `
+            <div class="actividad-item actividad-entrega-item">
+                <div class="actividad-info">
+                    <div class="actividad-titulo">Calendario de entregas</div>
+                    <div class="actividad-descripcion actividad-entrega-detalle">
+                        <strong>${escapeHtml(estado)}</strong>
+                        <span>${escapeHtml(obtenerResumenEntregaActividad())}</span>
+                        <em>${escapeHtml(lugar)}</em>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="actividad-item">
+            <div class="actividad-fecha">${new Date(actividad.fecha).toLocaleDateString('es', { day: 'numeric', month: 'short' })}<br>${actividad.hora?.substring(0, 5) || '--:--'}</div>
+            <div class="actividad-info">
+                <div class="actividad-titulo">${escapeHtml(actividad.titulo)} <span style="font-size:0.7rem;background:#7ca35a;color:#0f190c;padding:2px 8px;border-radius:12px;">${escapeHtml(iconosTipo[actividad.tipo] || actividad.tipo || 'Actividad')}</span></div>
+                <div class="actividad-descripcion">${escapeHtml(actividad.descripcion || '')}</div>
+            </div>
+        </div>
+    `;
+}
+
 function registrarProductosParaNovedades(productos) {
     novedadesActuales.productos = productos || [];
     asegurarBaseNovedades(STORAGE_PRODUCTOS_VISTOS, novedadesActuales.productos.map((producto) => String(producto.id)));
@@ -269,7 +401,6 @@ function renderizarTarjetaProductoCompacta(producto) {
     const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcciÃ³n');
 
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
-
     return `
         <div class="producto-card producto-card-compacta${claseNuevo}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
             <div class="producto-miniatura">
@@ -326,24 +457,39 @@ async function cargarActividadesPublicas() {
     if (!container) return;
 
     const actividades = await obtenerActividades();
-    registrarActividadesParaNovedades(actividades || []);
-    if (!actividades?.length) {
+    const actividadesEntrega = construirActividadesEntregaCalendario(appState.configMap || {});
+    const actividadesManuales = (actividades || []).filter((actividad) => String(actividad.tipo || '').toLowerCase() !== 'entrega');
+    const actividadesCombinadas = [...actividadesEntrega, ...actividadesManuales];
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const actividadesVigentes = actividadesCombinadas.filter((actividad) => {
+        if (String(actividad.tipo || '').toLowerCase() !== 'entrega') return true;
+        if (actividad.entregaAConfirmar) return true;
+        const fecha = parsearFechaConfigEntrega(actividad.fecha) || new Date(actividad.fecha);
+        fecha.setHours(0, 0, 0, 0);
+        return fecha >= hoy;
+    });
+    registrarActividadesParaNovedades(actividadesVigentes);
+    if (!actividadesVigentes.length) {
         container.innerHTML = '';
         container.style.display = 'none';
         return;
     }
 
     container.style.display = '';
-    const iconosTipo = { actividad: 'Actividad', sorteo: 'Sorteo', regalo: 'Regalo' };
-    container.innerHTML = actividades.map((actividad) => `
-        <div class="actividad-item">
-            <div class="actividad-fecha">${new Date(actividad.fecha).toLocaleDateString('es', { day: 'numeric', month: 'short' })}<br>${actividad.hora?.substring(0, 5) || '--:--'}</div>
-            <div class="actividad-info">
-                <div class="actividad-titulo">${escapeHtml(actividad.titulo)} <span style="font-size:0.7rem;background:#7ca35a;color:#0f190c;padding:2px 8px;border-radius:12px;">${escapeHtml(iconosTipo[actividad.tipo] || actividad.tipo || 'Actividad')}</span></div>
-                <div class="actividad-descripcion">${escapeHtml(actividad.descripcion || '')}</div>
-            </div>
-        </div>
-    `).join('');
+    const iconosTipo = { actividad: 'Actividad', sorteo: 'Sorteo', regalo: 'Regalo', entrega: 'Proxima entrega' };
+    const entregasVigentes = actividadesVigentes.filter((actividad) => String(actividad.tipo || '').toLowerCase() === 'entrega');
+    const manualesVigentes = actividadesVigentes.filter((actividad) => String(actividad.tipo || '').toLowerCase() !== 'entrega');
+    const usuarioConCalendarioPersonal = Boolean(appState.socioData?.id);
+    if (usuarioConCalendarioPersonal && !manualesVigentes.length) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+    container.innerHTML = `
+        ${usuarioConCalendarioPersonal ? '' : construirCalendarioEntregasPublicoHTML(entregasVigentes)}
+        ${manualesVigentes.map((actividad) => renderActividadPublica(actividad, iconosTipo)).join('')}
+    `;
 }
 
 async function cargarProductosPublicos() {
@@ -490,6 +636,3 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === noticiaModal) cerrarNoticiaModal();
     });
 });
-
-console.log('Public loaded');
-
