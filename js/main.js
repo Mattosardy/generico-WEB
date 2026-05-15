@@ -156,7 +156,7 @@ async function cargarGraficosDashboard() {
             'afterend',
             `<div id="adminChartsRow" class="admin-charts-row">
                 <div class="admin-chart-card">
-                    <div class="card-label">Reservas mensuales</div>
+                    <div class="card-label">Pedidos mensuales</div>
                     <canvas id="graficoReservas" class="admin-chart-canvas"></canvas>
                 </div>
                 <div class="admin-chart-card">

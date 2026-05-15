@@ -2,11 +2,11 @@ const TELEGRAM_BOT_USERNAME = window.TELEGRAM_BOT_USERNAME || 'NOMBRE_DEL_BOT';
 const TELEGRAM_LINK_CODE_TTL_MINUTES = 15;
 const notificationTemplates = {
     reserva_creada: ({ variety = 'Entrega mensual', grams = '-', estado = 'pendiente de confirmacion' } = {}) =>
-        `Cururu Club\nTu reserva fue recibida.\nVariedad: ${variety}\nCantidad: ${grams}g\nEstado: ${estado}.`,
+        `Cururu Club\nTu pedido mensual fue recibido.\nVariedad: ${variety}\nCantidad: ${grams}g\nEstado: ${estado}.`,
     reserva_confirmada: ({ variety = 'Entrega mensual', grams = '-', retiro = '' } = {}) =>
-        `Cururu Club\nTu reserva fue confirmada.\nVariedad: ${variety}\nCantidad: ${grams}g${retiro ? `\nRetiro: ${retiro}` : ''}`,
+        `Cururu Club\nTu pedido mensual fue confirmado.\nVariedad: ${variety}\nCantidad: ${grams}g${retiro ? `\nRetiro: ${retiro}` : ''}`,
     reserva_rechazada: ({ variety = 'Entrega mensual', grams = '-', motivo = 'Te vamos a contactar para coordinar.' } = {}) =>
-        `Cururu Club\nTu reserva no pudo ser confirmada.\nVariedad: ${variety}\nCantidad: ${grams}g\nMotivo: ${motivo}`,
+        `Cururu Club\nTu pedido mensual no pudo ser confirmado.\nVariedad: ${variety}\nCantidad: ${grams}g\nMotivo: ${motivo}`,
     retiro_disponible: ({ variety = 'Entrega mensual', grams = '-', retiro = '' } = {}) =>
         `Cururu Club\nTu retiro ya esta disponible.\nVariedad: ${variety}\nCantidad: ${grams}g${retiro ? `\nRetiro: ${retiro}` : ''}`,
     aviso_general: ({ message = '' } = {}) => `Cururu Club\n${message}`,

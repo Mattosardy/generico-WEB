@@ -8,17 +8,18 @@ function construirResumenCarritoMensual(reservas = [], gramosRestantesCiclo = 40
     const ciclo = appState.cicloClubActual || obtenerCicloClub();
     const activas = (reservas || [])
         .filter((reserva) => reservaEstaActiva(reserva) && fechaEstaEnCicloClub(reserva.fecha_retiro, ciclo));
+    const gramosUsados = Math.max(0, 40 - Number(gramosRestantesCiclo || 0));
     if (!activas.length) {
         return `
             <details class="actividad-carrito-submenu">
-                <summary>Carrito mensual <span>${gramosRestantesCiclo}g disponibles</span></summary>
-                <div class="actividad-carrito-vacio">Sin reservas para este mes.</div>
+                <summary>Pedido mensual <span>${gramosRestantesCiclo}g disponibles</span></summary>
+                <div class="actividad-carrito-vacio">Todavia no tenes pedidos activos para este ciclo.</div>
             </details>
         `;
     }
     return `
         <details class="actividad-carrito-submenu" open>
-            <summary>Carrito mensual <span>${gramosRestantesCiclo}g disponibles de 40g</span></summary>
+            <summary>Pedido mensual <span>${gramosUsados}g usados - ${gramosRestantesCiclo}g disponibles</span></summary>
             <div class="actividad-carrito-lista">
                 ${activas.map((reserva) => {
                     const variedad = reserva.producto_nombre || 'Variedad a definir';
@@ -27,8 +28,8 @@ function construirResumenCarritoMensual(reservas = [], gramosRestantesCiclo = 40
                     return `
                         <button type="button" class="carrito-reserva-btn" data-reserva-id="${reserva.id}" data-tipo="${tipoReserva}">
                             <strong>${escapeHtml(variedad)}</strong>
-                            <span>${Number(reserva.cantidad_gramos || 0)}g reservados</span>
-                            <small>${escapeHtml(fecha)} · Modificar reserva</small>
+                            <span>${Number(reserva.cantidad_gramos || 0)}g pedidos</span>
+                            <small>${escapeHtml(fecha)} · Modificar pedido</small>
                         </button>
                     `;
                 }).join('')}
@@ -55,7 +56,7 @@ function construirAccionModificarReservaHTML(reserva, tipo, puedeModificar) {
     if (!puedeModificar) {
         return '<div class="estado-reserva estado-pendiente">No se puede modificar: plazo vencido</div>';
     }
-    return `<button type="button" class="btn-modificar-reserva" data-reserva-id="${reserva.id}" data-tipo="${tipo}">Modificar reserva</button>`;
+    return `<button type="button" class="btn-modificar-reserva" data-reserva-id="${reserva.id}" data-tipo="${tipo}">Modificar pedido</button>`;
 }
 
 function obtenerTipoReservaUI(reserva) {
@@ -84,13 +85,13 @@ function obtenerResumenEntregaUsuario(reservaPrimer, reservaUltimo, puedePrimer,
 
     const conReserva = opciones.find((item) => reservaEstaActiva(item.reserva));
     const proxima = conReserva || opciones.find((item) => item.puedeReservar) || opciones[0];
-    if (!proxima) return 'Entrega pendiente.';
+    if (!proxima) return 'Pedido mensual pendiente.';
 
     const fecha = proxima.fecha.toLocaleDateString('es-UY');
-    if (!reservaEstaActiva(proxima.reserva)) return `Entrega del ${fecha} pendiente.`;
-    if (proxima.reserva.estado === 'confirmado') return `Entrega del ${fecha} en proceso.`;
+    if (!reservaEstaActiva(proxima.reserva)) return `Pedido para la entrega del ${fecha} pendiente.`;
+    if (proxima.reserva.estado === 'confirmado') return `Pedido del ${fecha} recibido.`;
     if (proxima.reserva.estado === 'entregado' || proxima.reserva.estado === 'retirado') return `Entrega del ${fecha} confirmada.`;
-    return `Entrega del ${fecha} pendiente de confirmacion.`;
+    return `Pedido del ${fecha} pendiente de confirmacion.`;
 }
 
 function formatearFechaReservaCalendario(fecha) {
@@ -113,7 +114,7 @@ function construirEventoCalendarioReservaUsuario(evento, indice) {
     const estado = reservaEstaActiva(evento.reserva)
         ? obtenerEtiquetaEstadoReserva(evento.reserva, evento.puedeReservar)
         : (evento.puedeReservar ? 'Pendiente' : 'Plazo cerrado');
-    const detalle = evento.reserva ? `${evento.reserva.cantidad_gramos}g reservados` : 'Sin reserva';
+    const detalle = evento.reserva ? `${evento.reserva.cantidad_gramos}g pedidos` : 'Sin pedido';
     return {
         fecha: evento.fecha,
         titulo: evento.titulo,
@@ -124,8 +125,8 @@ function construirEventoCalendarioReservaUsuario(evento, indice) {
         destacado: reservaEstaActiva(evento.reserva),
         fechaTexto: evento.fecha.toLocaleDateString('es-UY'),
         reservaResumen: reservaEstaActiva(evento.reserva)
-            ? `Reserva confirmada - ${evento.reserva.cantidad_gramos}g`
-            : 'Sin reserva'
+            ? `Pedido mensual - ${evento.reserva.cantidad_gramos}g`
+            : 'Sin pedido'
     };
 }
 
@@ -145,7 +146,7 @@ function renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo,
         <div class="reservas-activity-head">
             <span class="dashboard-eyebrow">Calendario de entregas</span>
             <strong>${escapeHtml(obtenerResumenEntregaUsuario(reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo))}</strong>
-            <small>${gramosRestantesCiclo}g disponibles · ${reservasActivas} reservas · ${historialRetirado} retiros</small>
+            <small>${40 - gramosRestantesCiclo}g usados - ${gramosRestantesCiclo}g disponibles - ${reservasActivas} pedidos activos - ${historialRetirado} retiros</small>
         </div>
         ${construirResumenCarritoMensual(reservas, gramosRestantesCiclo)}
         <div class="reservas-activity-events">
@@ -195,8 +196,8 @@ function abrirReservaActividadModal(evento) {
     const horario = formatearHoraRangoEntrega(detalleEntrega.hora) || 'Horario a confirmar';
     const lugar = detalleEntrega.lugar || 'Lugar de Siempre';
     const reservado = reservaEstaActiva(evento.reserva)
-        ? `Reserva confirmada - ${evento.reserva.cantidad_gramos}g`
-        : 'Sin reserva';
+        ? `Pedido mensual - ${evento.reserva.cantidad_gramos}g`
+        : 'Sin pedido';
 
     body.innerHTML = `
         <div class="reserva-modal-fecha">
@@ -209,7 +210,7 @@ function abrirReservaActividadModal(evento) {
             <div><span>Fecha</span><strong>${escapeHtml(fecha.completa)}</strong></div>
             <div><span>Horario</span><strong>${escapeHtml(horario)}</strong></div>
             <div><span>Lugar</span><strong class="reserva-modal-lugar">${escapeHtml(lugar)}</strong></div>
-            <div><span>Reserva</span><strong>${escapeHtml(reservado)}</strong></div>
+            <div><span>Pedido</span><strong>${escapeHtml(reservado)}</strong></div>
         </div>
     `;
     modal.style.display = 'flex';
@@ -228,6 +229,8 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
     const reservasActivas = [reservaPrimer, reservaUltimo].filter(reservaEstaActiva);
     const historialRetirado = (reservas || []).filter((reserva) => reserva.estado === 'entregado' || reserva.estado === 'retirado').length;
     const resumenEntrega = obtenerResumenEntregaUsuario(reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo);
+    const gramosUsados = Math.max(0, 40 - Number(gramosRestantesCiclo || 0));
+    const progreso = Math.min(100, Math.max(0, (gramosUsados / 40) * 100));
 
     dashboard.style.display = '';
     dashboard.innerHTML = `
@@ -240,24 +243,28 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
             <div class="dashboard-grams">
                 <span>${gramosRestantesCiclo}g</span>
                 <small>disponibles de 40g</small>
+                <div class="dashboard-grams-progress" aria-label="${gramosUsados} gramos usados de 40">
+                    <i style="width:${progreso}%"></i>
+                </div>
+                <small>${gramosUsados}g usados este ciclo</small>
             </div>
         </div>
         <div class="socio-dashboard-grid">
             <article class="socio-metric-card">
-                <span class="metric-label">Reservas activas</span>
+                <span class="metric-label">Pedidos activos</span>
                 <strong>${reservasActivas.length}</strong>
-                <small>${reservasActivas.length ? 'Tenes entregas coordinadas.' : 'Sin reservas activas por ahora.'}</small>
+                <small>${reservasActivas.length ? 'Tenes entregas coordinadas.' : 'Sin pedidos activos por ahora.'}</small>
             </article>
             <article class="socio-metric-card">
                 <span class="metric-label">Primera entrega</span>
                 ${construirBadgeEstadoReservaHTML(reservaPrimer, puedePrimer)}
-                <small>${reservaPrimer ? `${reservaPrimer.cantidad_gramos}g reservados` : (puedePrimer ? 'Disponible para reservar' : 'Plazo cerrado')}</small>
+                <small>${reservaPrimer ? `${reservaPrimer.cantidad_gramos}g pedidos` : (puedePrimer ? 'Disponible para pedir' : 'Plazo cerrado')}</small>
                 ${construirAccionModificarReservaHTML(reservaPrimer, 'primer', puedePrimer)}
             </article>
             <article class="socio-metric-card">
                 <span class="metric-label">Ultima entrega</span>
                 ${construirBadgeEstadoReservaHTML(reservaUltimo, puedeUltimo)}
-                <small>${reservaUltimo ? `${reservaUltimo.cantidad_gramos}g reservados` : (puedeUltimo ? 'Disponible para reservar' : 'Plazo cerrado')}</small>
+                <small>${reservaUltimo ? `${reservaUltimo.cantidad_gramos}g pedidos` : (puedeUltimo ? 'Disponible para pedir' : 'Plazo cerrado')}</small>
                 ${construirAccionModificarReservaHTML(reservaUltimo, 'ultimo', puedeUltimo)}
             </article>
             <article class="socio-metric-card">
@@ -311,19 +318,19 @@ async function cargarReservasSocio() {
 
 async function modificarReservaHandler(reservaId, tipo) {
     if (!appState.socioData?.id) {
-        mostrarMensaje('Inicia sesion para modificar la reserva.', false);
+        mostrarMensaje('Inicia sesion para modificar el pedido.', false);
         return;
     }
     const reservas = await obtenerReservas(appState.socioData.id);
     const reserva = reservas.find((item) => String(item.id) === String(reservaId));
     if (!reserva) {
-        mostrarMensaje('No se encontro la reserva.', false);
+        mostrarMensaje('No se encontro el pedido.', false);
         return;
     }
     const fechaEntrega = tipo === 'primer' ? appState.fechasEntrega.primerJueves : appState.fechasEntrega.ultimoJueves;
     const horasLimite = tipo === 'primer' ? configSistema.horasLimitePrimer : configSistema.horasLimiteUltimo;
     if (!puedeConfirmar(fechaEntrega, horasLimite)) {
-        mostrarMensaje('No se puede modificar: el plazo de reserva ya vencio.', false);
+        mostrarMensaje('No se puede modificar: el plazo del pedido ya vencio.', false);
         return;
     }
     const productos = await obtenerProductos();

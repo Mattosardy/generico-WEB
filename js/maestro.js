@@ -316,7 +316,7 @@ async function cargarMaestroReservas() {
     }
     container.innerHTML = `
         <h3>Pedidos</h3>
-        <p style="color:var(--text-muted); margin: 8px 0 14px;">Vista de control tipo planilla para confirmar pedidos y cerrar entregas.</p>
+        <p style="color:var(--text-muted); margin: 8px 0 14px;">Control general de pedidos mensuales para confirmar recepcion y cerrar entregas.</p>
         ${typeof renderizarTablaReservasAdmin === 'function' ? renderizarTablaReservasAdmin(data, 'maestro') : '<div class="loading">No se pudo renderizar la tabla.</div>'}
     `;
 }

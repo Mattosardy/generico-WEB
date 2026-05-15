@@ -1003,18 +1003,18 @@ function renderizarTablaReservasAdmin(data, origen = 'admin') {
             <thead><tr><th>Fecha retiro</th><th>Socio</th><th>Variedad</th><th>Cantidad</th><th>Estado</th><th>Registrada</th><th>Accion</th></tr></thead>
             <tbody>${data.map((reserva) => `
                 <tr>
-                    <td>${reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : '-'}</td>
-                    <td>${escapeHtml(reserva.socios?.nombre || '-')} ${escapeHtml(reserva.socios?.apellido || '')}</td>
-                    <td>${escapeHtml(obtenerVariedadReservaAdmin(reserva))}</td>
-                    <td>${Number(reserva.cantidad_gramos || 0)}g</td>
-                    <td><span class="reserva-status-badge estado-${escapeHtml(String(reserva.estado || 'pendiente').toLowerCase())}">${escapeHtml(obtenerEtiquetaEstadoReservaAdmin(reserva.estado))}</span></td>
-                    <td>${reserva.created_at ? new Date(reserva.created_at).toLocaleDateString('es-UY') : '-'}</td>
-                    <td>${construirAccionesReservaAdmin(reserva, origen)}</td>
+                    <td data-label="Fecha retiro">${reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : '-'}</td>
+                    <td data-label="Socio">${escapeHtml(reserva.socios?.nombre || '-')} ${escapeHtml(reserva.socios?.apellido || '')}</td>
+                    <td data-label="Variedad">${escapeHtml(obtenerVariedadReservaAdmin(reserva))}</td>
+                    <td data-label="Cantidad">${Number(reserva.cantidad_gramos || 0)}g</td>
+                    <td data-label="Estado"><span class="reserva-status-badge estado-${escapeHtml(String(reserva.estado || 'pendiente').toLowerCase())}">${escapeHtml(obtenerEtiquetaEstadoReservaAdmin(reserva.estado))}</span></td>
+                    <td data-label="Registrada">${reserva.created_at ? new Date(reserva.created_at).toLocaleDateString('es-UY') : '-'}</td>
+                    <td data-label="Accion">${construirAccionesReservaAdmin(reserva, origen)}</td>
                 </tr>
             `).join('')}</tbody>
         </table>
         </div>
-    ` : '<div class="loading">No hay reservas.</div>';
+    ` : '<div class="empty-state"><i class="fas fa-box-open"></i><strong>Sin pedidos por ahora</strong><span>Cuando los socios realicen pedidos mensuales, van a aparecer aca.</span></div>';
 }
 
 async function cargarReservasAdmin() {
@@ -1027,7 +1027,7 @@ async function cargarReservasAdmin() {
     }
     container.innerHTML = `
         <h3 style="color:var(--text-strong); margin-bottom: 12px;">Pedidos</h3>
-        <p style="color:var(--text-muted); margin: 0 0 12px;">Vista rapida tipo planilla: variedad, gramos, fecha y estado operativo.</p>
+        <p style="color:var(--text-muted); margin: 0 0 12px;">Control de pedidos mensuales: variedad, gramos, fecha de retiro y estado operativo.</p>
         ${renderizarTablaReservasAdmin(data, 'admin')}
     `;
 }

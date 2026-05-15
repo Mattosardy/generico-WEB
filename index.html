@@ -9,11 +9,12 @@
     <meta name="apple-mobile-web-app-title" content="Cururú Club">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
-    <title>Cururú Club - Club Canábico</title>
+    <meta name="description" content="Area privada de Cururu Club para socios, pedidos mensuales, entregas y novedades del club.">
+    <title>Cururu Club | Area de socios</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=20260515-t3-card-link">
+    <link rel="stylesheet" href="css/style.css?v=20260515-commercial-pass">
     <link rel="icon" href="data:,">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -25,7 +26,7 @@
         <div class="header-main">
             <div class="logo">
                 <h1><img src="assets/images/logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
-                <p>Club Canábico · Cultura · Comunidad</p>
+                <p>Area privada de socios · Pedidos · Entregas</p>
             </div>
             <div class="mobile-hidden-dock" aria-hidden="true">
                 <button class="dock-btn" data-section="inicio" id="dockBtnInicio"><i class="fas fa-house"></i><span>Inicio</span></button>
@@ -61,6 +62,16 @@
             <h2 class="section-title">
                 <i class="fas fa-book-open"></i> Nuestra Historia
             </h2>
+            <div class="club-intro-panel">
+                <span class="dashboard-eyebrow">Club privado para socios</span>
+                <h2>Pedidos mensuales, entregas claras y novedades en un solo lugar.</h2>
+                <p>Cururu Club centraliza el catalogo, el cupo mensual, las fechas de retiro y la comunicacion interna para que cada socio tenga una experiencia simple y ordenada.</p>
+                <div class="club-intro-badges" aria-label="Resumen del servicio">
+                    <span><i class="fas fa-leaf"></i> Variedades disponibles</span>
+                    <span><i class="fas fa-calendar-check"></i> Pedidos de 20g o 40g</span>
+                    <span><i class="fas fa-bell"></i> Avisos y entregas</span>
+                </div>
+            </div>
             <div class="historia-content">
                 <!-- VIDEO CENTRADO ARRIBA -->
                 <div class="historia-imagen" id="historiaMediaPrincipal">
@@ -107,7 +118,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     <div id="actividades" class="section" style="display: none;">
         <div id="cururuNews" class="cururu-news-section">
             <h2 class="section-title">
-                <i class="fas fa-bell"></i> Actividades
+                <i class="fas fa-bell"></i> Agenda y pedidos
             </h2>
             <div id="reservasActividadCalendar" class="reservas-activity-calendar auth-only" style="display: none;"></div>
             <div id="noticias-container" class="noticias-grid">
@@ -121,7 +132,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
 
     <!-- PRODUCTOS -->
     <div id="productos" class="section" style="display: none;">
-        <h2 class="section-title"><i class="fas fa-leaf"></i> Variedades</h2>
+        <h2 class="section-title"><i class="fas fa-leaf"></i> Variedades disponibles</h2>
         <div id="productos-container" class="productos-grid"><div class="loading">Cargando productos...</div></div>
     </div>
     
@@ -225,7 +236,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
             <button class="nav-maestro-btn" data-maestro-section="productos"><i class="fas fa-leaf"></i> Productos</button>
             <button class="nav-maestro-btn" data-maestro-section="actividades"><i class="fas fa-calendar-alt"></i> Actividades</button>
             <button class="nav-maestro-btn" data-maestro-section="socios"><i class="fas fa-users"></i> Socios</button>
-            <button class="nav-maestro-btn" data-maestro-section="reservas"><i class="fas fa-box"></i> Reservas</button>
+            <button class="nav-maestro-btn" data-maestro-section="reservas"><i class="fas fa-box"></i> Pedidos</button>
             <button class="nav-maestro-btn" data-maestro-section="solicitudes"><i class="fas fa-user-plus"></i> Solicitudes</button>
             <button class="nav-maestro-btn" data-maestro-section="admins"><i class="fas fa-user-shield"></i> Admins</button>
             <button class="nav-maestro-btn" data-maestro-section="logs"><i class="fas fa-history"></i> Logs</button>
@@ -252,6 +263,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     <div class="footer">
         <p>🌿 Cururú Club · Cultura · Comunidad 🌿</p>
         <p style="font-size: 0.7rem;">© 2025 - Todos los derechos reservados</p>
+        <p class="footer-legal">Plataforma privada para socios. La informacion y los pedidos se gestionan dentro del marco interno del club.</p>
         <p class="footer-cameo"><a href="https://mattosardy.github.io/telecomt3-card/" class="footer-cameo-link" target="_blank" rel="noopener noreferrer">Conectividad y soporte digital · <strong>Telecom T3</strong></a></p>
     </div>
 </div>
@@ -289,7 +301,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                 </button>
                 <div id="calificacionMensaje" style="margin-top: 8px; font-size: 0.85rem;"></div>
             </div>
-            <div class="modal-pedido-info">Seleccioná una cantidad:</div>
+            <div class="modal-pedido-info">Elegí la cantidad para este pedido mensual:</div>
             <div id="opcionesPedido" class="opciones-pedido"></div>
             <div id="pedidoRestante" class="modal-pedido-restante"></div>
             <button id="btnRealizarPedido" type="button" class="btn-pedido-modal" disabled>Realizar pedido</button>
@@ -340,17 +352,17 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-client.js?v=20260515-t3-card-link"></script>
+<script src="js/supabase-client.js?v=20260515-commercial-pass"></script>
 
-<script src="js/config.js?v=20260515-t3-card-link"></script>
-<script src="js/utils.js?v=20260515-t3-card-link"></script>
-<script src="js/notifications.js?v=20260515-t3-card-link"></script>
-<script src="js/auth.js?v=20260515-t3-card-link"></script>
-<script src="js/public.js?v=20260515-t3-card-link"></script>
-<script src="js/socio.js?v=20260515-t3-card-link"></script>
-<script src="js/modals.js?v=20260515-t3-card-link"></script>
-<script src="js/admin.js?v=20260515-t3-card-link"></script>
-<script src="js/maestro.js?v=20260515-t3-card-link"></script>
-<script src="js/main.js?v=20260515-t3-card-link"></script>
+<script src="js/config.js?v=20260515-commercial-pass"></script>
+<script src="js/utils.js?v=20260515-commercial-pass"></script>
+<script src="js/notifications.js?v=20260515-commercial-pass"></script>
+<script src="js/auth.js?v=20260515-commercial-pass"></script>
+<script src="js/public.js?v=20260515-commercial-pass"></script>
+<script src="js/socio.js?v=20260515-commercial-pass"></script>
+<script src="js/modals.js?v=20260515-commercial-pass"></script>
+<script src="js/admin.js?v=20260515-commercial-pass"></script>
+<script src="js/maestro.js?v=20260515-commercial-pass"></script>
+<script src="js/main.js?v=20260515-commercial-pass"></script>
 </body>
 </html>

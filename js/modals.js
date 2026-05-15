@@ -36,7 +36,7 @@ function actualizarEstadoPedidoModal() {
     if (!restanteEl || !alertaEl || !botonEl) return;
 
     const cicloActual = obtenerCicloClub();
-    restanteEl.textContent = `Disponible en este ciclo (${cicloActual.etiqueta}): ${restante}g de 40g`;
+    restanteEl.textContent = `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${restante}g de 40g`;
     alertaEl.textContent = '';
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         const gramos = Number(btn.dataset.gramos);
@@ -46,7 +46,7 @@ function actualizarEstadoPedidoModal() {
 
     if (!appState.gramosSeleccionadosPedido) {
         botonEl.disabled = true;
-        botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar reserva' : 'Realizar pedido';
+        botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido';
         return;
     }
     if (appState.gramosSeleccionadosPedido > restante) {
@@ -55,7 +55,9 @@ function actualizarEstadoPedidoModal() {
         return;
     }
     const seleccion = document.querySelector(`#opcionesPedido .opcion-pedido[data-gramos="${appState.gramosSeleccionadosPedido}"]`);
-    botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar reserva' : 'Realizar pedido'}${seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
+    const restanteLuego = Math.max(0, restante - Number(appState.gramosSeleccionadosPedido || 0));
+    restanteEl.textContent = `Pedido seleccionado: ${appState.gramosSeleccionadosPedido}g. Quedan ${restanteLuego}g disponibles en este ciclo.`;
+    botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'}${seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
     botonEl.disabled = false;
 }
 function inicializarPedidoModal() {
@@ -73,7 +75,7 @@ function inicializarPedidoModal() {
                 return;
             }
             appState.gramosSeleccionadosPedido = gramos;
-            document.getElementById('btnRealizarPedido').innerHTML = `${appState.reservaEditandoId ? 'Modificar reserva' : 'Realizar pedido'} - $${precio}`;
+            document.getElementById('btnRealizarPedido').innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'} - $${precio}`;
             actualizarEstadoPedidoModal();
         };
     });
@@ -141,7 +143,7 @@ async function realizarPedidoProducto() {
         return;
     }
 
-    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g`, true);
+    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g. Revisá el estado en Agenda y pedidos.`, true);
     cerrarProductoModal();
     if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
 }

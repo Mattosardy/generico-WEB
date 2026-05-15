@@ -226,7 +226,7 @@ function obtenerResumenEntregaActividad() {
     const disponibles = Number.isFinite(Number(appState.gramosRestantesCiclo)) ? Number(appState.gramosRestantesCiclo) : 40;
     const reservas = Number.isFinite(Number(appState.reservasActivasCount)) ? Number(appState.reservasActivasCount) : 0;
     const retiros = Number.isFinite(Number(appState.historialRetiradoCount)) ? Number(appState.historialRetiradoCount) : 0;
-    return `${disponibles}g disponibles · ${reservas} reservas · ${retiros} retiros`;
+    return `${disponibles}g disponibles · ${reservas} pedidos activos · ${retiros} retiros`;
 }
 
 function construirActividadesEntregaCalendario(configMap = appState.configMap || {}) {
