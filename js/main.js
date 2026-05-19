@@ -85,6 +85,17 @@ function obtenerDestinoPostLogin() {
     return 'productos';
 }
 
+function validarCambioPassword(actual, nueva, repetir) {
+    if (!actual || !nueva || !repetir) return 'Completá todos los campos.';
+    if (nueva.length < 8) return 'La nueva contraseña debe tener al menos 8 caracteres.';
+    if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(nueva) || !/\d/.test(nueva)) {
+        return 'La nueva contraseña debe incluir letras y números.';
+    }
+    if (nueva !== repetir) return 'La confirmación no coincide.';
+    if (actual === nueva) return 'La nueva contraseña debe ser distinta a la actual.';
+    return '';
+}
+
 async function mostrarSeccion(seccionId) {
     const seccionValida = mainSections.includes(seccionId) ? seccionId : 'inicio';
     const accesoPermitido = usuarioPuedeVerSeccion(seccionValida);
@@ -144,7 +155,7 @@ async function cargarGraficosDashboard() {
     const sociosPorMes = {};
     (reservas || []).forEach((reserva) => {
         const mes = new Date(reserva.fecha_retiro).toLocaleDateString('es', { month: 'short', year: 'numeric' });
-        reservasPorMes[mes] = (reservasPorMes[mes] || 0) + Number(reserva.cantidad_gramos || 0);
+        reservasPorMes[mes] = (reservasPorMes[mes] || 0) + gramosAPacks(reserva.cantidad_gramos);
     });
     (socios || []).forEach((socio) => {
         const mes = new Date(socio.fecha_ingreso).toLocaleDateString('es', { month: 'short', year: 'numeric' });
@@ -176,7 +187,7 @@ async function cargarGraficosDashboard() {
             type: 'bar',
             data: {
                 labels: Object.keys(reservasPorMes),
-                datasets: [{ label: 'Gramos', data: Object.values(reservasPorMes), backgroundColor: 'rgba(124, 163, 90, 0.5)', borderColor: '#7ca35a', borderWidth: 1 }]
+                datasets: [{ label: 'Packs', data: Object.values(reservasPorMes), backgroundColor: 'rgba(124, 163, 90, 0.5)', borderColor: '#7ca35a', borderWidth: 1 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e0ecd0' } } }, scales: { y: { ticks: { color: '#e0ecd0' } }, x: { ticks: { color: '#e0ecd0' } } } }
         });
@@ -304,6 +315,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         const email = document.getElementById('forgotEmail').value;
         const resultado = await enviarEnlaceRecuperacionPassword(email);
         mostrarMensaje(resultado.success ? 'Enlace enviado' : 'No se pudo enviar el enlace', resultado.success);
+    });
+
+    document.getElementById('formCambiarPassword')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const boton = document.getElementById('btnCambiarPassword');
+        const actual = document.getElementById('passwordActual')?.value || '';
+        const nueva = document.getElementById('passwordNueva')?.value || '';
+        const repetir = document.getElementById('passwordNuevaConfirmar')?.value || '';
+        const errorValidacion = validarCambioPassword(actual, nueva, repetir);
+
+        if (errorValidacion) {
+            mostrarMensaje(errorValidacion, false);
+            return;
+        }
+
+        if (boton) {
+            boton.disabled = true;
+            boton.textContent = 'Actualizando...';
+        }
+
+        try {
+            const resultado = await cambiarPasswordActual(actual, nueva);
+            if (!resultado.success) {
+                mostrarMensaje(resultado.error || 'No se pudo actualizar la contraseña.', false);
+                return;
+            }
+            form.reset();
+            mostrarMensaje('Contraseña actualizada correctamente.', true);
+        } finally {
+            if (boton) {
+                boton.disabled = false;
+                boton.innerHTML = '<i class="fas fa-key"></i> Actualizar contraseña';
+            }
+        }
     });
 
     await verificarSesion();

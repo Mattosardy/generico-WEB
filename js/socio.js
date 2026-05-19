@@ -32,9 +32,9 @@ function obtenerTipoReservaUI(reserva) {
 function obtenerEtiquetaEstadoReserva(reserva, puedeReservar = true) {
     if (reserva?.estado === 'cancelado') return 'Cancelado';
     if (!reservaEstaActiva(reserva)) return puedeReservar ? 'Pendiente' : 'Cerrada';
-    if (reserva.estado === 'confirmado') return 'Pedido recibido';
+    if (reserva.estado === 'confirmado') return 'Pedido confirmado';
     if (reserva.estado === 'entregado' || reserva.estado === 'retirado') return 'Entrega confirmada';
-    return 'Pendiente de confirmacion';
+    return 'Pedido realizado - pendiente de confirmacion';
 }
 
 function construirBadgeEstadoReservaHTML(reserva, puedeReservar = true) {
@@ -55,9 +55,9 @@ function obtenerResumenEntregaUsuario(reservaPrimer, reservaUltimo, puedePrimer,
 
     const fecha = proxima.fecha.toLocaleDateString('es-UY');
     if (!reservaEstaActiva(proxima.reserva)) return `Pedido para la entrega del ${fecha} pendiente.`;
-    if (proxima.reserva.estado === 'confirmado') return `Pedido del ${fecha} recibido.`;
+    if (proxima.reserva.estado === 'confirmado') return `Pedido del ${fecha} confirmado.`;
     if (proxima.reserva.estado === 'entregado' || proxima.reserva.estado === 'retirado') return `Entrega del ${fecha} confirmada.`;
-    return `Pedido del ${fecha} pendiente de confirmacion.`;
+    return `Pedido realizado para el ${fecha}, pendiente de confirmacion.`;
 }
 
 function formatearFechaReservaCalendario(fecha) {
@@ -94,12 +94,11 @@ function renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo,
     if (!container || !appState.socioData?.id || !appState.fechasEntrega || !appState.cicloClubActual) return;
 
     const eventos = [
-        { tipo: 'primer', titulo: 'Primera entrega', fecha: appState.fechasEntrega.primerJueves, reserva: reservaPrimer, puedeReservar: puedePrimer },
-        { tipo: 'ultimo', titulo: 'Segunda entrega', fecha: appState.fechasEntrega.ultimoJueves, reserva: reservaUltimo, puedeReservar: puedeUltimo }
+        { tipo: 'primer', titulo: '1ra entrega', fecha: appState.fechasEntrega.primerJueves, reserva: reservaPrimer, puedeReservar: puedePrimer },
+        { tipo: 'ultimo', titulo: '2da entrega', fecha: appState.fechasEntrega.ultimoJueves, reserva: reservaUltimo, puedeReservar: puedeUltimo }
     ];
 
-    container.style.display = '';
-    container.innerHTML = `
+    const calendarioHTML = `
         <div class="reservas-activity-head">
             <span class="dashboard-eyebrow">Calendario de entregas</span>
             <strong>Próximas fechas de retiro</strong>
@@ -109,6 +108,9 @@ function renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo,
             ${construirCalendarioEntregasHTML(eventos.map(construirEventoCalendarioReservaUsuario))}
         </div>
     `;
+
+    container.style.display = '';
+    container.innerHTML = calendarioHTML;
 
     container.querySelectorAll('[data-reserva-evento]').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -175,8 +177,14 @@ function cerrarReservaActividadModal() {
 
 function obtenerReservasActivasCarrito(reservas = []) {
     const ciclo = appState.cicloClubActual || obtenerCicloClub();
+    const hoy = normalizarFechaSinHora(new Date());
     return (reservas || [])
-        .filter((reserva) => reservaEstaActiva(reserva) && fechaEstaEnCicloClub(reserva.fecha_retiro, ciclo))
+        .filter((reserva) => {
+            if (!reservaEstaActiva(reserva)) return false;
+            const fechaRetiro = parsearFechaConfigEntrega(reserva.fecha_retiro) || new Date(reserva.fecha_retiro);
+            if (!reserva.fecha_retiro || Number.isNaN(fechaRetiro.getTime())) return true;
+            return fechaEstaEnCicloClub(fechaRetiro, ciclo) || normalizarFechaSinHora(fechaRetiro) >= hoy;
+        })
         .sort((a, b) => new Date(a.fecha_retiro).getTime() - new Date(b.fecha_retiro).getTime());
 }
 
@@ -190,7 +198,7 @@ function construirItemCarritoReservaHTML(reserva) {
             <span class="carrito-modal-item-icon"><i class="fas fa-leaf"></i></span>
             <span class="carrito-modal-item-copy">
                 <strong>${escapeHtml(nombre)}</strong>
-                <small>${Number(reserva.cantidad_gramos || 0)}g - ${escapeHtml(fecha)} - ${escapeHtml(estado)}</small>
+                <small>${escapeHtml(formatearPacksReserva(reserva.cantidad_gramos))} - ${escapeHtml(fecha)} - ${escapeHtml(estado)}</small>
             </span>
             <i class="fas fa-pen carrito-modal-item-action" aria-hidden="true"></i>
         </button>
@@ -233,14 +241,16 @@ async function abrirCarritoSocio() {
     const activas = obtenerReservasActivasCarrito(reservas);
     const gramosUsados = activas.reduce((total, reserva) => total + Number(reserva.cantidad_gramos || 0), 0);
     const gramosRestantes = Math.max(0, 40 - gramosUsados);
+    const packsUsados = gramosAPacks(gramosUsados);
+    const packsRestantes = gramosAPacks(gramosRestantes);
     const articulos = [];
 
     body.innerHTML = `
         <span class="dashboard-eyebrow">Carrito del socio</span>
         <h2 class="modal-titulo">Carrito de ${escapeHtml(appState.socioData.nombre || 'socio')}</h2>
         <div class="carrito-modal-summary">
-            <strong>${gramosUsados}g reservados</strong>
-            <span>${gramosRestantes}g disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
+            <strong>${packsUsados} de 2 packs reservados</strong>
+            <span>${packsRestantes} packs disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
         </div>
         <section class="carrito-modal-section">
             <h3>Variedades reservadas</h3>
@@ -278,6 +288,8 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
     const historialRetirado = (reservas || []).filter((reserva) => reserva.estado === 'entregado' || reserva.estado === 'retirado').length;
     const resumenEntrega = obtenerResumenEntregaUsuario(reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo);
     const gramosUsados = Math.max(0, 40 - Number(gramosRestantesCiclo || 0));
+    const packsUsados = gramosAPacks(gramosUsados);
+    const packsRestantes = gramosAPacks(gramosRestantesCiclo);
     const progreso = Math.min(100, Math.max(0, (gramosUsados / 40) * 100));
 
     dashboard.style.display = '';
@@ -289,12 +301,12 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
                 <p>${escapeHtml(resumenEntrega)}</p>
             </div>
             <div class="dashboard-grams">
-                <span>${gramosRestantesCiclo}g</span>
-                <small>disponibles de 40g</small>
-                <div class="dashboard-grams-progress" aria-label="${gramosUsados} gramos usados de 40">
+                <span>${packsRestantes}</span>
+                <small>packs disponibles de 2</small>
+                <div class="dashboard-grams-progress" aria-label="${packsUsados} packs usados de 2">
                     <i style="width:${progreso}%"></i>
                 </div>
-                <small>${gramosUsados}g usados este ciclo</small>
+                <small>${packsUsados} packs usados este ciclo</small>
             </div>
         </div>
         <div class="socio-dashboard-grid">
@@ -306,13 +318,13 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
             <article class="socio-metric-card">
                 <span class="metric-label">Primera entrega</span>
                 ${construirBadgeEstadoReservaHTML(reservaPrimer, puedePrimer)}
-                <small>${reservaPrimer ? `${reservaPrimer.cantidad_gramos}g pedidos` : (puedePrimer ? 'Disponible para pedir' : 'Plazo cerrado')}</small>
+                <small>${reservaPrimer ? `${escapeHtml(formatearPacksReserva(reservaPrimer.cantidad_gramos))} pedidos` : (puedePrimer ? 'Disponible para pedir' : 'Plazo cerrado')}</small>
                 ${construirAccionModificarReservaHTML(reservaPrimer, 'primer', puedePrimer)}
             </article>
             <article class="socio-metric-card">
                 <span class="metric-label">Ultima entrega</span>
                 ${construirBadgeEstadoReservaHTML(reservaUltimo, puedeUltimo)}
-                <small>${reservaUltimo ? `${reservaUltimo.cantidad_gramos}g pedidos` : (puedeUltimo ? 'Disponible para pedir' : 'Plazo cerrado')}</small>
+                <small>${reservaUltimo ? `${escapeHtml(formatearPacksReserva(reservaUltimo.cantidad_gramos))} pedidos` : (puedeUltimo ? 'Disponible para pedir' : 'Plazo cerrado')}</small>
                 ${construirAccionModificarReservaHTML(reservaUltimo, 'ultimo', puedeUltimo)}
             </article>
             <article class="socio-metric-card">

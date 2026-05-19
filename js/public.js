@@ -1,4 +1,4 @@
-async function cargarContenidoInstitucional() {
+﻿async function cargarContenidoInstitucional() {
     try {
         const { data, error } = await supabaseClient.from('configuracion_sistema').select('clave, valor');
         if (error) throw error;
@@ -99,6 +99,7 @@ function ordenarProductosParaCatalogo(productos) {
 
 const TIPOS_ARTICULOS_PRODUCTOS = ['dispositivos_pipas', 'parafernalia_accesorios'];
 const PREFIJO_ARTICULO_PRODUCTO = 'ARTICULO:';
+const PACK_GRAMOS_DEFAULT = 20;
 
 function normalizarTipoCultivo(tipoCultivo) {
     const valor = String(tipoCultivo || '').trim().toLowerCase();
@@ -132,6 +133,58 @@ function obtenerDescripcionTipoCultivo(tipoCultivo) {
     return tipoCultivo === 'exterior'
         ? 'Cultivo exterior, perfil clasico y acceso simple.'
         : 'Cultivo asistido, seleccion cuidada y mayor control.';
+}
+
+function normalizarEnteroNoNegativo(valor, fallback = 0) {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) return fallback;
+    return Math.max(0, Math.floor(numero));
+}
+
+function obtenerInfoStockProducto(producto = {}) {
+    const tieneCamposStock = Object.prototype.hasOwnProperty.call(producto, 'stock_packs')
+        || Object.prototype.hasOwnProperty.call(producto, 'stock_activo')
+        || Object.prototype.hasOwnProperty.call(producto, 'bajo_stock_packs')
+        || Object.prototype.hasOwnProperty.call(producto, 'pack_gramos');
+    const stockActivo = tieneCamposStock ? producto.stock_activo !== false : false;
+    const packGramos = normalizarEnteroNoNegativo(producto.pack_gramos, PACK_GRAMOS_DEFAULT) || PACK_GRAMOS_DEFAULT;
+    const stockPacks = normalizarEnteroNoNegativo(producto.stock_packs, 0);
+    const bajoStockPacks = normalizarEnteroNoNegativo(producto.bajo_stock_packs, 2);
+    const sinStock = stockActivo && stockPacks <= 0;
+    const bajoStock = stockActivo && stockPacks > 0 && stockPacks <= bajoStockPacks;
+    return {
+        tieneCamposStock,
+        stockActivo,
+        stockPacks,
+        bajoStockPacks,
+        packGramos,
+        gramosDisponibles: stockPacks * packGramos,
+        sinStock,
+        bajoStock
+    };
+}
+
+function productoTieneStockParaGramos(producto = {}, gramos = 0) {
+    const info = obtenerInfoStockProducto(producto);
+    if (!info.stockActivo) return true;
+    return info.stockPacks >= Math.ceil(Number(gramos || 0) / info.packGramos);
+}
+
+function obtenerClaseStockProducto(producto = {}) {
+    const info = obtenerInfoStockProducto(producto);
+    if (info.sinStock) return ' producto-sin-stock';
+    if (info.bajoStock) return ' producto-bajo-stock';
+    return '';
+}
+
+function renderizarBadgeStockProducto(producto = {}, compacto = false) {
+    const info = obtenerInfoStockProducto(producto);
+    if (!info.stockActivo) return '';
+    const detalle = compacto ? '' : `<span>${formatearPacksDisponibles(info.stockPacks, info.gramosDisponibles)}</span>`;
+    const estado = info.sinStock
+        ? '<strong>SIN STOCK</strong>'
+        : (info.bajoStock ? '<strong>Poca disponibilidad</strong>' : '<strong>Disponible</strong>');
+    return `<div class="producto-stock-badge${info.sinStock ? ' sin-stock' : ''}${info.bajoStock ? ' bajo-stock' : ''}">${estado}${detalle}</div>`;
 }
 
 const STORAGE_PRODUCTOS_VISTOS = 'cururu_productos_vistos_v1';
@@ -249,7 +302,7 @@ function obtenerResumenEntregaActividad() {
     const disponibles = Number.isFinite(Number(appState.gramosRestantesCiclo)) ? Number(appState.gramosRestantesCiclo) : 40;
     const reservas = Number.isFinite(Number(appState.reservasActivasCount)) ? Number(appState.reservasActivasCount) : 0;
     const retiros = Number.isFinite(Number(appState.historialRetiradoCount)) ? Number(appState.historialRetiradoCount) : 0;
-    return `${disponibles}g disponibles · ${reservas} pedidos activos · ${retiros} retiros`;
+    return `${gramosAPacks(disponibles)} packs disponibles · ${reservas} pedidos activos · ${retiros} retiros`;
 }
 
 function construirActividadesEntregaCalendario(configMap = appState.configMap || {}) {
@@ -358,28 +411,31 @@ window.marcarActividadesVistas = function() {
 };
 
 function inicializarAcordeonesProductos() {
-    document.querySelectorAll('.productos-toggle').forEach((toggle) => {
-        toggle.addEventListener('click', () => {
-            const tipoCultivo = toggle.dataset.tipoCultivo;
-            const columna = toggle.closest('.productos-columna');
-            const acordeon = toggle.closest('.productos-acordeon') || document;
-            const panel = acordeon.querySelector(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`);
-            if (!columna || !panel) return;
+    document.querySelectorAll('.productos-acordeon:not(.admin-main-acordeon):not(.admin-mensajes-acordeon):not(.admin-manual-acordeon)').forEach((acordeon) => {
+        if (acordeon.dataset.inicializado === 'true') return;
+        acordeon.dataset.inicializado = 'true';
+        acordeon.querySelectorAll('.productos-toggle').forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const tipoCultivo = toggle.dataset.tipoCultivo;
+                const columna = toggle.closest('.productos-columna');
+                const panel = acordeon.querySelector(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`);
+                if (!columna || !panel) return;
 
-            const expandido = toggle.getAttribute('aria-expanded') === 'true';
-            acordeon.querySelectorAll('.productos-columna.activa').forEach((columnaActiva) => {
-                if (columnaActiva === columna) return;
-                const toggleActivo = columnaActiva.querySelector('.productos-toggle');
-                if (toggleActivo) toggleActivo.setAttribute('aria-expanded', 'false');
-                columnaActiva.classList.remove('activa');
-            });
-            acordeon.querySelectorAll('.productos-panel').forEach((panelActivo) => {
-                if (panelActivo !== panel) panelActivo.hidden = true;
-            });
+                const expandido = toggle.getAttribute('aria-expanded') === 'true';
+                acordeon.querySelectorAll('.productos-columna.activa').forEach((columnaActiva) => {
+                    if (columnaActiva === columna) return;
+                    const toggleActivo = columnaActiva.querySelector('.productos-toggle');
+                    if (toggleActivo) toggleActivo.setAttribute('aria-expanded', 'false');
+                    columnaActiva.classList.remove('activa');
+                });
+                acordeon.querySelectorAll('.productos-panel').forEach((panelActivo) => {
+                    if (panelActivo !== panel) panelActivo.hidden = true;
+                });
 
-            toggle.setAttribute('aria-expanded', String(!expandido));
-            panel.hidden = expandido;
-            columna.classList.toggle('activa', !expandido);
+                toggle.setAttribute('aria-expanded', String(!expandido));
+                panel.hidden = expandido;
+                columna.classList.toggle('activa', !expandido);
+            });
         });
     });
 }
@@ -448,6 +504,23 @@ function construirArticulosDestacadosHTML(articulosPorCategoria = {}) {
 
 function construirEstadoProductoHTML(producto) {
     const disponible = producto.disponible !== false;
+    const stock = obtenerInfoStockProducto(producto);
+    if (stock.stockActivo && stock.sinStock) {
+        return `
+        <div class="producto-status-row stock-sin-stock">
+            <span class="producto-status-dot agotado"></span>
+            <span>SIN STOCK</span>
+        </div>
+    `;
+    }
+    if (stock.stockActivo && stock.bajoStock) {
+        return `
+        <div class="producto-status-row stock-bajo">
+            <span class="producto-status-dot disponible"></span>
+            <span>Poca disponibilidad</span>
+        </div>
+    `;
+    }
     return `
         <div class="producto-status-row">
             <span class="producto-status-dot ${disponible ? 'disponible' : 'agotado'}"></span>
@@ -462,21 +535,25 @@ function renderizarTarjetaProducto(producto) {
     const disponible = producto.disponible !== false;
     const indicaSativa = producto.indica_sativa || '50% Indica - 50% Sativa';
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
+    const stock = obtenerInfoStockProducto(producto);
+    const bloqueadoPorStock = stock.sinStock;
+    const claseStock = obtenerClaseStockProducto(producto);
 
     return `
-        <div class="producto-card${claseNuevo}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
+        <div class="producto-card${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
             <div class="producto-miniatura">
-                <span class="producto-disponibilidad-badge ${disponible ? 'disponible' : 'agotado'}">${disponible ? 'Disponible' : 'Agotado'}</span>
+                <span class="producto-disponibilidad-badge ${(!disponible || bloqueadoPorStock) ? 'agotado' : 'disponible'}">${bloqueadoPorStock ? 'SIN STOCK' : (disponible ? 'Disponible' : 'Agotado')}</span>
                 <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
             </div>
             ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}
             <div class="producto-detalle">
                 <h3 class="producto-nombre">${escapeHtml(producto.nombre)}</h3>
                 ${construirEstadoProductoHTML(producto)}
+                ${renderizarBadgeStockProducto(producto)}
                 <div style="color:#111111;font-size:0.9rem;margin-bottom:10px;">${escapeHtml(indicaSativa)}</div>
                 <button class="btn-mas-info" onclick="event.stopPropagation();mostrarMasInfo('${producto.id}')" style="background:#496535;border:1px solid #496535;color:#f4f8ef;padding:8px 16px;border-radius:20px;cursor:pointer;width:100%;margin-bottom:10px;"><i class="fas fa-plus-circle"></i> Información</button>
-                <button class="btn-reservar-producto" onclick="event.stopPropagation();abrirModalDesdeBoton('${producto.id}')" style="background:#496535;border:none;color:#f4f8ef;padding:10px;border-radius:25px;cursor:pointer;font-weight:bold;width:100%;" ${!disponible ? 'disabled' : ''}><i class="fas fa-calendar-check"></i> Reservar</button>
-                ${!disponible ? '<div class="producto-agotado-texto">No disponible para reservar</div>' : ''}
+                <button class="btn-reservar-producto" onclick="event.stopPropagation();abrirModalDesdeBoton('${producto.id}')" style="background:#496535;border:none;color:#f4f8ef;padding:10px;border-radius:25px;cursor:pointer;font-weight:bold;width:100%;" ${(!disponible || bloqueadoPorStock) ? 'disabled' : ''}><i class="fas fa-calendar-check"></i> Reservar</button>
+                ${(!disponible || bloqueadoPorStock) ? '<div class="producto-agotado-texto">No disponible para reservar</div>' : ''}
             </div>
         </div>
     `;
@@ -484,13 +561,14 @@ function renderizarTarjetaProducto(producto) {
 
 function renderizarTarjetaProductoCompacta(producto) {
     const imagenes = normalizarListaImagenes(producto.imagen_url);
-    const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcciÃ³n');
-
+    const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción');
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
+    const claseStock = obtenerClaseStockProducto(producto);
     return `
-        <div class="producto-card producto-card-compacta${claseNuevo}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
+        <div class="producto-card producto-card-compacta${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
             <div class="producto-miniatura">
-                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcciÃ³n')}';">
+                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
+                ${renderizarBadgeStockProducto(producto, true)}
                 <div class="producto-overlay">
                     ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}
                     <h3 class="producto-nombre">${escapeHtml(producto.nombre)}</h3>
@@ -508,6 +586,7 @@ async function cargarNoticias() {
     registrarNoticiasParaNovedades(noticias || []);
     if (!noticias?.length) {
         container.innerHTML = '<div class="empty-state"><i class="fas fa-newspaper"></i><strong>Sin novedades por ahora</strong><span>Cuando haya comunicados del club, los vas a ver acá.</span></div>';
+        inicializarAcordeonesProductos();
         return;
     }
 
@@ -536,6 +615,7 @@ async function cargarNoticias() {
             abrirNoticiaModal(noticia);
         });
     });
+    inicializarAcordeonesProductos();
 }
 
 async function cargarActividadesPublicas() {
@@ -564,16 +644,13 @@ async function cargarActividadesPublicas() {
 
     container.style.display = '';
     const iconosTipo = { actividad: 'Actividad', sorteo: 'Sorteo', regalo: 'Regalo', entrega: 'Proxima entrega' };
-    const entregasVigentes = actividadesVigentes.filter((actividad) => String(actividad.tipo || '').toLowerCase() === 'entrega');
     const manualesVigentes = actividadesVigentes.filter((actividad) => String(actividad.tipo || '').toLowerCase() !== 'entrega');
-    const usuarioConCalendarioPersonal = Boolean(appState.socioData?.id);
-    if (usuarioConCalendarioPersonal && !manualesVigentes.length) {
+    if (!manualesVigentes.length) {
         container.innerHTML = '';
         container.style.display = 'none';
         return;
     }
     container.innerHTML = `
-        ${usuarioConCalendarioPersonal ? '' : construirCalendarioEntregasPublicoHTML(entregasVigentes)}
         ${manualesVigentes.map((actividad) => renderActividadPublica(actividad, iconosTipo)).join('')}
     `;
 }
@@ -715,10 +792,10 @@ window.abrirNoticiaModal = function(noticia) {
         };
     }
 
-    titulo.textContent = noticia.titulo || 'Novedad';
+    titulo.textContent = normalizarTextoVisual(noticia.titulo || 'Novedad');
     fecha.textContent = formatearFechaNoticia(noticia.fecha_publicacion);
-    autor.textContent = noticia.autor ? `Por ${noticia.autor}` : '';
-    contenido.textContent = noticia.contenido || 'Sin contenido disponible.';
+    autor.textContent = noticia.autor ? `Por ${normalizarTextoVisual(noticia.autor)}` : '';
+    contenido.textContent = normalizarTextoVisual(noticia.contenido || 'Sin contenido disponible.');
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -738,3 +815,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === noticiaModal) cerrarNoticiaModal();
     });
 });
+
+
+

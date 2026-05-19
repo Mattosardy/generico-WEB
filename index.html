@@ -14,7 +14,7 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=20260515-articulos-admin">
+    <link rel="stylesheet" href="css/style.css?v=20260519-stock-packs-utf8">
     <link rel="icon" href="data:,">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -24,16 +24,17 @@
 <div class="container">
     <div class="header">
         <div class="header-main">
+            <span id="headerSessionName" class="header-session-name" aria-live="polite"></span>
             <div class="logo">
-                <h1><img src="assets/images/logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
+                <h1><img src="assets/images/Logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
                 <p>Area privada de socios · Pedidos · Entregas</p>
             </div>
             <div class="mobile-hidden-dock" aria-hidden="true">
                 <button class="dock-btn" data-section="inicio" id="dockBtnInicio"><i class="fas fa-house"></i><span>Inicio</span></button>
                 <button class="dock-btn" data-section="productos" id="dockBtnProductos"><i class="fas fa-leaf"></i><span>Productos</span></button>
                 <button class="dock-btn auth-only" data-section="actividades" id="dockBtnActividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
-                <button class="dock-btn admin-only" data-section="admin" id="dockBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Admin</span></button>
-                <button class="dock-btn maestro-only" data-section="maestro" id="dockBtnMaestro" style="display: none;"><i class="fas fa-crown"></i><span>Maestro</span></button>
+                <button class="dock-btn admin-only" data-section="admin" id="dockBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
+                <button class="dock-btn maestro-only" data-section="maestro" id="dockBtnMaestro" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
                 <button id="dockBtnLogin" class="dock-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i><span>Ingresar</span></button>
             </div>
         </div>
@@ -41,11 +42,11 @@
             <button class="nav-btn active" data-section="inicio"><i class="fas fa-house"></i><span>Inicio</span></button>
             <button class="nav-btn" data-section="productos"><i class="fas fa-leaf"></i><span>Productos</span></button>
             <button class="nav-btn auth-only" data-section="actividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
-            <button class="nav-btn admin-only" data-section="admin" id="navBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Admin</span></button>
-            <button class="nav-btn maestro-only" data-section="maestro" id="navBtnMaestro" style="display: none;"><i class="fas fa-crown"></i><span>Maestro</span></button>
+            <button class="nav-btn admin-only" data-section="admin" id="navBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
+            <button class="nav-btn maestro-only" data-section="maestro" id="navBtnMaestro" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
             <button id="btnLogin" class="btn-inicio nav-session-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-            <button id="btnLogout" class="btn-cerrar nav-session-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             <span id="userName" class="nav-user-name">Invitado</span>
+            <button id="btnLogout" class="btn-cerrar nav-session-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             <button class="nav-btn nav-audio-btn" id="btnAudioToggle" type="button" aria-label="Silenciar música" title="Silenciar música">
                 <i class="fas fa-volume-high"></i>
             </button>
@@ -68,7 +69,7 @@
                 <p>Cururu Club centraliza el catalogo, el cupo mensual, las fechas de retiro y la comunicacion interna para que cada socio tenga una experiencia simple y ordenada.</p>
                 <div class="club-intro-badges" aria-label="Resumen del servicio">
                     <span><i class="fas fa-leaf"></i> Variedades disponibles</span>
-                    <span><i class="fas fa-calendar-check"></i> Pedidos de 20g o 40g</span>
+                    <span><i class="fas fa-calendar-check"></i> Pedidos de 1 o 2 packs por mes</span>
                     <span><i class="fas fa-bell"></i> Avisos y entregas</span>
                 </div>
             </div>
@@ -120,9 +121,67 @@ Cururú Club Cannábico - calidad y transparencia.</div>
             <h2 class="section-title">
                 <i class="fas fa-bell"></i> Agenda y pedidos
             </h2>
-            <div id="reservasActividadCalendar" class="reservas-activity-calendar auth-only" style="display: none;"></div>
-            <div id="noticias-container" class="noticias-grid">
-                <div class="loading">Cargando noticias...</div>
+            <div class="productos-acordeon actividades-acordeon">
+                <div class="productos-columna auth-only" style="display: none;">
+                    <h3 class="productos-columna-titulo">
+                        <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-calendario" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-calendar-check"></i> Calendario de entregas</span>
+                            <span class="productos-toggle-descripcion">Próximas fechas de retiro</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div class="productos-panel auth-only" data-tipo-cultivo="actividades-calendario" style="display: none;" hidden>
+                    <div id="reservasActividadCalendar" class="reservas-activity-calendar">
+                        <div class="loading">Cargando calendario...</div>
+                    </div>
+                </div>
+
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-novedades" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-newspaper"></i> Novedades</span>
+                            <span class="productos-toggle-descripcion">Comunicados recientes del club</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div class="productos-panel" data-tipo-cultivo="actividades-novedades" hidden>
+                    <div id="noticias-container" class="noticias-grid">
+                        <div class="loading">Cargando noticias...</div>
+                    </div>
+                </div>
+
+                <div class="productos-columna auth-only" style="display: none;">
+                    <h3 class="productos-columna-titulo">
+                        <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-cuenta" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-user-lock"></i> Mi cuenta</span>
+                            <span class="productos-toggle-descripcion">Cambiar contraseña</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div class="productos-panel auth-only" data-tipo-cultivo="actividades-cuenta" style="display: none;" hidden>
+                    <div id="miCuentaPanel" class="socio-dashboard">
+                        <h3><i class="fas fa-user-lock"></i> Mi cuenta</h3>
+                        <p style="color: var(--text-muted); margin: 6px 0 16px; line-height: 1.5;">Actualizá tu contraseña usando tu clave actual para confirmar la operación.</p>
+                        <form id="formCambiarPassword" style="max-width: 420px;">
+                            <div class="form-group">
+                                <label>Contraseña actual *</label>
+                                <input type="password" id="passwordActual" autocomplete="current-password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nueva contraseña *</label>
+                                <input type="password" id="passwordNueva" autocomplete="new-password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Repetir nueva contraseña *</label>
+                                <input type="password" id="passwordNuevaConfirmar" autocomplete="new-password" required>
+                            </div>
+                            <button type="submit" id="btnCambiarPassword" class="btn-submit"><i class="fas fa-key"></i> Actualizar contraseña</button>
+                        </form>
+                    </div>
+                </div>
             </div>
             <div id="actividades-container" class="actividades-grid">
                 <div class="loading">Cargando actividades...</div>
@@ -186,53 +245,189 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     <div id="admin" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de Administración</h2>
         <div class="dashboard-grid" id="adminCards"><div class="loading">Cargando estadísticas...</div></div>
-        <div class="nav-admin-bar">
-            <button class="nav-admin-btn" data-admin-section="historia"><i class="fas fa-book-open"></i> Historia</button>
-            <button class="nav-admin-btn" data-admin-section="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
-            <button class="nav-admin-btn" data-admin-section="productos"><i class="fas fa-leaf"></i> Productos</button>
-            <button class="nav-admin-btn" data-admin-section="actividades"><i class="fas fa-calendar-alt"></i> Actividades</button>
-            <button class="nav-admin-btn" data-admin-section="entregas"><i class="fas fa-truck"></i> Entregas</button>
-            <button class="nav-admin-btn" data-admin-section="solicitudes"><i class="fas fa-user-plus"></i> Solicitudes</button>
-            <button class="nav-admin-btn" data-admin-section="socios"><i class="fas fa-users"></i> Socios</button>
-            <button class="nav-admin-btn" data-admin-section="reservasAdmin"><i class="fas fa-box"></i> Pedidos</button>
-            <button class="nav-admin-btn" data-admin-section="mensajes"><i class="fas fa-envelope"></i> Mensajes</button>
-        </div>
         <div id="admin-empty" class="admin-empty-state">
             <i class="fas fa-sliders"></i>
             <strong>Panel de administración</strong>
             <span>Elegí una sección del menú para empezar.</span>
         </div>
-        <div id="admin-historia" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-noticias" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-productos" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-actividades" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-entregas" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-solicitudes" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-socios" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-reservasAdmin" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-mensajes" style="display: none;">
-            <div class="section" style="background: rgba(8, 15, 6, 0.35); margin-top: 10px;">
-                <h3 style="color:var(--text-strong); margin-bottom: 18px;"><i class="fas fa-paper-plane"></i> Enviar mensaje a socios</h3>
-                <p style="color:var(--text-muted); margin: 0 0 18px; line-height: 1.5;">Elegí el destinatario, agregá un asunto claro y escribí el mensaje final antes de enviarlo. El historial de abajo muestra los envíos recientes para referencia.</p>
-                <div class="form-grid">
-                    <div class="form-group full-width"><label>Destinatario</label><select id="mensajeDestinatario"><option value="todos">Todos los socios</option></select></div>
-                    <div class="form-group full-width"><label>Asunto</label><input type="text" id="mensajeAsunto" placeholder="Asunto del mensaje"></div>
-                    <div class="form-group full-width"><label>Mensaje</label><textarea id="mensajeTexto" rows="5" placeholder="Escribí el mensaje para los socios..."></textarea></div>
-                    <div class="form-group full-width"><button id="enviarMensajeBtn" type="button" class="btn-submit">Enviar mensaje</button></div>
+        <div class="nav-admin-bar productos-acordeon admin-main-acordeon">
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="historia" data-tipo-cultivo="admin-historia" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-book-open"></i> Historia</span>
+                            <span class="productos-toggle-descripcion">Contenido institucional</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
                 </div>
-                <h3 style="color:var(--text-strong); margin: 22px 0 12px;">Historial reciente</h3>
-                <div id="mensajesHistorial" class="mensajes-container"><div class="loading">Cargando historial...</div></div>
+                <div id="admin-historia" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-historia" style="display: none;"><div class="loading">Cargando...</div></div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="manual" data-tipo-cultivo="admin-manual" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-circle-question"></i> Manual</span>
+                            <span class="productos-toggle-descripcion">Guías rápidas de uso</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-manual" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-manual" style="display: none;">
+                    <div class="manual-grid">
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-plus-circle"></i> Agregar contenido</h3>
+                            <p>Usá las secciones Historia, Productos, Actividades y Entregas para mantener la información visible y actualizada.</p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-leaf"></i> Productos, actividades y variedades</h3>
+                            <p>Revisá nombre, descripción, imágenes, disponibilidad y precios antes de guardar. En productos, verificá que cada variedad tenga datos completos.</p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-envelope"></i> Mensajes</h3>
+                            <p>En Mensajes podés leer la bandeja de Telegram y enviar avisos a un socio puntual o a todos los socios vinculados.</p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-box"></i> Pedidos y reservas</h3>
+                            <p>Entrá a Pedidos para revisar solicitudes, confirmar recepción, confirmar entrega y controlar que los estados estén al día.</p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-check-circle"></i> Recomendaciones</h3>
+                            <p>Antes de cerrar sesión, revisá solicitudes pendientes, mensajes recientes y entregas del calendario. Evitá borrar datos salvo que sea necesario.</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="productos" data-tipo-cultivo="admin-productos" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-leaf"></i> Productos</span>
+                            <span class="productos-toggle-descripcion">Variedades y catálogo</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-productos" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-productos" style="display: none;"><div class="loading">Cargando...</div></div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="actividades" data-tipo-cultivo="admin-actividades" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-calendar-alt"></i> Actividades</span>
+                            <span class="productos-toggle-descripcion">Agenda y eventos</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-actividades" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-actividades" style="display: none;"><div class="loading">Cargando...</div></div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="entregas" data-tipo-cultivo="admin-entregas" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-truck"></i> Entregas</span>
+                            <span class="productos-toggle-descripcion">Fechas y lugares</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-entregas" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-entregas" style="display: none;"><div class="loading">Cargando...</div></div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="solicitudes" data-tipo-cultivo="admin-solicitudes" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-user-plus"></i> Solicitudes</span>
+                            <span class="productos-toggle-descripcion">Altas pendientes</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-solicitudes" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-solicitudes" style="display: none;"><div class="loading">Cargando...</div></div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="socios" data-tipo-cultivo="admin-socios" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-users"></i> Socios</span>
+                            <span class="productos-toggle-descripcion">Gestión de usuarios</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-socios" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-socios" style="display: none;"><div class="loading">Cargando...</div></div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="reservasAdmin" data-tipo-cultivo="admin-reservasAdmin" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-box"></i> Pedidos</span>
+                            <span class="productos-toggle-descripcion">Reservas y estados</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-reservasAdmin" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-reservasAdmin" style="display: none;"><div class="loading">Cargando...</div></div>
+            </div>
+            <div class="admin-accordion-item">
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button class="nav-admin-btn productos-toggle" data-admin-section="mensajes" data-tipo-cultivo="admin-mensajes" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-envelope"></i> Mensajes</span>
+                            <span class="productos-toggle-descripcion">Telegram y avisos</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="admin-mensajes" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-mensajes" style="display: none;">
+                    <div class="productos-acordeon admin-mensajes-acordeon">
+                        <div class="productos-controles">
+                            <div class="productos-columna activa">
+                                <h3 class="productos-columna-titulo">
+                                    <button type="button" class="productos-toggle" data-tipo-cultivo="bandeja-entrada" aria-expanded="true">
+                                        <span class="productos-toggle-titulo"><i class="fas fa-inbox"></i> Bandeja de entrada</span>
+                                        <span class="productos-toggle-descripcion">Mensajes recibidos desde Telegram</span>
+                                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                                    </button>
+                                </h3>
+                            </div>
+                            <div class="productos-columna">
+                                <h3 class="productos-columna-titulo">
+                                    <button type="button" class="productos-toggle" data-tipo-cultivo="nuevo-mensaje" aria-expanded="false">
+                                        <span class="productos-toggle-titulo"><i class="fas fa-paper-plane"></i> Nuevo mensaje</span>
+                                        <span class="productos-toggle-descripcion">Enviar avisos por Telegram</span>
+                                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                                    </button>
+                                </h3>
+                            </div>
+                        </div>
+                        <div class="productos-panel" data-tipo-cultivo="bandeja-entrada">
+                            <div id="telegramInboxMensajes" class="mensajes-container"><div class="loading">Cargando mensajes recibidos...</div></div>
+                        </div>
+                        <div class="productos-panel" data-tipo-cultivo="nuevo-mensaje" hidden>
+                            <p style="color:var(--text-muted); margin: 0 0 18px; line-height: 1.5;">Elegí el destinatario, agregá un asunto claro y escribí el mensaje final antes de enviarlo. El historial de abajo muestra los envíos recientes para referencia.</p>
+                            <div class="form-grid">
+                                <div class="form-group full-width"><label>Destinatario</label><select id="mensajeDestinatario"><option value="todos">Todos los socios</option></select></div>
+                                <div class="form-group full-width"><label>Asunto</label><input type="text" id="mensajeAsunto" placeholder="Asunto del mensaje"></div>
+                                <div class="form-group full-width"><label>Mensaje</label><textarea id="mensajeTexto" rows="5" placeholder="Escribí el mensaje para los socios..."></textarea></div>
+                                <div class="form-group full-width"><button id="enviarMensajeBtn" type="button" class="btn-submit">Enviar mensaje</button></div>
+                            </div>
+                            <h3 style="color:var(--text-strong); margin: 22px 0 12px;">Historial reciente</h3>
+                            <div id="mensajesHistorial" class="mensajes-container"><div class="loading">Cargando historial...</div></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
     <!-- MAESTRO -->
-    <div id="maestro" class="section" style="display: none;">
+        <div id="maestro" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-crown"></i> Panel Maestro - Control Total</h2>
         <div class="dashboard-grid" id="maestroCards"><div class="loading">Cargando estadísticas...</div></div>
         <div class="nav-maestro-bar">
             <button class="nav-maestro-btn active" data-maestro-section="historia"><i class="fas fa-book-open"></i> Historia</button>
-            <button class="nav-maestro-btn" data-maestro-section="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
             <button class="nav-maestro-btn" data-maestro-section="productos"><i class="fas fa-leaf"></i> Productos</button>
             <button class="nav-maestro-btn" data-maestro-section="actividades"><i class="fas fa-calendar-alt"></i> Actividades</button>
             <button class="nav-maestro-btn" data-maestro-section="socios"><i class="fas fa-users"></i> Socios</button>
@@ -246,7 +441,6 @@ Cururú Club Cannábico - calidad y transparencia.</div>
             <button class="nav-maestro-btn" data-maestro-section="sorteos"><i class="fas fa-trophy"></i> Sorteos</button>
         </div>
         <div id="maestro-historia"><div class="loading">Cargando historia...</div></div>
-        <div id="maestro-noticias" style="display: none;"><div class="loading">Cargando noticias...</div></div>
         <div id="maestro-productos" style="display: none;"><div class="loading">Cargando productos...</div></div>
         <div id="maestro-actividades" style="display: none;"><div class="loading">Cargando actividades...</div></div>
         <div id="maestro-socios" style="display: none;"><div class="loading">Cargando socios...</div></div>
@@ -352,17 +546,23 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-client.js?v=20260515-commercial-pass"></script>
+<script>
+window.__SUPABASE_ENV__ = {
+    url: "%VITE_SUPABASE_URL%",
+    anonKey: "%VITE_SUPABASE_ANON_KEY%"
+};
+</script>
+<script src="js/supabase-client.js?v=20260515-reservas-validas"></script>
 
 <script src="js/config.js?v=20260515-commercial-pass"></script>
-<script src="js/utils.js?v=20260515-carrito-socio"></script>
+<script src="js/utils.js?v=20260519-stock-packs-utf8"></script>
 <script src="js/notifications.js?v=20260515-commercial-pass"></script>
-<script src="js/auth.js?v=20260515-carrito-socio"></script>
-<script src="js/public.js?v=20260515-articulos-admin"></script>
-<script src="js/socio.js?v=20260515-carrito-socio"></script>
-<script src="js/modals.js?v=20260515-articulos-admin"></script>
-<script src="js/admin.js?v=20260515-articulos-admin"></script>
+<script src="js/auth.js?v=20260515-header-roles"></script>
+<script src="js/public.js?v=20260519-stock-packs-utf8"></script>
+<script src="js/socio.js?v=20260519-stock-packs-utf8"></script>
+<script src="js/modals.js?v=20260519-stock-packs-utf8"></script>
+<script src="js/admin.js?v=20260519-stock-packs-utf8"></script>
 <script src="js/maestro.js?v=20260515-commercial-pass"></script>
-<script src="js/main.js?v=20260515-carrito-socio"></script>
+<script src="js/main.js?v=20260519-stock-packs-utf8"></script>
 </body>
 </html>

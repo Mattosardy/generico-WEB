@@ -8,11 +8,65 @@ function mostrarMensaje(mensaje, esExito = true) {
     setTimeout(() => div.remove(), 4000);
 }
 
+function normalizarTextoVisual(text) {
+    if (text === null || text === undefined) return '';
+    let valor = String(text);
+    if (!/[ÃÂâïð]/.test(valor)) return valor;
+
+    try {
+        valor = decodeURIComponent(escape(valor));
+    } catch (error) {
+        // Si el texto ya viene parcialmente dañado, aplicamos reemplazos puntuales abajo.
+    }
+
+    return valor
+        .replace(/â€œ/g, '“')
+        .replace(/â€/g, '”')
+        .replace(/â€\u009d/g, '”')
+        .replace(/â€™/g, '’')
+        .replace(/â€˜/g, '‘')
+        .replace(/â€“/g, '-')
+        .replace(/â€”/g, '-')
+        .replace(/Â·/g, '·')
+        .replace(/Â/g, '')
+        .replace(/ï¿¼/g, '')
+        .replace(/ðŸ‘‰/g, '👉')
+        .replace(/Ã¡/g, 'á')
+        .replace(/Ã©/g, 'é')
+        .replace(/Ã­/g, 'í')
+        .replace(/Ã³/g, 'ó')
+        .replace(/Ãº/g, 'ú')
+        .replace(/Ã±/g, 'ñ')
+        .replace(/Ã/g, 'Á')
+        .replace(/Ã‰/g, 'É')
+        .replace(/Ã/g, 'Í')
+        .replace(/Ã“/g, 'Ó')
+        .replace(/Ãš/g, 'Ú')
+        .replace(/Ã‘/g, 'Ñ');
+}
+
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
     const div = document.createElement('div');
-    div.textContent = String(text);
+    div.textContent = normalizarTextoVisual(text);
     return div.innerHTML;
+}
+
+function gramosAPacks(gramos) {
+    const packs = Number(gramos || 0) / 20;
+    return Number.isFinite(packs) ? packs : 0;
+}
+
+function formatearPacksReserva(gramos) {
+    const packs = gramosAPacks(gramos);
+    const etiquetaPack = packs === 1 ? 'Pack' : 'Packs';
+    return `${packs} ${etiquetaPack} (${Number(gramos || 0)}g)`;
+}
+
+function formatearPacksDisponibles(packs, gramos) {
+    const cantidad = Number(packs || 0);
+    const etiquetaPack = cantidad === 1 ? 'Pack' : 'Packs';
+    return `${cantidad} ${etiquetaPack} (${Number(gramos || 0)}g)`;
 }
 
 function formatearTelefonoUruguay(telefono) {

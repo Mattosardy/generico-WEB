@@ -1,13 +1,10 @@
-function obtenerPedidosProductos() {
-    try {
-        return JSON.parse(localStorage.getItem('cururu_pedidos_productos') || '[]');
-    } catch (error) {
-        return [];
-    }
+﻿function obtenerPedidosProductos() {
+    localStorage.removeItem('cururu_pedidos_productos');
+    return [];
 }
 
 function guardarPedidosProductos(pedidos) {
-    localStorage.setItem('cururu_pedidos_productos', JSON.stringify(pedidos));
+    localStorage.removeItem('cururu_pedidos_productos');
 }
 
 function normalizarTipoCultivoEdicion(tipoCultivo) {
@@ -44,36 +41,61 @@ function obtenerTotalPedidoMesActual() {
 
 function actualizarEstadoPedidoModal() {
     const restante = 40 - obtenerTotalPedidoMesActual();
+    const packsRestantes = gramosAPacks(restante);
     const restanteEl = document.getElementById('pedidoRestante');
     const alertaEl = document.getElementById('pedidoAlerta');
     const botonEl = document.getElementById('btnRealizarPedido');
     if (!restanteEl || !alertaEl || !botonEl) return;
 
     const cicloActual = obtenerCicloClub();
-    restanteEl.textContent = `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${restante}g de 40g`;
+    const stock = typeof obtenerInfoStockProducto === 'function'
+        ? obtenerInfoStockProducto(appState.productoModalActual || {})
+        : { stockActivo: false, stockPacks: 0, gramosDisponibles: 0, sinStock: false };
+    const detalleStock = stock.stockActivo
+        ? ` Stock: ${formatearPacksDisponibles(stock.stockPacks, stock.gramosDisponibles)}.`
+        : '';
+    restanteEl.textContent = `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${packsRestantes} de 2 packs.${detalleStock}`;
     alertaEl.textContent = '';
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         const gramos = Number(btn.dataset.gramos);
+        const sinStockParaCantidad = stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos);
         btn.classList.toggle('activa', gramos === appState.gramosSeleccionadosPedido);
-        btn.disabled = gramos > restante;
+        btn.disabled = gramos > restante || sinStockParaCantidad;
+        if (sinStockParaCantidad) {
+            btn.title = 'No hay packs suficientes para esta cantidad';
+        } else {
+            btn.removeAttribute('title');
+        }
     });
 
+    if (stock.sinStock) {
+        alertaEl.textContent = 'SIN STOCK';
+        botonEl.disabled = true;
+        botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido';
+        return;
+    }
     if (!appState.gramosSeleccionadosPedido) {
         botonEl.disabled = true;
         botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido';
         return;
     }
     if (appState.gramosSeleccionadosPedido > restante) {
-        alertaEl.textContent = `No podés pedir ${appState.gramosSeleccionadosPedido}g. Te quedan ${restante}g en este ciclo.`;
+        alertaEl.textContent = `No podés pedir ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}. Te quedan ${packsRestantes} packs en este ciclo.`;
+        botonEl.disabled = true;
+        return;
+    }
+    if (stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual || {}, appState.gramosSeleccionadosPedido)) {
+        alertaEl.textContent = `No hay packs suficientes para pedir ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}.`;
         botonEl.disabled = true;
         return;
     }
     const seleccion = document.querySelector(`#opcionesPedido .opcion-pedido[data-gramos="${appState.gramosSeleccionadosPedido}"]`);
     const restanteLuego = Math.max(0, restante - Number(appState.gramosSeleccionadosPedido || 0));
-    restanteEl.textContent = `Pedido seleccionado: ${appState.gramosSeleccionadosPedido}g. Quedan ${restanteLuego}g disponibles en este ciclo.`;
+    restanteEl.textContent = `Pedido seleccionado: ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}. Quedan ${gramosAPacks(restanteLuego)} packs disponibles en este ciclo.${detalleStock}`;
     botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'}${seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
     botonEl.disabled = false;
 }
+
 function inicializarPedidoModal() {
     if (!appState.reservaEditandoId) {
         appState.gramosSeleccionadosPedido = null;
@@ -85,7 +107,11 @@ function inicializarPedidoModal() {
             const precio = Number(btn.dataset.precio);
             const restante = 40 - obtenerTotalPedidoMesActual();
             if (gramos > restante) {
-                mostrarMensaje(`Te quedan ${restante}g disponibles en este ciclo.`, false);
+                mostrarMensaje(`Te quedan ${gramosAPacks(restante)} packs disponibles en este ciclo.`, false);
+                return;
+            }
+            if (typeof productoTieneStockParaGramos === 'function' && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos)) {
+                mostrarMensaje('No hay packs suficientes para esa cantidad.', false);
                 return;
             }
             appState.gramosSeleccionadosPedido = gramos;
@@ -108,6 +134,18 @@ async function realizarPedidoProducto() {
     if (!appState.gramosSeleccionadosPedido) {
         mostrarMensaje('Seleccioná una cantidad para continuar.', false);
         return;
+    }
+
+    if (typeof obtenerInfoStockProducto === 'function') {
+        const stock = obtenerInfoStockProducto(appState.productoModalActual);
+        if (stock.sinStock) {
+            mostrarMensaje('No hay stock disponible para esta variedad.', false);
+            return;
+        }
+        if (stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual, appState.gramosSeleccionadosPedido)) {
+            mostrarMensaje('No hay packs suficientes para esa cantidad.', false);
+            return;
+        }
     }
 
     if (!appState.socioData?.id) {
@@ -135,7 +173,7 @@ async function realizarPedidoProducto() {
             : null);
     const totalActual = obtenerTotalPedidoMesActual();
     if (totalActual + appState.gramosSeleccionadosPedido > 40) {
-        mostrarMensaje(`Limite mensual alcanzado. Ya llevas ${totalActual}g en este ciclo.`, false);
+        mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${gramosAPacks(totalActual)} packs en este ciclo.`, false);
         return;
     }
 
@@ -157,7 +195,7 @@ async function realizarPedidoProducto() {
         return;
     }
 
-    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${appState.productoModalActual.nombre} - ${appState.gramosSeleccionadosPedido}g. Revisá el detalle en tu carrito.`, true);
+    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${normalizarTextoVisual(appState.productoModalActual.nombre)} - ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}. Revisá el detalle en tu carrito.`, true);
     cerrarProductoModal();
     if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
 }
@@ -290,7 +328,7 @@ async function abrirModal(producto) {
     appState.galeriaActual = { imagenes: imagenesArray, indice: 0, productoId: producto.id };
 
     const modalMedia = document.getElementById('modalMedia');
-    modalMedia.innerHTML = renderizarGaleriaProductoModal(imagenesArray, producto.nombre || 'Variedad');
+    modalMedia.innerHTML = renderizarGaleriaProductoModal(imagenesArray, normalizarTextoVisual(producto.nombre || 'Variedad'));
     const imagenPrincipal = document.getElementById('modalImagenGaleria');
     if (imagenPrincipal) {
         imagenPrincipal.onerror = function onErrorImagen() {
@@ -302,14 +340,22 @@ async function abrirModal(producto) {
     actualizarControlesGaleriaProducto();
     habilitarSwipeGaleriaProducto();
 
-    document.getElementById('modalTitulo').textContent = producto.nombre;
+    document.getElementById('modalTitulo').textContent = normalizarTextoVisual(producto.nombre);
     document.getElementById('modalCepa').textContent = esArticulo
         ? (typeof obtenerTituloTipoCultivo === 'function' && typeof obtenerTipoCatalogoProducto === 'function' ? obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(producto)) : 'Artículo destacado')
-        : (producto.cepa || 'Cepa especial');
-    document.getElementById('modalDescripcion').textContent = producto.descripcion || '';
+        : normalizarTextoVisual(producto.cepa || 'Cepa especial');
+    document.getElementById('modalDescripcion').textContent = normalizarTextoVisual(producto.descripcion || '');
     document.getElementById('modalThc').textContent = esArticulo
         ? `${disponible ? 'Disponible' : 'No disponible'}${precioBase ? ` | $${Number(precioBase).toFixed(0)}` : ''}`
         : `THC: ${producto.thc_porcentaje || '?'}% | CBD: ${producto.cbd_porcentaje || '?'}%`;
+    if (!esArticulo && typeof obtenerInfoStockProducto === 'function') {
+        const stock = obtenerInfoStockProducto(producto);
+        if (stock.stockActivo) {
+            document.getElementById('modalThc').textContent += ` | Stock: ${formatearPacksDisponibles(stock.stockPacks, stock.gramosDisponibles)}`;
+            if (stock.sinStock) document.getElementById('modalThc').textContent += ' | SIN STOCK';
+            if (stock.bajoStock) document.getElementById('modalThc').textContent += ' | Poca disponibilidad';
+        }
+    }
     document.getElementById('panelCalificacion').style.display = 'none';
     document.getElementById('calificacionMensaje').innerHTML = '';
     calificacionSeleccionada = 0;
@@ -326,14 +372,18 @@ async function abrirModal(producto) {
     const opcionesContainer = document.getElementById('opcionesPedido');
     opcionesContainer.innerHTML = opcionesDisponibles.map((gramos) => {
         const precioTotal = (precioBase * gramos / 10).toFixed(0);
-        return `<button type="button" class="opcion-pedido" data-gramos="${gramos}" data-precio="${precioTotal}">${gramos}g - $${precioTotal}</button>`;
+        return `<button type="button" class="opcion-pedido" data-gramos="${gramos}" data-precio="${precioTotal}">${formatearPacksReserva(gramos)} - $${precioTotal}</button>`;
     }).join('');
 
-    if (!disponible) {
+    const stockModal = typeof obtenerInfoStockProducto === 'function'
+        ? obtenerInfoStockProducto(producto)
+        : { sinStock: false };
+
+    if (!disponible || stockModal.sinStock) {
         document.querySelectorAll('.opcion-pedido').forEach((btn) => {
             btn.disabled = true;
         });
-        document.getElementById('pedidoAlerta').textContent = 'Producto no disponible';
+        document.getElementById('pedidoAlerta').textContent = stockModal.sinStock ? 'SIN STOCK' : 'Producto no disponible';
         document.getElementById('btnRealizarPedido').disabled = true;
     } else {
         document.getElementById('pedidoAlerta').textContent = '';
@@ -397,6 +447,26 @@ window.editarProductoAdmin = async function(id) {
     document.getElementById('editIndicaPorcentaje').value = perfilIndicaSativa.indica ?? '';
     document.getElementById('editSativaPorcentaje').value = perfilIndicaSativa.sativa ?? '';
     sincronizarPerfilDesdeIndica();
+    const formGrid = document.querySelector('#formEditProducto .form-grid');
+    if (formGrid && !document.getElementById('editStockPacks')) {
+        const stockFields = document.createElement('div');
+        stockFields.className = 'form-group full-width stock-edit-grid';
+        stockFields.innerHTML = `
+            <div class="form-group"><label>Stock disponible en packs</label><input type="number" min="0" step="1" id="editStockPacks" value="0"></div>
+            <div class="form-group"><label>Bajo stock desde X packs</label><input type="number" min="0" step="1" id="editBajoStockPacks" value="2"></div>
+            <div class="form-group stock-admin-control"><label><input type="checkbox" id="editStockActivo" checked> Controlar stock</label><small id="editStockEquivalente">0 Packs (0g)</small></div>
+        `;
+        const descripcion = document.getElementById('editDescripcion')?.closest('.form-group');
+        formGrid.insertBefore(stockFields, descripcion || null);
+        document.getElementById('editStockPacks')?.addEventListener('input', () => {
+            if (typeof actualizarEquivalenciaStockAdmin === 'function') actualizarEquivalenciaStockAdmin('edit');
+        });
+    }
+    const stock = typeof obtenerInfoStockProducto === 'function' ? obtenerInfoStockProducto(data) : { stockPacks: 0, bajoStockPacks: 2, stockActivo: true };
+    if (document.getElementById('editStockPacks')) document.getElementById('editStockPacks').value = stock.stockPacks;
+    if (document.getElementById('editBajoStockPacks')) document.getElementById('editBajoStockPacks').value = stock.bajoStockPacks;
+    if (document.getElementById('editStockActivo')) document.getElementById('editStockActivo').checked = stock.stockActivo;
+    if (typeof actualizarEquivalenciaStockAdmin === 'function') actualizarEquivalenciaStockAdmin('edit');
     document.getElementById('editTipoCultivo').value = tipoCatalogo;
     document.getElementById('editPrecio').value = data.precio_por_10g || 1600;
     document.getElementById('editDescripcion').value = data.descripcion || '';
@@ -537,7 +607,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tipo_cultivo: esArticulo ? 'invernaculo' : tipoSeleccionado,
             precio_por_10g: parseFloat(document.getElementById('editPrecio').value) || 1600,
             descripcion: document.getElementById('editDescripcion').value,
-            imagen_url: imagenUrlEditada
+            imagen_url: imagenUrlEditada,
+            ...(typeof obtenerPayloadStockAdmin === 'function' ? obtenerPayloadStockAdmin('edit') : {})
         };
         const resultadoActualizacion = typeof actualizarProductoConCompatibilidad === 'function'
             ? await actualizarProductoConCompatibilidad(appState.productoEditandoId, updates)
@@ -566,3 +637,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === document.getElementById('editProductoModal')) cerrarEditProducto();
     });
 });
+
+
+
