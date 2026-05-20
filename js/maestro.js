@@ -2,9 +2,16 @@ const seccionesMaestroImplementadas = ['historia', 'socios', 'reservas', 'config
 
 async function subirArchivoPublico(bucket, file, prefijo) {
     if (!file) return '';
-    const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+    const esImagen = String(file.type || '').toLowerCase().startsWith('image/')
+        || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name || '');
+    const archivoSubida = esImagen && typeof sanitizeImageBeforeUpload === 'function'
+        ? await sanitizeImageBeforeUpload(file)
+        : file;
+    const ext = (archivoSubida.name.split('.').pop() || 'bin').toLowerCase();
     const fileName = `${prefijo}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabaseClient.storage.from(bucket).upload(fileName, file);
+    const { error } = await supabaseClient.storage.from(bucket).upload(fileName, archivoSubida, {
+        contentType: archivoSubida.type || undefined
+    });
     if (error) {
         const mensaje = String(error.message || '').toLowerCase();
         const bucketFaltante = error.statusCode === '400' || error.statusCode === 400 || mensaje.includes('bucket') || mensaje.includes('not found');
@@ -102,6 +109,7 @@ function renderizarEditorHistoria(container, opciones = {}) {
             <div class="form-group full-width">
                 <label>Subir varias imágenes</label>
                 <input type="file" id="${prefijo}ImagenesFiles" accept="image/*" multiple style="background:rgba(8,15,6,0.8);border-radius:12px;padding:12px;color:#e0ecd0;">
+                <small class="privacy-upload-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> Las imagenes son limpiadas automaticamente para proteger privacidad y ubicacion.</small>
                 <div id="${prefijo}ImagenesPreview" style="margin-top: 12px;"></div>
             </div>
             <div class="form-group full-width">

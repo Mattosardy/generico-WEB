@@ -5979,6 +5979,28 @@ button.entrega-calendar-event {
     font-size: 0.78rem;
 }
 
+.privacy-upload-note {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 7px;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 8px;
+    padding: 7px 10px;
+    border: 1px solid rgba(88, 136, 59, 0.16);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.58);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.privacy-upload-note i {
+    margin-top: 2px;
+    color: var(--accent-strong);
+    font-size: 0.78rem;
+}
+
 .telegram-security-actions {
     display: grid;
     gap: 10px;
@@ -6016,5 +6038,9 @@ button.entrega-calendar-event {
     .telegram-delay-note {
         width: 100%;
         border-radius: 14px;
+    }
+
+    .privacy-upload-note {
+        width: 100%;
     }
 }

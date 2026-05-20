@@ -91,9 +91,14 @@ window.limpiarInputImagenes = limpiarInputImagenes;
 async function subirMultiplesImagenes(bucket, files, prefijo) {
     const imagenes = [];
     for (const file of Array.from(files || [])) {
-        const ext = file.name.split('.').pop();
+        const archivoLimpio = typeof sanitizeImageBeforeUpload === 'function'
+            ? await sanitizeImageBeforeUpload(file)
+            : file;
+        const ext = (archivoLimpio.name.split('.').pop() || 'jpg').toLowerCase();
         const fileName = `${prefijo}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabaseClient.storage.from(bucket).upload(fileName, file);
+        const { error } = await supabaseClient.storage.from(bucket).upload(fileName, archivoLimpio, {
+            contentType: archivoLimpio.type || undefined
+        });
         if (error) {
             const mensaje = String(error.message || '').toLowerCase();
             const bucketFaltante = error.statusCode === '400' || error.statusCode === 400 || mensaje.includes('bucket') || mensaje.includes('not found');
@@ -696,6 +701,7 @@ async function cargarProductosAdmin() {
                 <div class="form-group full-width">
                     <label style="color: #c8d8b5; margin-bottom: 8px;"><i class="fas fa-image"></i> O subir varias imágenes</label>
                     <input type="file" id="productoImagenFileAdmin" accept="image/*" multiple style="background: rgba(8,15,6,0.8); border: 1px solid rgba(100,140,75,0.4); border-radius: 12px; padding: 10px; color: #e0ecd0; width: 100%;">
+                    <small class="privacy-upload-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> Las imagenes son limpiadas automaticamente para proteger privacidad y ubicacion.</small>
                     <div id="productoPreview" style="margin: 10px 0; text-align: center;"></div>
                 </div>
             </div>

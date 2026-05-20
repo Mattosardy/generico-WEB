@@ -52,6 +52,137 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+const IMAGE_UPLOAD_SUPPORTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const IMAGE_UPLOAD_REJECTED_TYPES = new Set(['image/gif', 'image/heic', 'image/heif']);
+
+function obtenerExtensionArchivoImagen(file, mimeType = '') {
+    const nombre = String(file?.name || '');
+    const extensionOriginal = nombre.includes('.') ? nombre.split('.').pop().toLowerCase() : '';
+    if (mimeType === 'image/jpeg') return 'jpg';
+    if (mimeType === 'image/png') return 'png';
+    if (mimeType === 'image/webp') return 'webp';
+    return extensionOriginal || 'jpg';
+}
+
+function obtenerNombreArchivoSanitizado(file, mimeType = '') {
+    const nombre = String(file?.name || 'imagen').replace(/\.[^.]+$/, '') || 'imagen';
+    const extension = obtenerExtensionArchivoImagen(file, mimeType);
+    return `${nombre}.${extension}`;
+}
+
+function obtenerTipoImagenArchivo(file) {
+    const tipo = String(file?.type || '').toLowerCase();
+    const nombre = String(file?.name || '').toLowerCase();
+    if (tipo) return tipo;
+    if (/\.(jpe?g)$/.test(nombre)) return 'image/jpeg';
+    if (/\.png$/.test(nombre)) return 'image/png';
+    if (/\.webp$/.test(nombre)) return 'image/webp';
+    if (/\.gif$/.test(nombre)) return 'image/gif';
+    if (/\.(heic|heif)$/.test(nombre)) return 'image/heic';
+    return '';
+}
+
+function validarFormatoImagenSanitizable(file) {
+    const tipo = obtenerTipoImagenArchivo(file);
+    if (IMAGE_UPLOAD_REJECTED_TYPES.has(tipo)) {
+        throw new Error('Formato no soportado. Usá JPG, PNG o WEBP. GIF, HEIC y HEIF no se suben para evitar conservar metadatos.');
+    }
+    if (!IMAGE_UPLOAD_SUPPORTED_TYPES.has(tipo)) {
+        throw new Error('Formato de imagen no soportado. Usá JPG, PNG o WEBP.');
+    }
+    return tipo;
+}
+
+function canvasToBlob(canvas, mimeType, quality) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                reject(new Error('No se pudo limpiar la imagen. Probá con JPG, PNG o WEBP.'));
+                return;
+            }
+            resolve(blob);
+        }, mimeType, quality);
+    });
+}
+
+function cargarImagenParaSanitizar(file) {
+    if (typeof createImageBitmap === 'function') {
+        return createImageBitmap(file);
+    }
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('No se pudo leer la imagen. Verificá que sea un JPG, PNG o WEBP válido.'));
+        };
+        img.src = url;
+    });
+}
+
+async function sanitizeImageBeforeUpload(file) {
+    if (!file) throw new Error('No se seleccionó ninguna imagen.');
+    const tipoOriginal = validarFormatoImagenSanitizable(file);
+
+    let imagen;
+    try {
+        imagen = await cargarImagenParaSanitizar(file);
+    } catch (error) {
+        throw new Error(error?.message || 'No se pudo procesar la imagen seleccionada.');
+    }
+
+    const width = imagen.width || imagen.naturalWidth;
+    const height = imagen.height || imagen.naturalHeight;
+    if (!width || !height) {
+        if (typeof imagen.close === 'function') imagen.close();
+        throw new Error('La imagen no tiene dimensiones válidas.');
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        if (typeof imagen.close === 'function') imagen.close();
+        throw new Error('El navegador no pudo preparar la imagen para limpieza.');
+    }
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(imagen, 0, 0, width, height);
+    if (typeof imagen.close === 'function') imagen.close();
+
+    let tipoSalida = tipoOriginal === 'image/jpeg' ? 'image/jpeg' : tipoOriginal;
+    let calidad = tipoSalida === 'image/jpeg' ? 0.9 : undefined;
+    let blob = await canvasToBlob(canvas, tipoSalida, calidad);
+
+    if (tipoOriginal === 'image/webp' && blob.type !== 'image/webp') {
+        tipoSalida = 'image/png';
+        blob = await canvasToBlob(canvas, tipoSalida);
+    }
+
+    const nombreSanitizado = obtenerNombreArchivoSanitizado(file, tipoSalida || blob.type || tipoOriginal);
+    return new File([blob], nombreSanitizado, {
+        type: tipoSalida || blob.type || tipoOriginal,
+        lastModified: Date.now()
+    });
+}
+
+async function sanitizeImagesBeforeUpload(files) {
+    const resultado = [];
+    for (const file of Array.from(files || [])) {
+        resultado.push(await sanitizeImageBeforeUpload(file));
+    }
+    return resultado;
+}
+
+window.sanitizeImageBeforeUpload = sanitizeImageBeforeUpload;
+window.sanitizeImagesBeforeUpload = sanitizeImagesBeforeUpload;
+
 function gramosAPacks(gramos) {
     const packs = Number(gramos || 0) / 20;
     return Number.isFinite(packs) ? packs : 0;
