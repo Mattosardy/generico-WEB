@@ -325,6 +325,7 @@ function renderTelegramLinkPanel() {
                 <span class="metric-label">Notificaciones</span>
                 <strong>${linked ? username : 'Telegram'}</strong>
                 <small>${linked ? 'Canal de avisos activo.' : 'Vincula tu cuenta para recibir avisos del club.'}</small>
+                <small class="telegram-delay-note"><i class="fas fa-info-circle" aria-hidden="true"></i> Los mensajes y notificaciones por Telegram pueden demorar hasta 4 minutos.</small>
             </div>
             <button type="button" id="btnVincularTelegram" class="dashboard-shortcut">
                 <i class="fab fa-telegram"></i> ${linked ? 'Verificar' : 'Activar Telegram'}
@@ -343,6 +344,7 @@ function renderTelegramLinkPanel() {
                     <strong>🔒 Verificación Telegram requerida</strong>
                     <small>Para proteger tu cuenta, ingresá el código enviado a tu Telegram. El código es válido por 24 horas.</small>
                     ${expiresAt ? `<em>Código vigente hasta ${escapeHtml(expiresAt)}</em>` : ''}
+                    <small class="telegram-delay-note"><i class="fas fa-info-circle" aria-hidden="true"></i> Los mensajes y notificaciones por Telegram pueden demorar hasta 4 minutos.</small>
                 </div>
                 <div class="telegram-security-actions">
                     <button type="button" id="btnEnviarTelegramSecurityCode" class="dashboard-shortcut">
