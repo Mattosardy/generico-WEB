@@ -200,6 +200,24 @@ function formatearPacksDisponibles(packs, gramos) {
     return `${cantidad} ${etiquetaPack} (${Number(gramos || 0)}g)`;
 }
 
+function usuarioEsMaestro() {
+    return String(appState?.rolUsuario || '').toLowerCase() === 'maestro';
+}
+
+function usuarioPuedeVerPrecios() {
+    return !usuarioEsMaestro();
+}
+
+function formatearPrecioVisible(precio) {
+    if (!usuarioPuedeVerPrecios()) return 'Disponible para socios';
+    const numero = Number(precio || 0);
+    return numero > 0 ? `$${numero.toFixed(0)}` : '';
+}
+
+window.usuarioEsMaestro = usuarioEsMaestro;
+window.usuarioPuedeVerPrecios = usuarioPuedeVerPrecios;
+window.formatearPrecioVisible = formatearPrecioVisible;
+
 function formatearTelefonoUruguay(telefono) {
     const limpio = String(telefono || '').replace(/[\s\-().]/g, '');
     if (limpio.startsWith('+598')) return limpio;

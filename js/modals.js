@@ -103,7 +103,8 @@ function actualizarEstadoPedidoModal() {
     const seleccion = document.querySelector(`#opcionesPedido .opcion-pedido[data-gramos="${appState.gramosSeleccionadosPedido}"]`);
     const restanteLuego = Math.max(0, restante - Number(appState.gramosSeleccionadosPedido || 0));
     restanteEl.textContent = `Pedido seleccionado: ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}. Quedan ${gramosAPacks(restanteLuego)} packs disponibles en este ciclo.${detalleStock}`;
-    botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'}${seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
+    const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
+    botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'}${puedeVerPrecios && seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
     botonEl.disabled = false;
 }
 
@@ -115,7 +116,7 @@ function inicializarPedidoModal() {
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         btn.onclick = () => {
             const gramos = Number(btn.dataset.gramos);
-            const precio = Number(btn.dataset.precio);
+            const precio = Number(btn.dataset.precio || 0);
             const restante = 40 - obtenerTotalPedidoMesActual();
             if (gramos > restante) {
                 mostrarMensaje(`Te quedan ${gramosAPacks(restante)} packs disponibles en este ciclo.`, false);
@@ -126,7 +127,8 @@ function inicializarPedidoModal() {
                 return;
             }
             appState.gramosSeleccionadosPedido = gramos;
-            document.getElementById('btnRealizarPedido').innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'} - $${precio}`;
+            const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
+            document.getElementById('btnRealizarPedido').innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'}${puedeVerPrecios && precio ? ` - $${precio}` : ''}`;
             actualizarEstadoPedidoModal();
         };
     });
@@ -357,7 +359,7 @@ async function abrirModal(producto) {
         : normalizarTextoVisual(producto.cepa || 'Cepa especial');
     document.getElementById('modalDescripcion').textContent = normalizarTextoVisual(producto.descripcion || '');
     document.getElementById('modalThc').textContent = esArticulo
-        ? `${disponible ? 'Disponible' : 'No disponible'}${precioBase ? ` | $${Number(precioBase).toFixed(0)}` : ''}`
+        ? `${disponible ? 'Disponible' : 'No disponible'}${precioBase ? ` | ${typeof formatearPrecioVisible === 'function' ? formatearPrecioVisible(precioBase) : `$${Number(precioBase).toFixed(0)}`}` : ''}`
         : `THC: ${producto.thc_porcentaje || '?'}% | CBD: ${producto.cbd_porcentaje || '?'}%`;
     if (!esArticulo && typeof obtenerInfoStockProducto === 'function') {
         const stock = obtenerInfoStockProducto(producto);
@@ -383,7 +385,10 @@ async function abrirModal(producto) {
     const opcionesContainer = document.getElementById('opcionesPedido');
     opcionesContainer.innerHTML = opcionesDisponibles.map((gramos) => {
         const precioTotal = (precioBase * gramos / 10).toFixed(0);
-        return `<button type="button" class="opcion-pedido" data-gramos="${gramos}" data-precio="${precioTotal}">${formatearPacksReserva(gramos)} - $${precioTotal}</button>`;
+        const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
+        const precioAttr = puedeVerPrecios ? ` data-precio="${precioTotal}"` : '';
+        const precioLabel = puedeVerPrecios ? ` - $${precioTotal}` : '';
+        return `<button type="button" class="opcion-pedido" data-gramos="${gramos}"${precioAttr}>${formatearPacksReserva(gramos)}${precioLabel}</button>`;
     }).join('');
 
     const stockModal = typeof obtenerInfoStockProducto === 'function'

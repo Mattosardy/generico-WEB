@@ -6036,6 +6036,12 @@ button.entrega-calendar-event {
     background: rgba(124, 163, 90, 0.12);
 }
 
+.precio-restringido {
+    color: var(--text-muted);
+    font-style: normal;
+    font-weight: 600;
+}
+
 .telegram-security-actions {
     display: grid;
     gap: 10px;

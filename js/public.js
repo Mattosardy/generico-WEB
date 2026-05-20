@@ -477,8 +477,12 @@ function renderizarTarjetaArticuloDestacado(articulo) {
     const imagenPrincipal = imagenes[0] || obtenerImagenFallback(articulo) || '';
     const precio = Number(articulo.precio_por_10g || 0);
     const disponible = articulo.disponible !== false;
+    const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
+    const precioVisible = typeof formatearPrecioVisible === 'function'
+        ? formatearPrecioVisible(precio)
+        : (precio ? `$${precio.toFixed(0)}` : '');
     return `
-        <article class="articulo-destacado-card" data-producto-id="${escapeHtml(String(articulo.id))}" data-producto='${JSON.stringify(articulo).replace(/'/g, '&#39;')}'>
+        <article class="articulo-destacado-card" data-producto-id="${escapeHtml(String(articulo.id))}" data-producto='${serializarProductoParaDataset(articulo)}'>
             <div class="articulo-destacado-media">
                 ${imagenPrincipal ? `<img src="${imagenPrincipal}" alt="${escapeHtml(articulo.nombre)}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=&quot;fas fa-box-open&quot; aria-hidden=&quot;true&quot;></i>';">` : '<i class="fas fa-box-open" aria-hidden="true"></i>'}
             </div>
@@ -486,10 +490,18 @@ function renderizarTarjetaArticuloDestacado(articulo) {
                 <span>${disponible ? 'Disponible' : 'No disponible'}</span>
                 <strong>${escapeHtml(articulo.nombre)}</strong>
                 <p>${escapeHtml(articulo.descripcion || obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(articulo)))}</p>
-                ${precio ? `<em>$${precio.toFixed(0)}</em>` : ''}
+                ${precioVisible ? `<em class="${puedeVerPrecios ? '' : 'precio-restringido'}">${escapeHtml(precioVisible)}</em>` : ''}
             </div>
         </article>
     `;
+}
+
+function serializarProductoParaDataset(producto = {}) {
+    const payload = { ...producto };
+    if (typeof usuarioPuedeVerPrecios === 'function' && !usuarioPuedeVerPrecios()) {
+        delete payload.precio_por_10g;
+    }
+    return JSON.stringify(payload).replace(/'/g, '&#39;');
 }
 
 function construirArticulosDestacadosHTML(articulosPorCategoria = {}) {
@@ -564,7 +576,7 @@ function renderizarTarjetaProducto(producto) {
     const claseStock = obtenerClaseStockProducto(producto);
 
     return `
-        <div class="producto-card${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
+        <div class="producto-card${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${serializarProductoParaDataset(producto)}'>
             <div class="producto-miniatura">
                 <span class="producto-disponibilidad-badge ${(!disponible || bloqueadoPorStock) ? 'agotado' : 'disponible'}">${bloqueadoPorStock ? 'SIN STOCK' : (disponible ? 'Disponible' : 'Agotado')}</span>
                 <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
@@ -589,7 +601,7 @@ function renderizarTarjetaProductoCompacta(producto) {
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
     const claseStock = obtenerClaseStockProducto(producto);
     return `
-        <div class="producto-card producto-card-compacta${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${JSON.stringify(producto).replace(/'/g, '&#39;')}'>
+        <div class="producto-card producto-card-compacta${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${serializarProductoParaDataset(producto)}'>
             <div class="producto-miniatura">
                 <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
                 ${renderizarBadgeStockProducto(producto, true)}
