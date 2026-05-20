@@ -100,6 +100,29 @@ function ordenarProductosParaCatalogo(productos) {
 const TIPOS_ARTICULOS_PRODUCTOS = ['dispositivos_pipas', 'parafernalia_accesorios'];
 const PREFIJO_ARTICULO_PRODUCTO = 'ARTICULO:';
 const PACK_GRAMOS_DEFAULT = 20;
+const PLAN_PLUS_TITULO_DEFAULT = 'Artículos destacados';
+
+function obtenerConfigSistemaValor(clave, fallback = '') {
+    const configMap = appState.configMap || {};
+    const valor = configMap[clave];
+    if (valor === undefined || valor === null || String(valor).trim() === '') return fallback;
+    return valor;
+}
+
+function configSistemaBooleano(clave, fallback = false) {
+    const valor = obtenerConfigSistemaValor(clave, fallback ? 'true' : 'false');
+    if (typeof valor === 'boolean') return valor;
+    return ['true', '1', 'si', 'sí', 'on', 'activo'].includes(String(valor).trim().toLowerCase());
+}
+
+function planPlusActivo() {
+    return window.CURURU_PLAN?.plusActivo === true;
+}
+
+function obtenerTituloPlanPlus() {
+    const tituloDeploy = String(window.CURURU_PLAN?.planPlusTitulo || PLAN_PLUS_TITULO_DEFAULT).trim() || PLAN_PLUS_TITULO_DEFAULT;
+    return String(obtenerConfigSistemaValor('plan_plus_titulo', tituloDeploy)).trim() || tituloDeploy;
+}
 
 function normalizarTipoCultivo(tipoCultivo) {
     const valor = String(tipoCultivo || '').trim().toLowerCase();
@@ -470,10 +493,11 @@ function renderizarTarjetaArticuloDestacado(articulo) {
 }
 
 function construirArticulosDestacadosHTML(articulosPorCategoria = {}) {
+    if (!planPlusActivo()) return '';
     const categorias = obtenerCategoriasArticulosDestacados(articulosPorCategoria);
     return `
         <div class="productos-subsection articulos-destacados-section">
-            <h2 class="section-title"><i class="fas fa-star"></i> Artículos destacados</h2>
+            <h2 class="section-title"><i class="fas fa-star"></i> ${escapeHtml(obtenerTituloPlanPlus())}</h2>
             <div class="productos-acordeon productos-acordeon-articulos">
                 <div class="productos-controles">
                     ${categorias.map((categoria) => `
@@ -660,10 +684,11 @@ async function cargarProductosPublicos() {
     if (!container) return;
 
     const productos = await obtenerProductos();
+    const plusActivo = planPlusActivo();
     if (!productos?.length) {
         container.innerHTML = `
             <div class="empty-state"><i class="fas fa-leaf"></i><strong>Catálogo en preparación</strong><span>Las variedades disponibles se mostrarán acá.</span></div>
-            ${construirArticulosDestacadosHTML()}
+            ${plusActivo ? construirArticulosDestacadosHTML() : ''}
         `;
         inicializarAcordeonesProductos();
         return;
@@ -680,7 +705,11 @@ async function cargarProductosPublicos() {
     }));
 
     const productosOrdenados = ordenarProductosParaCatalogo(productosConCalificaciones);
-    registrarProductosParaNovedades(productosOrdenados);
+    registrarProductosParaNovedades(
+        plusActivo
+            ? productosOrdenados
+            : productosOrdenados.filter((producto) => !productoEsArticulo(producto))
+    );
     const grupos = { invernaculo: [], exterior: [] };
     const articulosPorCategoria = {
         dispositivos_pipas: [],
@@ -690,7 +719,7 @@ async function cargarProductosPublicos() {
     productosOrdenados.forEach((producto) => {
         const tipo = obtenerTipoCatalogoProducto(producto);
         if (TIPOS_ARTICULOS_PRODUCTOS.includes(tipo)) {
-            articulosPorCategoria[tipo].push(producto);
+            if (plusActivo) articulosPorCategoria[tipo].push(producto);
         } else {
             grupos[tipo].push(producto);
         }
@@ -720,7 +749,7 @@ async function cargarProductosPublicos() {
                 </div>
             `).join('')}
         </div>
-        ${construirArticulosDestacadosHTML(articulosPorCategoria)}
+        ${plusActivo ? construirArticulosDestacadosHTML(articulosPorCategoria) : ''}
     `;
 
     inicializarAcordeonesProductos();

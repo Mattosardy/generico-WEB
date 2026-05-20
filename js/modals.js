@@ -19,6 +19,17 @@ function productoEdicionEsArticuloTipo(tipoCultivo) {
     return normalizado === 'dispositivos_pipas' || normalizado === 'parafernalia_accesorios';
 }
 
+function actualizarOpcionesPlanPlusEdicion(plusActivo) {
+    const select = document.getElementById('editTipoCultivo');
+    if (!select) return;
+    Array.from(select.options).forEach((option) => {
+        if (productoEdicionEsArticuloTipo(option.value)) {
+            option.hidden = !plusActivo;
+            option.disabled = !plusActivo;
+        }
+    });
+}
+
 function obtenerTipoCatalogoProductoEdicion(producto = {}) {
     const cepa = String(producto.cepa || '').trim();
     if (cepa.startsWith('ARTICULO:')) return normalizarTipoCultivoEdicion(cepa.slice('ARTICULO:'.length));
@@ -435,9 +446,16 @@ window.editarProductoAdmin = async function(id) {
         return;
     }
     appState.productoEditandoId = id;
-    document.getElementById('editNombre').value = data.nombre || '';
     const tipoCatalogo = obtenerTipoCatalogoProductoEdicion(data);
     const esArticulo = productoEdicionEsArticuloTipo(tipoCatalogo);
+    const plusActivo = typeof planPlusActivo === 'function' ? planPlusActivo() : false;
+    actualizarOpcionesPlanPlusEdicion(plusActivo);
+    if (esArticulo && !plusActivo) {
+        appState.productoEditandoId = null;
+        mostrarMensaje('Artículos destacados requiere Plan Plus. Contactá al proveedor para activarlo.', false);
+        return;
+    }
+    document.getElementById('editNombre').value = data.nombre || '';
     document.getElementById('editCepa').value = esArticulo ? '' : (data.cepa || '');
     document.getElementById('editThc').value = data.thc_porcentaje || '';
     document.getElementById('editCbd').value = data.cbd_porcentaje || '';
@@ -593,6 +611,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const tipoSeleccionado = normalizarTipoCultivoEdicion(document.getElementById('editTipoCultivo').value);
         const esArticulo = productoEdicionEsArticuloTipo(tipoSeleccionado);
+        const plusActivo = typeof planPlusActivo === 'function' ? planPlusActivo() : false;
+        if (esArticulo && !plusActivo) {
+            mostrarMensaje('Artículos destacados requiere Plan Plus. Contactá al proveedor para activarlo.', false);
+            return;
+        }
         const updates = {
             nombre: document.getElementById('editNombre').value,
             cepa: esArticulo ? `ARTICULO:${tipoSeleccionado}` : document.getElementById('editCepa').value,

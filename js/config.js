@@ -6,8 +6,14 @@ window.configSistema = {
     fechaEntregaUltimo: ''
 };
 
-window.defaultHistoriaVideoUrl = 'https://qjiqbcokhlwisxbeplym.supabase.co/storage/v1/object/public/noticias/historia_video_1776899904368_g07gbj3gkwn.mp4';
+window.defaultHistoriaVideoUrl = `${window.SUPABASE_URL}/storage/v1/object/public/noticias/historia_video_1776899904368_g07gbj3gkwn.mp4`;
 window.TELEGRAM_BOT_USERNAME = 'Cururuclub_bot';
+
+// Feature flags comerciales controlados por el proveedor/deploy, no por Supabase del club.
+window.CURURU_PLAN = {
+    plusActivo: true,
+    planPlusTitulo: 'Artículos destacados'
+};
 
 window.appState = {
     usuarioActual: null,

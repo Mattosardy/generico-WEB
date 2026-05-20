@@ -196,6 +196,30 @@ function productoAdminEsArticuloTipo(tipoCultivo) {
     return normalizado === 'dispositivos_pipas' || normalizado === 'parafernalia_accesorios';
 }
 
+function renderPlanPlusEstadoAdmin(plusActivo) {
+    return `
+        <div class="plan-plus-admin-notice ${plusActivo ? 'activo' : 'inactivo'}">
+            <div>
+                <strong>Plan Plus: ${plusActivo ? 'activo' : 'no activo'}</strong>
+                <span>${plusActivo
+                    ? 'Artículos destacados habilitados para la página inicial.'
+                    : 'Para activar Artículos destacados, contactar al proveedor.'}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderOpcionesTipoProductoAdmin(plusActivo) {
+    return `
+        <option value="invernaculo">PREMIUM</option>
+        <option value="exterior">STANDARD</option>
+        ${plusActivo ? `
+            <option value="dispositivos_pipas">Dispositivos y pipas</option>
+            <option value="parafernalia_accesorios">Parafernalia y Accesorios</option>
+        ` : ''}
+    `;
+}
+
 function obtenerTipoCatalogoProductoAdmin(producto = {}) {
     const cepa = String(producto.cepa || '').trim();
     if (cepa.startsWith('ARTICULO:')) return normalizarTipoCultivoAdmin(cepa.slice('ARTICULO:'.length));
@@ -671,11 +695,16 @@ async function cargarProductosAdmin() {
     const container = document.getElementById('admin-productos');
     if (!container) return;
     const productos = (await obtenerProductos()) || [];
+    const plusActivo = typeof planPlusActivo === 'function' ? planPlusActivo() : false;
+    const productosVisibles = plusActivo
+        ? productos
+        : productos.filter((producto) => !productoAdminEsArticuloTipo(obtenerTipoCatalogoProductoAdmin(producto)));
 
     container.innerHTML = `
+        ${renderPlanPlusEstadoAdmin(plusActivo)}
         <form id="formProductoAdmin">
             <h3>Nuevo producto</h3>
-            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">Cargá variedades o artículos. Las variedades van a PREMIUM/STANDARD y los artículos aparecen en Artículos destacados.</p>
+            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">${plusActivo ? 'Cargá variedades o artículos. Las variedades van a PREMIUM/STANDARD y los artículos aparecen en Artículos destacados.' : 'Cargá variedades para el catálogo. Los artículos destacados requieren Plan Plus.'}</p>
             <div class="form-grid">
                 <div class="form-group full-width"><input type="text" id="productoNombreAdmin" placeholder="Nombre" required></div>
                 <div class="form-group"><input type="text" id="productoCepaAdmin" placeholder="Cepa"></div>
@@ -683,10 +712,7 @@ async function cargarProductosAdmin() {
                 <div class="form-group"><input type="number" step="0.1" id="productoCbdAdmin" placeholder="CBD %"></div>
                 <div class="form-group">
                     <select id="productoTipoCultivoAdmin">
-                        <option value="invernaculo">PREMIUM</option>
-                        <option value="exterior">STANDARD</option>
-                        <option value="dispositivos_pipas">Dispositivos y pipas</option>
-                        <option value="parafernalia_accesorios">Parafernalia y Accesorios</option>
+                        ${renderOpcionesTipoProductoAdmin(plusActivo)}
                     </select>
                 </div>
                 <div class="form-group"><input type="number" step="0.01" id="productoPrecioAdmin" placeholder="Precio base" value="1600"></div>
@@ -708,11 +734,11 @@ async function cargarProductosAdmin() {
             <button type="submit" class="btn-submit">Agregar</button>
         </form>
         <hr>
-        ${productos.length ? `
+        ${productosVisibles.length ? `
             <div class="admin-tabla-scroll">
             <table class="tabla-datos admin-productos-tabla">
                 <thead><tr><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Disp.</th><th></th></tr></thead>
-                <tbody>${productos.map((producto) => `
+                <tbody>${productosVisibles.map((producto) => `
                     <tr>
                         <td>${escapeHtml(producto.nombre)}</td>
                         <td>${escapeHtml(obtenerEtiquetaProductoAdmin(producto))}</td>
@@ -724,7 +750,7 @@ async function cargarProductosAdmin() {
                 `).join('')}</tbody>
             </table>
             </div>
-        ` : '<div class="loading">No hay productos todavía.</div>'}
+        ` : '<div class="loading">No hay variedades todavía.</div>'}
     `;
 
     configurarInputImagenesConLimite('productoImagenFileAdmin', 'productoPreview', 'productos');
@@ -752,6 +778,10 @@ async function cargarProductosAdmin() {
 
         const tipoSeleccionado = normalizarTipoCultivoAdmin(document.getElementById('productoTipoCultivoAdmin').value);
         const esArticulo = productoAdminEsArticuloTipo(tipoSeleccionado);
+        if (esArticulo && !plusActivo) {
+            mostrarMensaje('Artículos destacados requiere Plan Plus. Contactá al proveedor para activarlo.', false);
+            return;
+        }
         const payloadProducto = {
             nombre: document.getElementById('productoNombreAdmin').value,
             cepa: esArticulo ? `ARTICULO:${tipoSeleccionado}` : document.getElementById('productoCepaAdmin').value,
