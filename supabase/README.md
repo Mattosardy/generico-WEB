@@ -46,6 +46,18 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
 8. Probar un mensaje desde el panel admin. Queda en `notificaciones_programadas` con `canal = 'telegram'`.
 9. Ejecutar el despacho con `POST https://<worker-url>/api/notifications/dispatch-pending`.
 
+### Telegram Security Lite
+
+Seguridad reforzada: la plataforma puede exigir validacion por Telegram al vincular la cuenta y tambien al detectar un dispositivo nuevo. Esto reduce accesos no autorizados y protege los datos del club y de sus socios.
+
+La mejora se apoya en:
+
+- codigo temporal de 6 digitos enviado solo al Telegram vinculado del socio;
+- hash del codigo en base de datos, sin guardar el codigo plano;
+- vencimiento de 24 horas;
+- tabla `socio_dispositivos_verificados` para permitir varios dispositivos verificados por socio;
+- validacion post-login, sin bloquear el primer acceso antes de vincular Telegram.
+
 ### Envio directo de prueba
 
 ```bash

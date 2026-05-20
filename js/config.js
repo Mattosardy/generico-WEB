@@ -33,5 +33,13 @@ window.appState = {
     sociosChart: null,
     configWhatsApp: { phoneNumberId: null, accessToken: null },
     configTelegram: { botUsername: window.TELEGRAM_BOT_USERNAME },
+    telegramSecurity: {
+        deviceId: null,
+        deviceName: '',
+        verified: false,
+        required: false,
+        pending: false,
+        expiresAt: null
+    },
     configMap: {}
 };

@@ -63,6 +63,9 @@ async function actualizarUIporRol() {
         if (socio.success && socio.data) {
             appState.rolUsuario = socio.data.rol || 'socio';
             appState.socioData = socio.data;
+            if (typeof actualizarEstadoSeguridadTelegram === 'function') {
+                await actualizarEstadoSeguridadTelegram();
+            }
             actualizarNombreUsuarioNav([socio.data.nombre]);
         } else {
             appState.rolUsuario = 'socio';

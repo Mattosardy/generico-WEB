@@ -274,6 +274,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         event.preventDefault();
         mostrarPanelLogin();
     });
+    document.getElementById('mostrarLoginPassword')?.addEventListener('change', (event) => {
+        const passwordInput = document.getElementById('loginPassword');
+        if (passwordInput) {
+            passwordInput.type = event.target.checked ? 'text' : 'password';
+        }
+    });
     document.getElementById('formLoginPassword')?.addEventListener('submit', async (event) => {
         event.preventDefault();
         const telefono = document.getElementById('loginTelefonoPassword').value.trim();

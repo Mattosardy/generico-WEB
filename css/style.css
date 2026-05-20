@@ -2201,6 +2201,31 @@ input[type="file"] {
     color: rgba(217, 228, 207, 0.48);
 }
 
+.password-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin: -4px 0 14px;
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+}
+
+.password-toggle input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.password-toggle:focus-within {
+    color: var(--accent-strong);
+}
+
 .tabla-datos,
 .historial-table {
     border-collapse: separate;
@@ -5890,7 +5915,79 @@ button.entrega-calendar-event {
         text-transform: uppercase;
     }
 
-    .tabla-reservas-excel td .reserva-status-badge {
+.tabla-reservas-excel td .reserva-status-badge {
         margin: 0;
+    }
+}
+
+.telegram-security-card {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+    padding: 16px;
+    border: 1px solid rgba(93, 129, 67, 0.24);
+    border-radius: 16px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(232, 241, 224, 0.72)),
+        radial-gradient(circle at top right, rgba(206, 222, 194, 0.45), transparent 42%);
+    box-shadow: 0 14px 34px rgba(42, 61, 33, 0.08);
+}
+
+.telegram-security-card.verified {
+    border-color: rgba(77, 139, 87, 0.24);
+    background: linear-gradient(135deg, rgba(248, 253, 246, 0.96), rgba(229, 242, 225, 0.78));
+}
+
+.telegram-security-copy {
+    display: grid;
+    gap: 5px;
+}
+
+.telegram-security-copy strong,
+.telegram-security-card.verified strong {
+    color: var(--text-strong);
+    font-size: 1rem;
+}
+
+.telegram-security-copy small,
+.telegram-security-card.verified small,
+.telegram-security-copy em {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.telegram-security-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.telegram-security-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.telegram-security-form input {
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--app-line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text-strong);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.telegram-security-feedback {
+    min-height: 18px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+@media (max-width: 720px) {
+    .telegram-security-form {
+        grid-template-columns: 1fr;
     }
 }
