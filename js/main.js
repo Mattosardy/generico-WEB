@@ -6,6 +6,16 @@ const restrictedSections = {
     maestro: ['maestro']
 };
 
+function registrarServiceWorkerPwa() {
+    if (!('serviceWorker' in navigator)) return;
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+            .catch((error) => {
+                console.warn('No se pudo registrar la PWA:', error);
+            });
+    });
+}
+
 function actualizarBotonAudio() {
     const audio = document.getElementById('backgroundAudio');
     const boton = document.getElementById('btnAudioToggle');
@@ -216,6 +226,7 @@ async function verificarSesion() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    registrarServiceWorkerPwa();
     inicializarPlaceholders();
     inicializarAudioFondo();
     if (typeof actualizarBotonesSesion === 'function') actualizarBotonesSesion(false);

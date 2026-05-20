@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#2f4d23">
+    <meta name="theme-color" content="#050505">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Cururú Club">
+    <meta name="apple-mobile-web-app-title" content="Cururu Club">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     <meta name="description" content="Area privada de Cururu Club para socios, pedidos mensuales, entregas y novedades del club.">
     <title>Cururu Club | Area de socios</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512.png">
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css?v=20260519-exif-cleanup">
-    <link rel="icon" href="data:,">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -26,7 +29,7 @@
         <div class="header-main">
             <span id="headerSessionName" class="header-session-name" aria-live="polite"></span>
             <div class="logo">
-                <h1><img src="assets/images/Logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
+                <h1><img src="assets/images/logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
                 <p>Area privada de socios · Pedidos · Entregas</p>
             </div>
             <div class="mobile-hidden-dock" aria-hidden="true">
@@ -567,6 +570,6 @@ window.__SUPABASE_ENV__ = {
 <script src="js/modals.js?v=20260520-plan-plus"></script>
 <script src="js/admin.js?v=20260520-plan-plus"></script>
 <script src="js/maestro.js?v=20260519-exif-cleanup"></script>
-<script src="js/main.js?v=20260519-stock-packs-utf8"></script>
+<script src="js/main.js?v=20260520-pwa"></script>
 </body>
 </html>
