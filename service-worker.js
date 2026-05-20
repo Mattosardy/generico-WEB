@@ -1,4 +1,4 @@
-const CURURU_CACHE_VERSION = 'cururu-pwa-v1-20260520';
+const CURURU_CACHE_VERSION = 'cururu-pwa-v2-20260520-supabase-new';
 const CURURU_STATIC_CACHE = CURURU_CACHE_VERSION;
 
 const PRECACHE_URLS = [
@@ -6,7 +6,6 @@ const PRECACHE_URLS = [
     '/index.html',
     '/manifest.webmanifest',
     '/css/style.css?v=20260519-exif-cleanup',
-    '/js/supabase-client.js?v=20260515-reservas-validas',
     '/js/config.js?v=20260519-telegram-security-lite',
     '/js/utils.js?v=20260519-exif-cleanup',
     '/js/notifications.js?v=20260519-telegram-security-lite',
@@ -33,6 +32,7 @@ function isLocalStaticRequest(request) {
     if (url.pathname.startsWith('/storage/')) return false;
     if (url.pathname.startsWith('/functions/')) return false;
     if (url.pathname.startsWith('/cdn-cgi/')) return false;
+    if (url.pathname === '/js/supabase-client.js') return false;
     return true;
 }
 

@@ -1,9 +1,36 @@
-const VERIFY_TOKEN = "cururu123";
 const NO_CACHE_HEADERS = {
   "Cache-Control": "no-cache, no-store, must-revalidate",
   "Pragma": "no-cache",
   "Expires": "0",
 };
+
+const BLOCKED_ASSET_PREFIXES = [
+  "/.git",
+  "/.env",
+  "/supabase/",
+  "/workers/",
+];
+
+const BLOCKED_ASSET_PATHS = new Set([
+  "/.gitignore",
+  "/package-lock.json",
+  "/package.json",
+  "/vite-dev.log",
+  "/worker.js",
+  "/wrangler.jsonc",
+]);
+
+function getEnv(env, key) {
+  return String(env?.[key] || "").trim();
+}
+
+function isBlockedAssetPath(pathname) {
+  const normalized = pathname.toLowerCase();
+  return BLOCKED_ASSET_PATHS.has(normalized)
+    || normalized.endsWith(".sql")
+    || normalized.endsWith(".dump")
+    || BLOCKED_ASSET_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
 
 function getCacheHeadersForPath(pathname) {
   const normalizedPath = pathname === "/" ? "/index.html" : pathname.toLowerCase();
@@ -26,6 +53,27 @@ function applyAssetCacheHeaders(response, pathname) {
     statusText: response.statusText,
     headers,
   });
+}
+
+async function applyRuntimeEnv(response, env, pathname) {
+  const normalizedPath = pathname === "/" ? "/index.html" : pathname.toLowerCase();
+  if (!normalizedPath.endsWith(".html")) return response;
+
+  const supabaseUrl = getEnv(env, "SUPABASE_URL");
+  const supabaseAnonKey = getEnv(env, "SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !supabaseAnonKey) return response;
+
+  const html = await response.text();
+  return new Response(
+    html
+      .replaceAll("%VITE_SUPABASE_URL%", supabaseUrl)
+      .replaceAll("%VITE_SUPABASE_ANON_KEY%", supabaseAnonKey),
+    {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    },
+  );
 }
 
 function getRelevantHeaders(request) {
@@ -116,7 +164,16 @@ export default {
         const token = url.searchParams.get("hub.verify_token");
         const challenge = url.searchParams.get("hub.challenge");
 
-        if (mode === "subscribe" && token === VERIFY_TOKEN) {
+        const verifyToken = getEnv(env, "WHATSAPP_VERIFY_TOKEN");
+        if (!verifyToken) {
+          logStructured("META WEBHOOK MISCONFIGURED", {
+            ...context,
+            reason: "missing_verify_token",
+          });
+          return new Response("Webhook not configured", { status: 500 });
+        }
+
+        if (mode === "subscribe" && token === verifyToken) {
           logStructured("META WEBHOOK VERIFIED", {
             ...context,
             mode,
@@ -129,7 +186,7 @@ export default {
         logStructured("META WEBHOOK VERIFICATION FORBIDDEN", {
           ...context,
           mode,
-          tokenMatches: token === VERIFY_TOKEN,
+          tokenMatches: token === verifyToken,
         });
 
         return new Response("Forbidden", { status: 403 });
@@ -168,9 +225,14 @@ export default {
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
 
+    if (isBlockedAssetPath(url.pathname)) {
+      return new Response("Not found", { status: 404, headers: NO_CACHE_HEADERS });
+    }
+
     if (env?.ASSETS) {
       const assetResponse = await env.ASSETS.fetch(request);
-      return applyAssetCacheHeaders(assetResponse, url.pathname);
+      const withRuntimeEnv = await applyRuntimeEnv(assetResponse, env, url.pathname);
+      return applyAssetCacheHeaders(withRuntimeEnv, url.pathname);
     }
 
     return new Response("Cururu WhatsApp Webhook OK", {

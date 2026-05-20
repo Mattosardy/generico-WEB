@@ -3,11 +3,42 @@
 // VERSIÓN CON LOGIN POR EMAIL
 // ============================================
 
-const SUPABASE_URL = 'https://qjiqbcokhlwisxbeplym.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqaXFiY29raGx3aXN4YmVwbHltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTc3MjgsImV4cCI6MjA5MDI3MzcyOH0._bRZjYV1Ly30T-g4zuI7GNNTRnZtnD9HTamojbP3xnY';
-const SUPABASE_PROJECT_REF = 'qjiqbcokhlwisxbeplym';
+function resolverSupabaseEnv() {
+    const supabaseUrl = String(window.__SUPABASE_ENV__?.url || '').trim();
+    const supabaseAnonKey = String(window.__SUPABASE_ENV__?.anonKey || '').trim();
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('%VITE_') || supabaseAnonKey.includes('%VITE_')) {
+        throw new Error('Configuracion de Supabase no disponible. Abrir la web desde npm run dev o desde el deploy, no como archivo file://.');
+    }
+
+    let parsedUrl;
+    try {
+        parsedUrl = new URL(supabaseUrl);
+    } catch (_error) {
+        throw new Error('SUPABASE_URL invalida. Verificar variables de entorno del servidor.');
+    }
+
+    return {
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+        projectRef: parsedUrl.hostname.split('.')[0]
+    };
+}
+
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var SUPABASE_PROJECT_REF = '';
+var supabaseClient = null;
+
+const supabaseEnv = resolverSupabaseEnv();
+SUPABASE_URL = supabaseEnv.url;
+SUPABASE_ANON_KEY = supabaseEnv.anonKey;
+SUPABASE_PROJECT_REF = supabaseEnv.projectRef;
+
+window.SUPABASE_URL = SUPABASE_URL;
+
+supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabaseClient = supabaseClient;
 
 function errorEsRefreshTokenInvalido(error) {
     const mensaje = String(error?.message || '').toLowerCase();
