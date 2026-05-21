@@ -5,15 +5,25 @@ function mostrarPanelLogin() {
 }
 
 function mostrarPanelRegister() {
+    mostrarMensaje('El alta de socios la realiza el administrador del club.', false);
+    mostrarPanelLogin();
+    return;
     document.getElementById('panelLogin').style.display = 'none';
     document.getElementById('panelRegister').style.display = 'block';
     document.getElementById('panelForgot').style.display = 'none';
 }
 
 function mostrarPanelForgot() {
+    mostrarMensaje('Solicitá una nueva clave temporal al administrador del club.', false);
+    mostrarPanelLogin();
+    return;
     document.getElementById('panelLogin').style.display = 'none';
     document.getElementById('panelRegister').style.display = 'none';
     document.getElementById('panelForgot').style.display = 'block';
+}
+
+function socioDebeCambiarPassword() {
+    return Boolean(appState.socioData?.debe_cambiar_password || appState.socioData?.password_temporal);
 }
 function actualizarBotonesSesion(autenticado) {
     const desktopLogin = document.getElementById('btnLogin');
@@ -29,13 +39,31 @@ function actualizarBotonesSesion(autenticado) {
     if (desktopLogout) desktopLogout.style.display = autenticado ? 'inline-flex' : 'none';
 }
 
-function actualizarNombreUsuarioNav(partes = ['Invitado']) {
-    const userName = document.getElementById('userName');
-    if (!userName) return;
+function obtenerNombrePilaSesion(partes = ['Invitado']) {
     const limpias = partes.map((parte) => String(parte || '').trim()).filter(Boolean);
     const nombreBase = limpias[0] || 'Invitado';
-    const nombrePila = nombreBase.includes('@') ? nombreBase.split('@')[0] : nombreBase.split(/\s+/)[0];
-    const visibles = nombrePila && nombrePila !== 'Invitado' ? [`Carrito de ${nombrePila}`] : ['Invitado'];
+    return nombreBase.includes('@') ? nombreBase.split('@')[0] : nombreBase.split(/\s+/)[0];
+}
+
+function actualizarNombreHeaderSesion(nombrePila = 'Invitado') {
+    const headerName = document.getElementById('headerSessionName');
+    if (!headerName) return;
+    const visible = nombrePila && nombrePila !== 'Invitado';
+    headerName.textContent = visible ? nombrePila : '';
+    headerName.style.display = visible ? '' : 'none';
+}
+
+function actualizarNombreUsuarioNav(partes = ['Invitado'], rol = appState.rolUsuario) {
+    const userName = document.getElementById('userName');
+    if (!userName) return;
+    const nombrePila = obtenerNombrePilaSesion(partes);
+    const rolNormalizado = String(rol || 'socio').toLowerCase();
+    const esSocio = rolNormalizado === 'socio';
+    actualizarNombreHeaderSesion(nombrePila);
+    userName.classList.toggle('nav-user-name-hidden', !esSocio && nombrePila !== 'Invitado');
+    const visibles = nombrePila && nombrePila !== 'Invitado'
+        ? [esSocio ? `Carrito de ${nombrePila}` : nombrePila]
+        : ['Invitado'];
     userName.textContent = '';
     visibles.forEach((parte) => {
         const token = document.createElement('span');
@@ -63,26 +91,35 @@ async function actualizarUIporRol() {
         if (socio.success && socio.data) {
             appState.rolUsuario = socio.data.rol || 'socio';
             appState.socioData = socio.data;
+            if (typeof renderPasswordTemporalGate === 'function') {
+                renderPasswordTemporalGate();
+            }
             if (typeof actualizarEstadoSeguridadTelegram === 'function') {
                 await actualizarEstadoSeguridadTelegram();
             }
-            actualizarNombreUsuarioNav([socio.data.nombre]);
+            actualizarNombreUsuarioNav([socio.data.nombre], appState.rolUsuario);
         } else {
             appState.rolUsuario = 'socio';
             appState.socioData = null;
+            if (typeof renderPasswordTemporalGate === 'function') {
+                renderPasswordTemporalGate();
+            }
             const dashboard = document.getElementById('socioDashboard');
             if (dashboard) dashboard.style.display = 'none';
-            actualizarNombreUsuarioNav([usuario.email]);
+            actualizarNombreUsuarioNav([usuario.email], appState.rolUsuario);
         }
         actualizarBotonesSesion(true);
     } else {
         appState.rolUsuario = 'invitado';
         appState.socioData = null;
+        if (typeof renderPasswordTemporalGate === 'function') {
+            renderPasswordTemporalGate();
+        }
         appState.gramosReservadosCiclo = 0;
         appState.cicloClubActual = null;
         const dashboard = document.getElementById('socioDashboard');
         if (dashboard) dashboard.style.display = 'none';
-        actualizarNombreUsuarioNav(['Invitado']);
+        actualizarNombreUsuarioNav(['Invitado'], appState.rolUsuario);
         actualizarBotonesSesion(false);
         mostrarPanelLogin();
     }
@@ -131,3 +168,5 @@ async function cerrarSesionHandler() {
     mostrarMensaje('Sesión cerrada', true);
     if (typeof mostrarSeccion === 'function') mostrarSeccion('inicio');
 }
+
+window.socioDebeCambiarPassword = socioDebeCambiarPassword;

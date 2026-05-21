@@ -65,13 +65,14 @@ function actualizarEstadoPedidoModal() {
     const detalleStock = stock.stockActivo
         ? ` Stock: ${formatearPacksDisponibles(stock.stockPacks, stock.gramosDisponibles)}.`
         : '';
+    const passwordTemporalPendiente = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
     restanteEl.textContent = `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${packsRestantes} de 2 packs.${detalleStock}`;
     alertaEl.textContent = '';
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         const gramos = Number(btn.dataset.gramos);
         const sinStockParaCantidad = stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos);
         btn.classList.toggle('activa', gramos === appState.gramosSeleccionadosPedido);
-        btn.disabled = gramos > restante || sinStockParaCantidad;
+        btn.disabled = passwordTemporalPendiente || gramos > restante || sinStockParaCantidad;
         if (sinStockParaCantidad) {
             btn.title = 'No hay packs suficientes para esta cantidad';
         } else {
@@ -81,6 +82,12 @@ function actualizarEstadoPedidoModal() {
 
     if (stock.sinStock) {
         alertaEl.textContent = 'SIN STOCK';
+        botonEl.disabled = true;
+        botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido';
+        return;
+    }
+    if (passwordTemporalPendiente) {
+        alertaEl.textContent = 'Cambiá tu contraseña temporal para poder reservar.';
         botonEl.disabled = true;
         botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido';
         return;
@@ -142,6 +149,10 @@ async function realizarPedidoProducto() {
     }
     if (!appState.socioData && !appState.usuarioActual) {
         mostrarMensaje('Iniciá sesión para pedir.', false);
+        return;
+    }
+    if (typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword()) {
+        mostrarMensaje('Cambiá tu contraseña temporal para poder reservar.', false);
         return;
     }
     if (!appState.gramosSeleccionadosPedido) {

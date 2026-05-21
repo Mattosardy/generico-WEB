@@ -919,7 +919,45 @@ async function cargarSociosAdmin() {
         container.innerHTML = '<div class="loading">No se pudieron cargar los socios.</div>';
         return;
     }
-    container.innerHTML = (data || []).length ? `
+    const crearSocioHTML = `
+        <div class="admin-create-socio-card">
+            <div class="admin-create-socio-copy">
+                <span class="metric-label">Alta controlada</span>
+                <h3><i class="fas fa-user-plus"></i> Crear socio</h3>
+                <p>Creá un acceso real con teléfono y contraseña temporal automática. El correo técnico interno se genera en backend y no se muestra al socio.</p>
+            </div>
+            <form id="formCrearSocioAdmin" class="admin-create-socio-form">
+                <div class="form-group">
+                    <label for="nuevoSocioNombre">Nombre</label>
+                    <input type="text" id="nuevoSocioNombre" placeholder="Nombre del socio" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioTelefono">Teléfono</label>
+                    <input type="tel" id="nuevoSocioTelefono" placeholder="09XXXXXXX" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioRol">Rol</label>
+                    <select id="nuevoSocioRol">
+                        <option value="socio" selected>Socio</option>
+                        <option value="admin">Admin</option>
+                        <option value="maestro">Maestro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioEstado">Estado</label>
+                    <select id="nuevoSocioEstado">
+                        <option value="activo" selected>Activo</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit"><i class="fas fa-lock"></i> Crear socio</button>
+            </form>
+            <div id="crearSocioResultado" class="admin-create-socio-result" hidden></div>
+            <small class="admin-create-socio-note">La contraseña temporal se muestra una sola vez. El socio deberá cambiarla en su primer ingreso.</small>
+        </div>
+    `;
+    const tablaSociosHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
             <thead><tr><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
@@ -955,6 +993,70 @@ async function cargarSociosAdmin() {
         </table>
         </div>
     ` : '<div class="loading">No hay socios.</div>';
+    container.innerHTML = crearSocioHTML + tablaSociosHTML;
+    document.getElementById('formCrearSocioAdmin')?.addEventListener('submit', crearSocioDesdeAdmin);
+}
+
+async function crearSocioDesdeAdmin(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const boton = form.querySelector('button[type="submit"]');
+    const resultadoEl = document.getElementById('crearSocioResultado');
+    const payload = {
+        nombre: document.getElementById('nuevoSocioNombre')?.value?.trim() || '',
+        telefono: document.getElementById('nuevoSocioTelefono')?.value?.trim() || '',
+        rol: document.getElementById('nuevoSocioRol')?.value || 'socio',
+        estado: document.getElementById('nuevoSocioEstado')?.value || 'activo'
+    };
+
+    if (!payload.nombre || !payload.telefono) {
+        mostrarMensaje('Nombre y teléfono son obligatorios.', false);
+        return;
+    }
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = 'Creando...';
+    }
+    if (resultadoEl) resultadoEl.hidden = true;
+
+    try {
+        const { data, error } = await supabaseClient.functions.invoke('admin-create-socio', {
+            body: payload
+        });
+        if (error) throw error;
+        if (!data?.ok) throw new Error(data?.error || 'No se pudo crear el socio.');
+
+        const linkWeb = data.link_web || window.location.origin;
+        if (resultadoEl) {
+            resultadoEl.hidden = false;
+            resultadoEl.innerHTML = `
+                <strong>Socio creado correctamente</strong>
+                <span>Datos para entregar al socio:</span>
+                <dl>
+                    <div><dt>Link de la web</dt><dd>${escapeHtml(linkWeb)}</dd></div>
+                    <div><dt>Teléfono</dt><dd>${escapeHtml(data.telefono || payload.telefono)}</dd></div>
+                    <div><dt>Contraseña temporal</dt><dd><code>${escapeHtml(data.temporary_password || '')}</code></dd></div>
+                </dl>
+                <em>Esta contraseña se muestra una sola vez. El socio deberá cambiarla en su primer ingreso.</em>
+            `;
+        }
+        form.reset();
+        mostrarMensaje('Socio creado correctamente.', true);
+        await cargarSociosAdmin();
+    } catch (error) {
+        const detalle = error?.message || error?.context?.error || 'No se pudo crear el socio.';
+        mostrarMensaje(detalle, false);
+        if (resultadoEl) {
+            resultadoEl.hidden = false;
+            resultadoEl.innerHTML = `<strong>No se pudo crear el socio</strong><span>${escapeHtml(detalle)}</span>`;
+        }
+    } finally {
+        if (boton) {
+            boton.disabled = false;
+            boton.innerHTML = '<i class="fas fa-lock"></i> Crear socio';
+        }
+    }
 }
 
 function normalizarTelefonoSocioInput(valor) {

@@ -53,7 +53,7 @@ function limpiarSesionLocalSupabase() {
             if (clave.startsWith(prefijo)) localStorage.removeItem(clave);
         });
     } catch (error) {
-        console.warn('No se pudo limpiar la sesiÃ³n local de Supabase:', error);
+        console.warn('No se pudo limpiar la sesión local de Supabase:', error);
     }
 }
 
@@ -203,6 +203,61 @@ async function loginConTelefonoPassword(telefono, password) {
     } catch (error) {
         console.error('Error al iniciar sesion con telefono:', error.message);
         return { success: false, error };
+    }
+}
+
+async function cambiarPasswordActual(passwordActual, nuevaPassword) {
+    try {
+        const usuario = await obtenerUsuarioActual();
+        const telefono = appState?.socioData?.telefono || '';
+
+        if (!usuario || !telefono) {
+            return { success: false, error: 'No se pudo validar la sesión actual.' };
+        }
+
+        const reauth = await loginConTelefonoPassword(telefono, passwordActual);
+        if (!reauth.success) {
+            return { success: false, error: 'La contraseña actual no es válida.' };
+        }
+
+        if (reauth.data?.user?.id && reauth.data.user.id !== usuario.id) {
+            return { success: false, error: 'No se pudo validar la sesión actual.' };
+        }
+
+        const { data, error } = await supabaseClient.auth.updateUser({ password: nuevaPassword });
+        if (error) throw error;
+        return { success: true, data };
+    } catch (_error) {
+        return { success: false, error: 'No se pudo actualizar la contraseña.' };
+    }
+}
+
+async function marcarPasswordCambiada() {
+    try {
+        const { data, error } = await supabaseClient.rpc('mark_password_changed');
+        if (error) throw error;
+        appState.socioData = {
+            ...appState.socioData,
+            debe_cambiar_password: false,
+            password_temporal: false,
+            password_changed_at: new Date().toISOString()
+        };
+        return { success: true, data };
+    } catch (error) {
+        console.error('No se pudo marcar la contraseña como cambiada:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+async function cambiarPasswordTemporal(nuevaPassword) {
+    try {
+        const { data, error } = await supabaseClient.auth.updateUser({ password: nuevaPassword });
+        if (error) throw error;
+        const marcado = await marcarPasswordCambiada();
+        if (!marcado.success) return marcado;
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error.message || 'No se pudo actualizar la contraseña.' };
     }
 }
 
@@ -416,6 +471,9 @@ window.loginConEmail = loginConEmail;
 window.verificarEmail = verificarEmail;
 window.enviarEnlaceRecuperacionPassword = enviarEnlaceRecuperacionPassword;
 window.loginConTelefonoPassword = loginConTelefonoPassword;
+window.cambiarPasswordActual = cambiarPasswordActual;
+window.cambiarPasswordTemporal = cambiarPasswordTemporal;
+window.marcarPasswordCambiada = marcarPasswordCambiada;
 window.normalizarTelefonoAuth = normalizarTelefonoAuth;
 window.obtenerUsuarioActual = obtenerUsuarioActual;
 window.cerrarSesion = cerrarSesion;

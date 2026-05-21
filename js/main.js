@@ -8,6 +8,13 @@ const restrictedSections = {
 
 function registrarServiceWorkerPwa() {
     if (!('serviceWorker' in navigator)) return;
+    const esLocalhost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+    if (window.location.protocol !== 'https:' || esLocalhost) {
+        navigator.serviceWorker.getRegistrations?.()
+            .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+            .catch(() => undefined);
+        return;
+    }
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
             .catch((error) => {
@@ -104,6 +111,34 @@ function validarCambioPassword(actual, nueva, repetir) {
     if (nueva !== repetir) return 'La confirmación no coincide.';
     if (actual === nueva) return 'La nueva contraseña debe ser distinta a la actual.';
     return '';
+}
+
+function validarNuevaPassword(nueva, repetir) {
+    if (!nueva || !repetir) return 'Completá todos los campos.';
+    if (nueva.length < 8) return 'La nueva contraseña debe tener al menos 8 caracteres.';
+    if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(nueva) || !/\d/.test(nueva)) {
+        return 'La nueva contraseña debe incluir letras y números.';
+    }
+    if (nueva !== repetir) return 'La confirmación no coincide.';
+    return '';
+}
+
+function validarCambioPasswordActualizado(actual, nueva, repetir) {
+    if (!actual) return 'Completá todos los campos.';
+    const errorNueva = validarNuevaPassword(nueva, repetir);
+    if (errorNueva) return errorNueva;
+    if (actual === nueva) return 'La nueva contraseña debe ser distinta a la actual.';
+    return '';
+}
+
+function renderPasswordTemporalGate() {
+    const gate = document.getElementById('passwordTemporalGate');
+    if (!gate) return;
+    const requerido = typeof socioDebeCambiarPassword === 'function'
+        ? socioDebeCambiarPassword()
+        : Boolean(appState.socioData?.debe_cambiar_password || appState.socioData?.password_temporal);
+    gate.hidden = !requerido;
+    document.body.classList.toggle('password-temporal-required', requerido);
 }
 
 async function mostrarSeccion(seccionId) {
@@ -302,7 +337,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         mostrarMensaje('Inicio de sesión exitoso', true);
         await verificarSesion();
-        await mostrarSeccion(obtenerDestinoPostLogin());
+        await mostrarSeccion(typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword()
+            ? 'actividades'
+            : obtenerDestinoPostLogin());
     });
 
     document.getElementById('formRegisterMagic')?.addEventListener('submit', async (event) => {
@@ -341,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const actual = document.getElementById('passwordActual')?.value || '';
         const nueva = document.getElementById('passwordNueva')?.value || '';
         const repetir = document.getElementById('passwordNuevaConfirmar')?.value || '';
-        const errorValidacion = validarCambioPassword(actual, nueva, repetir);
+        const errorValidacion = validarCambioPasswordActualizado(actual, nueva, repetir);
 
         if (errorValidacion) {
             mostrarMensaje(errorValidacion, false);
@@ -355,9 +392,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const resultado = await cambiarPasswordActual(actual, nueva);
+            const passwordTemporalActivo = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
             if (!resultado.success) {
                 mostrarMensaje(resultado.error || 'No se pudo actualizar la contraseña.', false);
                 return;
+            }
+            if (passwordTemporalActivo && typeof marcarPasswordCambiada === 'function') {
+                const marcado = await marcarPasswordCambiada();
+                if (!marcado.success) {
+                    mostrarMensaje('La contraseña cambió, pero no se pudo cerrar el estado temporal.', false);
+                    return;
+                }
+                renderPasswordTemporalGate();
             }
             form.reset();
             mostrarMensaje('Contraseña actualizada correctamente.', true);
@@ -365,6 +411,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (boton) {
                 boton.disabled = false;
                 boton.innerHTML = '<i class="fas fa-key"></i> Actualizar contraseña';
+            }
+        }
+    });
+
+    document.getElementById('formPasswordTemporal')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const boton = document.getElementById('btnPasswordTemporal');
+        const nueva = document.getElementById('passwordTemporalNueva')?.value || '';
+        const repetir = document.getElementById('passwordTemporalConfirmar')?.value || '';
+        const errorValidacion = validarNuevaPassword(nueva, repetir);
+
+        if (errorValidacion) {
+            mostrarMensaje(errorValidacion, false);
+            return;
+        }
+
+        if (boton) {
+            boton.disabled = true;
+            boton.textContent = 'Actualizando...';
+        }
+
+        try {
+            const resultado = await cambiarPasswordTemporal(nueva);
+            if (!resultado.success) {
+                mostrarMensaje(resultado.error || 'No se pudo actualizar la contraseña.', false);
+                return;
+            }
+            form.reset();
+            renderPasswordTemporalGate();
+            mostrarMensaje('Contraseña actualizada correctamente.', true);
+            if (typeof actualizarEstadoSeguridadTelegram === 'function') {
+                await actualizarEstadoSeguridadTelegram();
+            }
+            if (typeof renderTelegramLinkPanel === 'function') renderTelegramLinkPanel();
+        } finally {
+            if (boton) {
+                boton.disabled = false;
+                boton.innerHTML = '<i class="fas fa-key"></i> Cambiar contraseña';
             }
         }
     });

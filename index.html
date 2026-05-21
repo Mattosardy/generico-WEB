@@ -185,6 +185,24 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                         </form>
                     </div>
                 </div>
+                <div id="passwordTemporalGate" class="password-temporal-card auth-only" hidden>
+                    <div class="password-temporal-copy">
+                        <span class="metric-label">Seguridad de acceso</span>
+                        <strong>Debés cambiar tu contraseña temporal para continuar.</strong>
+                        <small>Elegí una contraseña propia. El correo no forma parte del flujo del socio.</small>
+                    </div>
+                    <form id="formPasswordTemporal" class="password-temporal-form">
+                        <div class="form-group">
+                            <label>Nueva contraseña *</label>
+                            <input type="password" id="passwordTemporalNueva" autocomplete="new-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Repetir nueva contraseña *</label>
+                            <input type="password" id="passwordTemporalConfirmar" autocomplete="new-password" required>
+                        </div>
+                        <button type="submit" id="btnPasswordTemporal" class="btn-submit"><i class="fas fa-key"></i> Cambiar contraseña</button>
+                    </form>
+                </div>
             </div>
             <div id="actividades-container" class="actividades-grid">
                 <div class="loading">Cargando actividades...</div>
@@ -203,7 +221,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
         <h2 class="section-title"><i class="fas fa-lock"></i> Acceso Socios</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(100,140,75,0.3); padding-bottom: 10px;">
             <button id="tabLogin" class="btn-submit" style="background: #7ca35a;"><i class="fas fa-lock"></i> Iniciar Sesión</button>
-            <button id="tabRegister" class="btn-submit" style="background: rgba(100,140,75,0.3);"><i class="fas fa-user-plus"></i> Registrarse</button>
+            <button id="tabRegister" class="btn-submit" style="background: rgba(100,140,75,0.3);" hidden aria-hidden="true"><i class="fas fa-user-plus"></i> Registrarse</button>
         </div>
         <div id="panelLogin">
             <p style="color: var(--text-main); margin-bottom: 20px;">Ingresá con tu teléfono y contraseña.</p>
@@ -215,10 +233,10 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                     <span>Mostrar contraseña</span>
                 </label>
                 <button type="submit" class="btn-submit"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-                <p style="margin-top: 15px; font-size: 0.85rem;"><a href="#" id="forgotPasswordLink" style="color: var(--accent-strong);">¿Olvidaste tu contraseña?</a></p>
+                <p class="login-admin-help">¿Necesitás una nueva clave? Solicitá una nueva clave temporal al administrador del club.</p>
             </form>
         </div>
-        <div id="panelRegister" style="display: none;">
+        <div id="panelRegister" style="display: none;" hidden aria-hidden="true">
             <p style="color: var(--text-main); margin-bottom: 20px;">Completá tus datos y verificá Telegram para recibir avisos del club.</p>
             <form id="formRegisterMagic" style="max-width: 400px;">
                 <div class="form-group"><label>Nombre *</label><input type="text" id="registerNombre" autocomplete="given-name" required></div>
@@ -234,17 +252,8 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                 <p style="color: var(--text-muted); font-size: 0.85rem;">Se abrió Telegram. Tocá Start para completar la verificación.</p>
             </div>
         </div>
-        <div id="panelForgot" style="display: none;">
-            <p style="color: var(--text-main); margin-bottom: 20px;">Ingresá tu email para restablecer tu contraseña.</p>
-            <form id="formForgotMagic" style="max-width: 400px;">
-                <div class="form-group"><label>Email *</label><input type="email" id="forgotEmail" required></div>
-                <button type="submit" class="btn-submit"><i class="fas fa-envelope"></i> Enviar enlace de restablecimiento</button>
-            </form>
-            <div id="forgotMessage" style="display: none; margin-top: 20px; padding: 15px; background: rgba(100,140,75,0.2); border-radius: 12px;">
-                <p style="color: var(--text-strong);"><i class="fas fa-envelope"></i> Se ha enviado un enlace a <strong id="forgotEmailSent"></strong></p>
-                <p style="color: var(--text-muted); font-size: 0.85rem;">Hacé clic en el enlace para restablecer tu contraseña.</p>
-            </div>
-            <p style="margin-top: 15px; font-size: 0.85rem;"><a href="#" id="backToLoginFromForgot" style="color: var(--accent-strong);">← Volver a iniciar sesión</a></p>
+        <div id="panelForgot" style="display: none;" hidden aria-hidden="true">
+            <p style="color: var(--text-main); margin-bottom: 20px;">Solicitá una nueva clave temporal al administrador del club.</p>
         </div>
     </div>
     
@@ -301,6 +310,12 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                         <article class="manual-bloque">
                             <h3><i class="fas fa-check-circle"></i> Recomendaciones</h3>
                             <p>Antes de cerrar sesión, revisá solicitudes pendientes, mensajes recientes y entregas del calendario. Evitá borrar datos salvo que sea necesario.</p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-user-plus"></i> Cómo crear un socio nuevo</h3>
+                            <p>Ir al panel admin, abrir Crear socio, cargar nombre y teléfono, crear socio y copiar la contraseña temporal generada una sola vez.</p>
+                            <p>Enviar al socio el link de la web, teléfono y contraseña temporal. El socio inicia sesión, cambia la contraseña temporal, vincula Telegram, valida el dispositivo y queda listo para reservar.</p>
+                            <p>El correo no forma parte del flujo del socio. Si el sistema necesita un correo técnico interno, se genera automáticamente y no debe ser usado por el socio.</p>
                         </article>
                     </div>
                 </div>

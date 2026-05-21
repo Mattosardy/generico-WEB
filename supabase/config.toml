@@ -36,3 +36,6 @@ verify_jwt = true
 
 [functions.schedule-reminders]
 verify_jwt = true
+
+[functions.admin-create-socio]
+verify_jwt = false

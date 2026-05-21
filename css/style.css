@@ -552,6 +552,57 @@ body::before {
 .actividades-acordeon #formCambiarPassword input {
     width: 100%;
 }
+
+.login-admin-help {
+    margin-top: 15px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.password-temporal-card[hidden] {
+    display: none !important;
+}
+
+.password-temporal-card {
+    margin: 18px 0 26px;
+    padding: 18px;
+    border: 1px solid rgba(245, 190, 85, 0.35);
+    border-radius: 18px;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 248, 232, 0.9)),
+        rgba(255, 255, 255, 0.92);
+    box-shadow: var(--app-shadow-tight);
+    color: #1d211b;
+}
+
+.password-temporal-copy {
+    margin-bottom: 14px;
+}
+
+.password-temporal-copy strong {
+    display: block;
+    color: #151914;
+    font-size: 1.02rem;
+    margin: 4px 0;
+}
+
+.password-temporal-copy small {
+    display: block;
+    color: #53604e;
+    line-height: 1.45;
+}
+
+.password-temporal-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    max-width: 720px;
+}
+
+.password-temporal-form .btn-submit {
+    align-self: end;
+}
 .actividades-acordeon #btnCambiarPassword {
     justify-self: center;
     width: min(100%, 320px);
