@@ -7033,6 +7033,82 @@ body::before {
     color: inherit !important;
 }
 
+/* Navigation patch: graphite by default, green only when selected. */
+.nav-btn,
+.dock-btn,
+.btn-inicio,
+.nav-session-btn,
+.productos-toggle,
+.nav-admin-btn,
+.tab-btn,
+[role="tab"],
+.quick-action-btn {
+    background:
+        linear-gradient(145deg, rgba(30, 34, 30, 0.98), rgba(55, 61, 53, 0.96)) !important;
+    color: #f7faf5 !important;
+    border: 1px solid rgba(225, 234, 220, 0.16) !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    text-shadow: none !important;
+}
+
+.nav-btn *,
+.dock-btn *,
+.btn-inicio *,
+.nav-session-btn *,
+.productos-toggle *,
+.nav-admin-btn *,
+.tab-btn *,
+[role="tab"] *,
+.quick-action-btn * {
+    color: inherit !important;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible,
+.dock-btn:hover,
+.dock-btn:focus-visible,
+.btn-inicio:hover,
+.btn-inicio:focus-visible,
+.nav-session-btn:hover,
+.nav-session-btn:focus-visible,
+.productos-toggle:hover,
+.productos-toggle:focus-visible,
+.nav-admin-btn:hover,
+.nav-admin-btn:focus-visible,
+.tab-btn:hover,
+.tab-btn:focus-visible,
+[role="tab"]:hover,
+[role="tab"]:focus-visible,
+.quick-action-btn:hover,
+.quick-action-btn:focus-visible {
+    background:
+        linear-gradient(145deg, rgba(46, 52, 45, 0.99), rgba(70, 78, 66, 0.98)) !important;
+    color: #ffffff !important;
+}
+
+.nav-btn.active,
+.dock-btn.active,
+.productos-columna.activa .productos-toggle,
+.nav-admin-btn.active,
+.tab-btn.active,
+[role="tab"][aria-selected="true"],
+.quick-action-btn.active {
+    background: linear-gradient(135deg, #7ca35a, #b8d89e) !important;
+    color: #071006 !important;
+    border-color: rgba(216, 240, 198, 0.72) !important;
+    box-shadow: 0 14px 34px rgba(124, 163, 90, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+.nav-btn.active *,
+.dock-btn.active *,
+.productos-columna.activa .productos-toggle *,
+.nav-admin-btn.active *,
+.tab-btn.active *,
+[role="tab"][aria-selected="true"] *,
+.quick-action-btn.active * {
+    color: inherit !important;
+}
+
 .section,
 .historia-section,
 .club-intro-panel,
@@ -7241,5 +7317,400 @@ body::before {
         max-width: none !important;
         max-height: calc(100vh - 24px) !important;
         transform: none !important;
+    }
+}
+
+/* Final emergency override: scroll and navigation must win the cascade. */
+html,
+body,
+body.authenticated,
+body.password-temporal-required,
+body.modal-open {
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto !important;
+    touch-action: auto !important;
+}
+
+body,
+.container,
+.main-content,
+main,
+#app,
+.app,
+.page,
+.page-content,
+#inicio,
+#productos,
+#actividades,
+#admin,
+#maestro,
+#login {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    touch-action: auto !important;
+}
+
+body::before,
+body::after,
+.tour-root[hidden],
+.modal[style*="display: none"],
+.edit-modal[style*="display: none"],
+.tour-scrim[hidden] {
+    pointer-events: none !important;
+}
+
+.header .nav-btn,
+.header-nav .nav-btn,
+nav .nav-btn,
+.mobile-hidden-dock .dock-btn,
+.bottom-dock .dock-btn,
+.dock-btn,
+button.nav-btn,
+button.dock-btn,
+button.btn-inicio,
+button.nav-session-btn,
+#tabLogin,
+#tabRegister,
+.tab-btn,
+[role="tab"],
+.productos-acordeon .productos-toggle,
+.admin-main-acordeon .productos-toggle,
+#admin .nav-admin-btn,
+button.nav-admin-btn,
+.quick-action-btn {
+    background:
+        linear-gradient(145deg, #1b1f1b 0%, #30362f 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(232, 238, 228, 0.2) !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    text-shadow: none !important;
+}
+
+.header .nav-btn *,
+.header-nav .nav-btn *,
+nav .nav-btn *,
+.mobile-hidden-dock .dock-btn *,
+.bottom-dock .dock-btn *,
+.dock-btn *,
+button.nav-btn *,
+button.dock-btn *,
+button.btn-inicio *,
+button.nav-session-btn *,
+#tabLogin *,
+#tabRegister *,
+.tab-btn *,
+[role="tab"] *,
+.productos-acordeon .productos-toggle *,
+.admin-main-acordeon .productos-toggle *,
+#admin .nav-admin-btn *,
+button.nav-admin-btn *,
+.quick-action-btn * {
+    color: #ffffff !important;
+}
+
+.header .nav-btn:hover,
+.header .nav-btn:focus-visible,
+.header-nav .nav-btn:hover,
+.header-nav .nav-btn:focus-visible,
+nav .nav-btn:hover,
+nav .nav-btn:focus-visible,
+.mobile-hidden-dock .dock-btn:hover,
+.mobile-hidden-dock .dock-btn:focus-visible,
+.bottom-dock .dock-btn:hover,
+.bottom-dock .dock-btn:focus-visible,
+.dock-btn:hover,
+.dock-btn:focus-visible,
+button.btn-inicio:hover,
+button.btn-inicio:focus-visible,
+button.nav-session-btn:hover,
+button.nav-session-btn:focus-visible,
+#tabLogin:hover,
+#tabRegister:hover,
+.tab-btn:hover,
+.tab-btn:focus-visible,
+[role="tab"]:hover,
+[role="tab"]:focus-visible,
+.productos-acordeon .productos-toggle:hover,
+.productos-acordeon .productos-toggle:focus-visible,
+#admin .nav-admin-btn:hover,
+#admin .nav-admin-btn:focus-visible,
+.quick-action-btn:hover,
+.quick-action-btn:focus-visible {
+    background:
+        linear-gradient(145deg, #2e342d 0%, #485144 100%) !important;
+    color: #ffffff !important;
+}
+
+.header .nav-btn.active,
+.header-nav .nav-btn.active,
+nav .nav-btn.active,
+.mobile-hidden-dock .dock-btn.active,
+.bottom-dock .dock-btn.active,
+.dock-btn.active,
+button.nav-btn.active,
+#tabLogin.active,
+#tabRegister.active,
+.tab-btn.active,
+[role="tab"][aria-selected="true"],
+.productos-columna.activa > .productos-columna-titulo > .productos-toggle,
+.productos-columna.activa .productos-toggle,
+#admin .nav-admin-btn.active,
+button.nav-admin-btn.active,
+.quick-action-btn.active {
+    background:
+        linear-gradient(135deg, #7ca35a 0%, #b8d89e 100%) !important;
+    color: #071006 !important;
+    border-color: rgba(220, 242, 202, 0.82) !important;
+    box-shadow: 0 14px 34px rgba(124, 163, 90, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.36) !important;
+}
+
+.header .nav-btn.active *,
+.header-nav .nav-btn.active *,
+nav .nav-btn.active *,
+.mobile-hidden-dock .dock-btn.active *,
+.bottom-dock .dock-btn.active *,
+.dock-btn.active *,
+button.nav-btn.active *,
+#tabLogin.active *,
+#tabRegister.active *,
+.tab-btn.active *,
+[role="tab"][aria-selected="true"] *,
+.productos-columna.activa > .productos-columna-titulo > .productos-toggle *,
+.productos-columna.activa .productos-toggle *,
+#admin .nav-admin-btn.active *,
+button.nav-admin-btn.active *,
+.quick-action-btn.active * {
+    color: #071006 !important;
+}
+
+/* Final cart/user nav button override. */
+.header #userName.nav-user-name,
+.navbar #userName.nav-user-name,
+#userName.nav-user-name,
+.nav-user-name:not(.nav-user-name-hidden) {
+    background:
+        linear-gradient(145deg, #1b1f1b 0%, #30362f 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(232, 238, 228, 0.2) !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    text-shadow: none !important;
+}
+
+.header #userName.nav-user-name:hover,
+.header #userName.nav-user-name:focus-visible,
+.navbar #userName.nav-user-name:hover,
+.navbar #userName.nav-user-name:focus-visible,
+#userName.nav-user-name:hover,
+#userName.nav-user-name:focus-visible,
+.nav-user-name:not(.nav-user-name-hidden):hover,
+.nav-user-name:not(.nav-user-name-hidden):focus-visible {
+    background:
+        linear-gradient(145deg, #2e342d 0%, #485144 100%) !important;
+    color: #ffffff !important;
+}
+
+.header #userName.nav-user-name.active,
+.navbar #userName.nav-user-name.active,
+#userName.nav-user-name.active,
+.nav-user-name.active {
+    background:
+        linear-gradient(135deg, #7ca35a 0%, #b8d89e 100%) !important;
+    color: #071006 !important;
+    border-color: rgba(220, 242, 202, 0.82) !important;
+}
+
+/* Multi-club visual skin layer.
+   Replace these files to rebrand another club without touching app logic:
+   - assets/images/menu.png: navigation buttons
+   - assets/images/acordeon.png: accordion/toggle buttons
+   - assets/images/baner.png: full-width headings/banners
+*/
+:root {
+    --club-skin-menu: url("../assets/images/menu.png");
+    --club-skin-acordeon: url("../assets/images/acordeon.png");
+    --club-skin-baner: url("../assets/images/baner.png");
+}
+
+.header .nav-btn,
+.header-nav .nav-btn,
+nav .nav-btn,
+.mobile-hidden-dock .dock-btn,
+.bottom-dock .dock-btn,
+.dock-btn,
+button.nav-btn,
+button.dock-btn,
+button.btn-inicio,
+button.nav-session-btn,
+#userName.nav-user-name,
+.nav-user-name:not(.nav-user-name-hidden),
+#tabLogin,
+#tabRegister,
+.tab-btn,
+[role="tab"],
+.quick-action-btn {
+    background-image:
+        linear-gradient(145deg, rgba(10, 12, 10, 0.34), rgba(10, 12, 10, 0.58)),
+        var(--club-skin-menu) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    color: #ffffff !important;
+    border-color: rgba(236, 243, 232, 0.2) !important;
+}
+
+.header .nav-btn:hover,
+.header .nav-btn:focus-visible,
+.header-nav .nav-btn:hover,
+.header-nav .nav-btn:focus-visible,
+nav .nav-btn:hover,
+nav .nav-btn:focus-visible,
+.mobile-hidden-dock .dock-btn:hover,
+.mobile-hidden-dock .dock-btn:focus-visible,
+.bottom-dock .dock-btn:hover,
+.bottom-dock .dock-btn:focus-visible,
+.dock-btn:hover,
+.dock-btn:focus-visible,
+button.btn-inicio:hover,
+button.btn-inicio:focus-visible,
+button.nav-session-btn:hover,
+button.nav-session-btn:focus-visible,
+#userName.nav-user-name:hover,
+#userName.nav-user-name:focus-visible,
+.nav-user-name:not(.nav-user-name-hidden):hover,
+.nav-user-name:not(.nav-user-name-hidden):focus-visible,
+#tabLogin:hover,
+#tabRegister:hover,
+.tab-btn:hover,
+.tab-btn:focus-visible,
+[role="tab"]:hover,
+[role="tab"]:focus-visible,
+.quick-action-btn:hover,
+.quick-action-btn:focus-visible {
+    background-image:
+        linear-gradient(145deg, rgba(8, 10, 8, 0.18), rgba(8, 10, 8, 0.42)),
+        var(--club-skin-menu) !important;
+    color: #ffffff !important;
+}
+
+.header .nav-btn.active,
+.header-nav .nav-btn.active,
+nav .nav-btn.active,
+.mobile-hidden-dock .dock-btn.active,
+.bottom-dock .dock-btn.active,
+.dock-btn.active,
+button.nav-btn.active,
+#tabLogin.active,
+#tabRegister.active,
+.tab-btn.active,
+[role="tab"][aria-selected="true"],
+.quick-action-btn.active {
+    background-image:
+        linear-gradient(135deg, rgba(124, 163, 90, 0.92), rgba(184, 216, 158, 0.9)),
+        var(--club-skin-menu) !important;
+    color: #071006 !important;
+}
+
+.productos-acordeon .productos-toggle,
+.admin-main-acordeon .productos-toggle,
+.admin-mensajes-acordeon .productos-toggle,
+.actividades-acordeon .productos-toggle,
+#admin .nav-admin-btn,
+button.nav-admin-btn {
+    background-image:
+        linear-gradient(145deg, rgba(9, 12, 9, 0.38), rgba(9, 12, 9, 0.62)),
+        var(--club-skin-acordeon) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    color: #ffffff !important;
+    border-color: rgba(236, 243, 232, 0.2) !important;
+}
+
+.productos-acordeon .productos-toggle:hover,
+.productos-acordeon .productos-toggle:focus-visible,
+.admin-main-acordeon .productos-toggle:hover,
+.admin-main-acordeon .productos-toggle:focus-visible,
+.admin-mensajes-acordeon .productos-toggle:hover,
+.admin-mensajes-acordeon .productos-toggle:focus-visible,
+.actividades-acordeon .productos-toggle:hover,
+.actividades-acordeon .productos-toggle:focus-visible,
+#admin .nav-admin-btn:hover,
+#admin .nav-admin-btn:focus-visible,
+button.nav-admin-btn:hover,
+button.nav-admin-btn:focus-visible {
+    background-image:
+        linear-gradient(145deg, rgba(8, 10, 8, 0.2), rgba(8, 10, 8, 0.46)),
+        var(--club-skin-acordeon) !important;
+    color: #ffffff !important;
+}
+
+.productos-columna.activa > .productos-columna-titulo > .productos-toggle,
+.productos-columna.activa .productos-toggle,
+#admin .nav-admin-btn.active,
+button.nav-admin-btn.active {
+    background-image:
+        linear-gradient(135deg, rgba(124, 163, 90, 0.9), rgba(184, 216, 158, 0.88)),
+        var(--club-skin-acordeon) !important;
+    color: #071006 !important;
+}
+
+.productos-toggle *,
+.nav-admin-btn *,
+.productos-columna.activa .productos-toggle *,
+#admin .nav-admin-btn.active * {
+    color: inherit !important;
+}
+
+.section-title,
+#inicio > .historia-container > .section-title,
+#actividades .cururu-news-section > .section-title,
+#productos > .section-title,
+#productos .productos-subsection > .section-title,
+#login > .section-title,
+#admin > .section-title,
+#maestro > .section-title,
+.modal-titulo,
+.admin-portada-form h3,
+.admin-product-form h3 {
+    width: 100%;
+    padding: 16px 18px !important;
+    border-radius: 20px !important;
+    background-image:
+        linear-gradient(90deg, rgba(5, 7, 5, 0.64), rgba(5, 7, 5, 0.32)),
+        var(--club-skin-baner) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    color: #ffffff !important;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.76) !important;
+    border: 1px solid rgba(236, 243, 232, 0.18) !important;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.24) !important;
+}
+
+.section-title *,
+.modal-titulo *,
+.admin-portada-form h3 *,
+.admin-product-form h3 * {
+    color: inherit !important;
+}
+
+@media (max-width: 720px) {
+    .section-title,
+    #inicio > .historia-container > .section-title,
+    #actividades .cururu-news-section > .section-title,
+    #productos > .section-title,
+    #productos .productos-subsection > .section-title,
+    #login > .section-title,
+    #admin > .section-title,
+    #maestro > .section-title,
+    .modal-titulo {
+        padding: 13px 14px !important;
+        border-radius: 16px !important;
+        background-position: center !important;
     }
 }
