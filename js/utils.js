@@ -617,11 +617,7 @@ function obtenerIdentificadorSocioPedido() {
 }
 
 function obtenerImagenFallback(producto) {
-    const nombre = String(producto?.nombre || '').toLowerCase();
-    if (nombre.includes('cururu')) return crearPlaceholderConstruccion('Cururu Dream', 'Imagen en actualizacion');
-    if (nombre.includes('sapo')) return crearPlaceholderConstruccion('Sapo Kush', 'Imagen en actualizacion');
-    if (nombre.includes('rana')) return crearPlaceholderConstruccion('Rana Verde', 'Imagen en actualizacion');
-    return crearPlaceholderConstruccion('Cururu Club', 'Imagen en actualizacion');
+    return crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
 }
 
 function esRutaLocalInvalida(valor) {
@@ -632,19 +628,29 @@ function esRutaLocalInvalida(valor) {
     return false;
 }
 
-function crearPlaceholderConstruccion(titulo = 'Sitio en construcción', detalle = 'Contenido visual en preparación') {
+function crearPlaceholderConstruccion(titulo = 'EN CONSTRUCCION', detalle = 'Foto en preparacion') {
     const svg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
             <defs>
                 <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#102015"/>
-                    <stop offset="100%" stop-color="#27402a"/>
+                    <stop offset="0%" stop-color="#0b0d0b"/>
+                    <stop offset="100%" stop-color="#1d2a1f"/>
+                </linearGradient>
+                <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#f7faf5"/>
+                    <stop offset="45%" stop-color="#bcc8b8"/>
+                    <stop offset="100%" stop-color="#7ca35a"/>
                 </linearGradient>
             </defs>
             <rect width="1200" height="800" fill="url(#bg)"/>
-            <rect x="70" y="70" width="1060" height="660" rx="36" fill="rgba(8,15,6,0.55)" stroke="#7ca35a" stroke-width="4"/>
-            <text x="600" y="340" fill="#000000" font-family="Poppins, Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">${titulo}</text>
-            <text x="600" y="410" fill="#dce8cf" font-family="Open Sans, Arial, sans-serif" font-size="30" text-anchor="middle">${detalle}</text>
+            <rect x="76" y="76" width="1048" height="648" rx="42" fill="rgba(255,255,255,0.06)" stroke="url(#metal)" stroke-width="4"/>
+            <circle cx="600" cy="285" r="88" fill="rgba(255,255,255,0.08)" stroke="#dce8cf" stroke-width="5"/>
+            <path d="M535 295h130v36H535z" fill="url(#metal)" rx="14"/>
+            <path d="M555 278c14-54 76-54 90 0" fill="none" stroke="#dce8cf" stroke-width="18" stroke-linecap="round"/>
+            <path d="M506 370h188" stroke="#7ca35a" stroke-width="12" stroke-linecap="round"/>
+            <path d="M526 430h148M556 486h88" stroke="rgba(220,232,207,0.55)" stroke-width="8" stroke-linecap="round"/>
+            <text x="600" y="575" fill="#f7faf5" font-family="Poppins, Arial, sans-serif" font-size="58" font-weight="700" text-anchor="middle" letter-spacing="2">${titulo}</text>
+            <text x="600" y="635" fill="#dce8cf" font-family="Open Sans, Arial, sans-serif" font-size="30" text-anchor="middle">${detalle}</text>
         </svg>
     `;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.replace(/\n\s+/g, ' ').trim())}`;
@@ -712,6 +718,34 @@ function construirHTMLGaleriaHorizontal(imagenes, opciones = {}) {
 }
 
 function aplicarContenidoInstitucional(configMap = {}) {
+    const portada = document.getElementById('portadaInstitucional');
+    const portadaTitulo = document.getElementById('portadaTitulo');
+    const portadaSubtitulo = document.getElementById('portadaSubtitulo');
+    const portadaDescripcion = document.getElementById('portadaDescripcion');
+    const portadaDefaults = {
+        portada_titulo: 'Club privado para socios',
+        portada_subtitulo: 'Pedidos mensuales, entregas claras y novedades en un solo lugar.',
+        portada_descripcion: 'Cururu Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.'
+    };
+    const tieneClavePortada = (clave) => Object.prototype.hasOwnProperty.call(configMap, clave);
+    const valorPortada = (clave) => {
+        if (!tieneClavePortada(clave)) return portadaDefaults[clave] || '';
+        return String(configMap[clave] || '').trim();
+    };
+    const portadaActiva = !tieneClavePortada('portada_activa')
+        || ['true', '1', 'si', 'sí', 'on', 'activo'].includes(String(configMap.portada_activa || '').trim().toLowerCase());
+
+    if (portada) portada.hidden = !portadaActiva;
+    [
+        [portadaTitulo, valorPortada('portada_titulo')],
+        [portadaSubtitulo, valorPortada('portada_subtitulo')],
+        [portadaDescripcion, valorPortada('portada_descripcion')]
+    ].forEach(([elemento, texto]) => {
+        if (!elemento) return;
+        elemento.textContent = texto;
+        elemento.hidden = !texto || !portadaActiva;
+    });
+
     const historiaTitulo = document.getElementById('historiaTituloPrincipal');
     const historiaPrincipal = document.getElementById('historiaTextoPrincipal');
     const historiaAdicional = document.getElementById('historiaTextoAdicional');

@@ -168,6 +168,10 @@ async function mostrarSeccion(seccionId) {
     if (destino === 'actividades' && typeof marcarActividadesVistas === 'function') {
         marcarActividadesVistas();
     }
+    if (window.cururuTour && (destino === 'productos' || destino === 'admin' || destino === 'actividades')) {
+        window.cururuTour.refresh();
+        window.cururuTour.maybeShow();
+    }
 }
 
 async function ejecutarCargaSegura(etiqueta, fn) {
@@ -455,5 +459,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     await verificarSesion();
-    await mostrarSeccion(localStorage.getItem('cururu_seccion_activa') || 'inicio');
+    await mostrarSeccion(typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword()
+        ? 'actividades'
+        : (localStorage.getItem('cururu_seccion_activa') || 'inicio'));
+    if (window.cururuTour) {
+        window.cururuTour.refresh();
+        window.cururuTour.maybeShow();
+    }
 });

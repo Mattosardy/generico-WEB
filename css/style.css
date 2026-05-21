@@ -809,6 +809,164 @@ body::before {
     color: var(--text-muted);
     font-weight: 800;
 }
+.admin-product-form {
+    margin-bottom: 24px;
+}
+.admin-product-form-intro {
+    color: var(--text-muted);
+    margin: 8px 0 18px;
+    line-height: 1.5;
+}
+.admin-product-form .form-group {
+    min-width: 0;
+}
+.admin-product-form .form-group label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-main);
+    margin-bottom: 7px;
+    font-weight: 800;
+}
+.admin-product-form .form-group input,
+.admin-product-form .form-group select,
+.admin-product-form .form-group textarea {
+    width: 100%;
+}
+.stock-admin-control-create {
+    min-height: 78px;
+    padding: 10px 12px;
+    border: 1px solid rgba(124, 163, 90, 0.18);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+}
+.stock-admin-control-create label {
+    margin-bottom: 0;
+}
+.admin-portada-form {
+    margin: 0 0 22px;
+    padding: 16px;
+    border: 1px solid rgba(124, 163, 90, 0.18);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+}
+.admin-portada-form h3 {
+    margin: 0 0 6px;
+    color: var(--text-strong);
+}
+.admin-portada-copy {
+    color: var(--text-muted);
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+.admin-portada-form .form-group label,
+.portada-toggle-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main);
+    font-weight: 800;
+}
+.admin-portada-form .form-group input,
+.admin-portada-form .form-group textarea {
+    width: 100%;
+}
+
+.admin-create-socio-card {
+    margin: 0 0 22px;
+    padding: 18px;
+    border: 1px solid rgba(124, 163, 90, 0.2);
+    border-radius: 18px;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(124, 163, 90, 0.08)),
+        rgba(255, 255, 255, 0.04);
+    box-shadow: var(--app-shadow-tight);
+}
+
+.admin-create-socio-copy h3 {
+    margin: 4px 0 8px;
+    color: var(--text-strong);
+}
+
+.admin-create-socio-copy p,
+.admin-create-socio-note {
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.admin-create-socio-form {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    gap: 12px;
+    align-items: end;
+    margin: 16px 0 10px;
+}
+
+.admin-create-socio-form .form-group {
+    min-width: 0;
+}
+
+.admin-create-socio-form label {
+    display: inline-flex;
+    color: var(--text-main);
+    font-weight: 800;
+    margin-bottom: 7px;
+}
+
+.admin-create-socio-form input,
+.admin-create-socio-form select {
+    width: 100%;
+}
+
+.admin-create-socio-result[hidden] {
+    display: none !important;
+}
+
+.admin-create-socio-result {
+    margin: 14px 0 10px;
+    padding: 14px;
+    border: 1px solid rgba(124, 163, 90, 0.32);
+    border-radius: 14px;
+    background: rgba(124, 163, 90, 0.1);
+    color: var(--text-main);
+}
+
+.admin-create-socio-result strong,
+.admin-create-socio-result span,
+.admin-create-socio-result em {
+    display: block;
+}
+
+.admin-create-socio-result dl {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.admin-create-socio-result dl div {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.35fr) 1fr;
+    gap: 10px;
+}
+
+.admin-create-socio-result dt {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.admin-create-socio-result dd {
+    margin: 0;
+    word-break: break-word;
+}
+
+.admin-create-socio-result code {
+    display: inline-flex;
+    padding: 5px 8px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.12);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
 .stock-edit-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1749,6 +1907,10 @@ body::before {
     --radius-lg: 26px;
     --radius-md: 18px;
     --ease-premium: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[hidden] {
+    display: none !important;
 }
 
 html {
@@ -4221,6 +4383,10 @@ button,
     box-shadow: var(--app-shadow-tight) !important;
 }
 
+.historia-texto-principal[hidden] {
+    display: none !important;
+}
+
 .historia-imagen {
     border-radius: 22px !important;
     box-shadow: var(--app-shadow-tight) !important;
@@ -6122,6 +6288,181 @@ button.entrega-calendar-event {
     font-size: 0.78rem;
 }
 
+.tour-panel-action {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 12px;
+}
+
+.tour-panel-action-admin {
+    margin-top: -8px;
+    margin-bottom: 18px;
+}
+
+.tour-open-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 9px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-strong);
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.tour-open-btn:hover,
+.tour-open-btn:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(124, 163, 90, 0.42);
+    background: rgba(255, 255, 255, 0.16);
+    outline: none;
+}
+
+.tour-root[hidden] {
+    display: none;
+}
+
+.tour-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.tour-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.24);
+    pointer-events: auto;
+}
+
+.tour-popover {
+    position: fixed;
+    left: var(--tour-left, 50%);
+    top: var(--tour-top, auto);
+    bottom: var(--tour-bottom, 18px);
+    transform: var(--tour-transform, translateX(-50%));
+    width: min(360px, calc(100vw - 32px));
+    max-height: var(--tour-max-height, calc(100vh - 40px));
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 22px;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(234, 241, 232, 0.9)),
+        rgba(255, 255, 255, 0.92);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    color: #172016;
+    pointer-events: auto;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.tour-popover[style*="--tour-top"] {
+    bottom: auto;
+}
+
+.tour-popover-mobile {
+    right: 12px;
+    top: auto !important;
+    width: auto;
+    border-radius: 20px;
+}
+
+.tour-popover-centered {
+    bottom: auto;
+}
+
+.tour-step-label {
+    display: inline-flex;
+    margin-bottom: 8px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(124, 163, 90, 0.14);
+    color: #35562c;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.tour-popover h3 {
+    margin: 0 28px 8px 0;
+    color: #0d130c;
+    font-size: 1.05rem;
+}
+
+.tour-popover p {
+    margin: 0;
+    color: #40503a;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.tour-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.06);
+    color: #172016;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.tour-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.tour-primary,
+.tour-secondary {
+    min-height: 36px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.tour-primary {
+    background: #172016;
+    color: #fff;
+}
+
+.tour-secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: #263623;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.tour-secondary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.tour-highlight {
+    position: relative;
+    z-index: 9998;
+    outline: 2px solid rgba(185, 220, 152, 0.92);
+    outline-offset: 5px;
+    border-radius: 18px;
+    box-shadow: 0 0 0 10px rgba(124, 163, 90, 0.18);
+}
+
 @media (max-width: 720px) {
     .telegram-security-form {
         grid-template-columns: 1fr;
@@ -6134,5 +6475,276 @@ button.entrega-calendar-event {
 
     .privacy-upload-note {
         width: 100%;
+    }
+
+    .password-temporal-form {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-create-socio-form {
+        grid-template-columns: 1fr;
+    }
+
+    .tour-panel-action,
+    .tour-panel-action-admin {
+        justify-content: stretch;
+    }
+
+    .tour-open-btn {
+        width: 100%;
+    }
+
+    .tour-popover {
+        left: var(--tour-left, 12px);
+        right: 12px;
+        bottom: var(--tour-bottom, 12px);
+        width: auto;
+        transform: var(--tour-transform, none);
+        border-radius: 20px;
+    }
+
+    .tour-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tour-actions #tourSkip {
+        grid-column: 1 / -1;
+        order: 3;
+    }
+}
+
+/* Final UI pass: dark premium shell, light floating surfaces, mobile-safe spacing. */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 18% 0%, rgba(165, 205, 145, 0.13), transparent 34%),
+        radial-gradient(circle at 82% 12%, rgba(235, 241, 234, 0.08), transparent 30%),
+        linear-gradient(180deg, #050505 0%, #0b0d0a 52%, #050505 100%) !important;
+    color: #f4f6f1 !important;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+        linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.035) 42%, transparent 58%),
+        radial-gradient(circle at 50% 100%, rgba(124, 163, 90, 0.08), transparent 42%);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+img,
+video,
+canvas {
+    max-width: 100%;
+}
+
+[hidden],
+.historia-texto-principal[hidden],
+.historia-texto-principal[aria-hidden="true"],
+[data-institutional-block="standby"] {
+    display: none !important;
+}
+
+.container,
+.main-content {
+    background: transparent !important;
+}
+
+.header,
+.navbar {
+    background: rgba(7, 8, 7, 0.78) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28) !important;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+}
+
+.brand,
+.nav-btn,
+.dock-btn,
+.user-info,
+.section-title {
+    color: #f5f7f2 !important;
+}
+
+.section,
+.historia-section,
+.producto-card,
+.producto-card-premium,
+.noticia-card,
+.actividad-card,
+.socio-dashboard,
+.admin-card,
+.admin-chart-card,
+.admin-section-panel,
+.login-container,
+.modal-content,
+.edit-modal-content,
+.carrito-socio-modal-content,
+.telegram-link-panel,
+.telegram-security-panel,
+.password-temporal-card,
+.empty-state,
+.card,
+.panel {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(239, 244, 238, 0.91)) !important;
+    color: #152013 !important;
+    border: 1px solid rgba(255, 255, 255, 0.44) !important;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.section h1,
+.section h2,
+.section h3,
+.section h4,
+.producto-card h3,
+.producto-card-premium h3,
+.modal-content h2,
+.modal-content h3,
+.admin-section-panel h2,
+.admin-section-panel h3,
+.socio-dashboard h2,
+.socio-dashboard h3 {
+    color: #0f170e !important;
+}
+
+.section p,
+.section small,
+.producto-card p,
+.producto-card-premium p,
+.modal-content p,
+.admin-section-panel p,
+.socio-dashboard p,
+.descripcion,
+.text-muted {
+    color: #465542 !important;
+}
+
+.btn,
+button,
+.btn-primary,
+.btn-secondary,
+.action-btn,
+.submit-btn {
+    border-radius: 999px;
+}
+
+input,
+select,
+textarea {
+    max-width: 100%;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #111811 !important;
+    border: 1px solid rgba(18, 28, 16, 0.14) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+label,
+.form-group label {
+    color: #1b2718 !important;
+}
+
+.modal,
+.edit-modal {
+    padding: 20px;
+}
+
+.modal-galeria-frame,
+.producto-imagen-frame,
+.imagen-placeholder-construccion {
+    background: linear-gradient(145deg, #f8faf6, #e8efe5) !important;
+}
+
+.tour-open-btn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #162112 !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.tour-scrim {
+    background: rgba(0, 0, 0, 0.42) !important;
+}
+
+.tour-popover {
+    width: min(380px, calc(100vw - 40px));
+    max-width: calc(100vw - 40px);
+}
+
+@media (max-width: 720px) {
+    body {
+        background:
+            radial-gradient(circle at 12% 0%, rgba(165, 205, 145, 0.13), transparent 28%),
+            linear-gradient(180deg, #050505 0%, #090b09 100%) !important;
+    }
+
+    .container,
+    .main-content,
+    .section {
+        width: 100%;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .section,
+    .historia-section,
+    .socio-dashboard,
+    .admin-section-panel,
+    .login-container {
+        border-radius: 20px !important;
+        padding: 18px !important;
+    }
+
+    .modal,
+    .edit-modal {
+        padding: 10px !important;
+        align-items: flex-start !important;
+    }
+
+    .modal-content,
+    .edit-modal-content {
+        width: min(100%, calc(100vw - 20px)) !important;
+        max-height: calc(100vh - 20px) !important;
+        margin: 10px auto !important;
+        padding: 18px !important;
+        border-radius: 22px !important;
+        overflow-y: auto !important;
+    }
+
+    .form-grid,
+    .admin-create-socio-form,
+    .stock-edit-grid,
+    .telegram-security-form {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .btn,
+    button,
+    .submit-btn,
+    .action-btn {
+        min-height: 42px;
+        white-space: normal;
+    }
+
+    .tour-popover {
+        left: 12px !important;
+        right: 12px !important;
+        bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+        top: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100vh - 24px) !important;
+        transform: none !important;
     }
 }

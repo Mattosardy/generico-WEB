@@ -233,7 +233,7 @@ window.cambiarImagenGaleria = function(direccion) {
     if (imagenPrincipal) {
         imagenPrincipal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = obtenerImagenFallback(appState.productoModalActual) || crearPlaceholderConstruccion('Sitio en construcción');
+            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
         };
         imagenPrincipal.src = appState.galeriaActual.imagenes[nuevoIndice];
     }
@@ -247,7 +247,7 @@ window.irAImagen = function(indice) {
     if (imagenPrincipal) {
         imagenPrincipal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = obtenerImagenFallback(appState.productoModalActual) || crearPlaceholderConstruccion('Sitio en construcción');
+            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
         };
         imagenPrincipal.src = appState.galeriaActual.imagenes[indice];
     }
@@ -264,7 +264,7 @@ window.seleccionarImagenProducto = function(indice) {
     if (principal) {
         principal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = obtenerImagenFallback(appState.productoModalActual) || crearPlaceholderConstruccion('Sitio en construcción');
+            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
         };
         principal.src = imagen;
     }
@@ -273,23 +273,28 @@ window.seleccionarImagenProducto = function(indice) {
 };
 
 function renderizarGaleriaProductoModal(imagenes, titulo) {
-    const imagenPrincipal = imagenes[0] || crearPlaceholderConstruccion('Sitio en construcción');
+    const imagenesVisibles = normalizarListaImagenes(imagenes).slice(0, 3);
+    const imagenesFinales = imagenesVisibles.length
+        ? imagenesVisibles
+        : [crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')];
+    const imagenPrincipal = imagenesFinales[0];
+    const tieneGaleria = imagenesFinales.length > 1;
     return `
         <div class="modal-galeria horizontal producto-simple">
             <div class="modal-galeria-frame">
-                <button type="button" class="galeria-flecha izquierda" id="galeriaPrev" onclick="cambiarImagenGaleria(-1)" aria-label="Imagen anterior">
+                ${tieneGaleria ? `<button type="button" class="galeria-flecha izquierda" id="galeriaPrev" onclick="cambiarImagenGaleria(-1)" aria-label="Imagen anterior">
                     <i class="fas fa-chevron-left"></i>
-                </button>
+                </button>` : ''}
                 <img id="modalImagenGaleria" class="modal-imagen" src="${imagenPrincipal}" alt="${escapeHtml(titulo)}">
-                <button type="button" class="galeria-flecha derecha" id="galeriaNext" onclick="cambiarImagenGaleria(1)" aria-label="Imagen siguiente">
+                ${tieneGaleria ? `<button type="button" class="galeria-flecha derecha" id="galeriaNext" onclick="cambiarImagenGaleria(1)" aria-label="Imagen siguiente">
                     <i class="fas fa-chevron-right"></i>
-                </button>
+                </button>` : ''}
             </div>
-            ${imagenes.length > 1 ? `
+            ${tieneGaleria ? `
                 <div class="galeria-strip">
-                    ${imagenes.map((imagen, index) => `
+                    ${imagenesFinales.map((imagen, index) => `
                         <button type="button" class="galeria-thumb${index === 0 ? ' activa' : ''}" onclick="seleccionarImagenProducto(${index})" aria-label="Ver imagen ${index + 1}">
-                            <img src="${imagen}" alt="${escapeHtml(titulo)} ${index + 1}" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('Sitio en construcción')}';">
+                            <img src="${imagen}" alt="${escapeHtml(titulo)} ${index + 1}" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
                         </button>
                     `).join('')}
                 </div>
@@ -336,18 +341,20 @@ async function abrirModal(producto) {
     const disponible = producto.disponible !== false;
     const esArticulo = typeof productoEsArticulo === 'function' && productoEsArticulo(producto);
 
-    let imagenesArray = [];
+    const imagenesBase = normalizarListaImagenes(producto.imagen_url);
+    let imagenesGaleria = [];
     if (typeof obtenerImagenesProducto === 'function') {
         try {
             const imagenes = await obtenerImagenesProducto(producto.id);
-            if (imagenes?.length) imagenesArray = imagenes.map((img) => img.imagen_url);
+            if (imagenes?.length) imagenesGaleria = imagenes.map((img) => img.imagen_url);
         } catch (error) {
             console.warn('No se pudo cargar la galeria del producto', error);
         }
     }
-    const imagenesBase = normalizarListaImagenes(producto.imagen_url);
-    if (!imagenesArray.length && imagenesBase.length) imagenesArray = imagenesBase;
-    if (!imagenesArray.length) imagenesArray = [obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')];
+    let imagenesArray = [...imagenesBase, ...normalizarListaImagenes(imagenesGaleria)]
+        .filter((imagen, index, lista) => imagen && lista.indexOf(imagen) === index)
+        .slice(0, 3);
+    if (!imagenesArray.length) imagenesArray = [crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')];
 
     appState.galeriaActual = { imagenes: imagenesArray, indice: 0, productoId: producto.id };
 
@@ -357,7 +364,7 @@ async function abrirModal(producto) {
     if (imagenPrincipal) {
         imagenPrincipal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción');
+            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
         };
     }
 

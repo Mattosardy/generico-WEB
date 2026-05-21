@@ -473,8 +473,8 @@ function obtenerCategoriasArticulosDestacados(articulosPorCategoria = {}) {
 }
 
 function renderizarTarjetaArticuloDestacado(articulo) {
-    const imagenes = normalizarListaImagenes(articulo.imagen_url);
-    const imagenPrincipal = imagenes[0] || obtenerImagenFallback(articulo) || '';
+    const imagenes = normalizarListaImagenes(articulo.imagen_url).slice(0, 3);
+    const imagenPrincipal = imagenes[0] || crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
     const precio = Number(articulo.precio_por_10g || 0);
     const disponible = articulo.disponible !== false;
     const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
@@ -484,7 +484,7 @@ function renderizarTarjetaArticuloDestacado(articulo) {
     return `
         <article class="articulo-destacado-card" data-producto-id="${escapeHtml(String(articulo.id))}" data-producto='${serializarProductoParaDataset(articulo)}'>
             <div class="articulo-destacado-media">
-                ${imagenPrincipal ? `<img src="${imagenPrincipal}" alt="${escapeHtml(articulo.nombre)}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=&quot;fas fa-box-open&quot; aria-hidden=&quot;true&quot;></i>';">` : '<i class="fas fa-box-open" aria-hidden="true"></i>'}
+                <img src="${imagenPrincipal}" alt="${escapeHtml(articulo.nombre)}" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
             </div>
             <div class="articulo-destacado-body">
                 <span>${disponible ? 'Disponible' : 'No disponible'}</span>
@@ -566,8 +566,8 @@ function construirEstadoProductoHTML(producto) {
 }
 
 function renderizarTarjetaProducto(producto) {
-    const imagenes = normalizarListaImagenes(producto.imagen_url);
-    const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción');
+    const imagenes = normalizarListaImagenes(producto.imagen_url).slice(0, 3);
+    const imagenPrincipal = imagenes[0] || crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
     const disponible = producto.disponible !== false;
     const indicaSativa = producto.indica_sativa || '50% Indica - 50% Sativa';
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
@@ -579,7 +579,7 @@ function renderizarTarjetaProducto(producto) {
         <div class="producto-card${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${serializarProductoParaDataset(producto)}'>
             <div class="producto-miniatura">
                 <span class="producto-disponibilidad-badge ${(!disponible || bloqueadoPorStock) ? 'agotado' : 'disponible'}">${bloqueadoPorStock ? 'SIN STOCK' : (disponible ? 'Disponible' : 'Agotado')}</span>
-                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
+                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
             </div>
             ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}
             <div class="producto-detalle">
@@ -596,14 +596,14 @@ function renderizarTarjetaProducto(producto) {
 }
 
 function renderizarTarjetaProductoCompacta(producto) {
-    const imagenes = normalizarListaImagenes(producto.imagen_url);
-    const imagenPrincipal = imagenes[0] || obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción');
+    const imagenes = normalizarListaImagenes(producto.imagen_url).slice(0, 3);
+    const imagenPrincipal = imagenes[0] || crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
     const claseStock = obtenerClaseStockProducto(producto);
     return `
         <div class="producto-card producto-card-compacta${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${serializarProductoParaDataset(producto)}'>
             <div class="producto-miniatura">
-                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${obtenerImagenFallback(producto) || crearPlaceholderConstruccion('Sitio en construcción')}';">
+                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
                 ${renderizarBadgeStockProducto(producto, true)}
                 <div class="producto-overlay">
                     ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}

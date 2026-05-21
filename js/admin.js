@@ -452,6 +452,7 @@ async function cargarHistoriaAdmin() {
         botonGuardar: 'guardarHistoriaAdmin',
         configHistoria
     });
+    renderizarPortadaAdmin(container, appState.configMap || {});
 }
 
 window.guardarHistoriaAdmin = async function() {
@@ -464,6 +465,76 @@ window.guardarHistoriaAdmin = async function() {
         mostrarMensaje('No se pudo guardar la historia', false);
     }
 };
+
+function valorPortadaAdmin(configMap, clave, fallback = '') {
+    if (!Object.prototype.hasOwnProperty.call(configMap || {}, clave)) return fallback;
+    return String(configMap[clave] || '');
+}
+
+function portadaActivaAdmin(configMap = {}) {
+    if (!Object.prototype.hasOwnProperty.call(configMap, 'portada_activa')) return true;
+    return ['true', '1', 'si', 'sí', 'on', 'activo'].includes(String(configMap.portada_activa || '').trim().toLowerCase());
+}
+
+function renderizarPortadaAdmin(container, configMap = {}) {
+    const titulo = valorPortadaAdmin(configMap, 'portada_titulo', 'Club privado para socios');
+    const subtitulo = valorPortadaAdmin(configMap, 'portada_subtitulo', 'Pedidos mensuales, entregas claras y novedades en un solo lugar.');
+    const descripcion = valorPortadaAdmin(configMap, 'portada_descripcion', 'Cururu Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.');
+
+    container.insertAdjacentHTML('afterbegin', `
+        <form id="formPortadaAdmin" class="admin-portada-form">
+            <h3>Portada institucional</h3>
+            <p class="admin-portada-copy">Edita el bloque principal de la home o ocultalo si queres dejar solo la historia y el contenido multimedia.</p>
+            <div class="form-grid">
+                <div class="form-group full-width portada-toggle-row">
+                    <label for="portadaActivaAdmin"><input type="checkbox" id="portadaActivaAdmin" ${portadaActivaAdmin(configMap) ? 'checked' : ''}> Mostrar portada</label>
+                </div>
+                <div class="form-group full-width">
+                    <label for="portadaTituloAdmin">Título</label>
+                    <input type="text" id="portadaTituloAdmin" value="${escapeHtml(titulo)}" placeholder="Club privado para socios">
+                </div>
+                <div class="form-group full-width">
+                    <label for="portadaSubtituloAdmin">Subtítulo</label>
+                    <input type="text" id="portadaSubtituloAdmin" value="${escapeHtml(subtitulo)}" placeholder="Pedidos mensuales, entregas claras y novedades en un solo lugar.">
+                </div>
+                <div class="form-group full-width">
+                    <label for="portadaDescripcionAdmin">Descripción</label>
+                    <textarea id="portadaDescripcionAdmin" rows="4" placeholder="Descripción institucional visible en la home">${escapeHtml(descripcion)}</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-submit">Guardar portada</button>
+                </div>
+            </div>
+        </form>
+    `);
+
+    document.getElementById('formPortadaAdmin')?.addEventListener('submit', guardarPortadaAdmin);
+}
+
+async function guardarPortadaAdmin(event) {
+    event.preventDefault();
+    const updates = [
+        { clave: 'portada_activa', valor: document.getElementById('portadaActivaAdmin')?.checked ? 'true' : 'false' },
+        { clave: 'portada_titulo', valor: document.getElementById('portadaTituloAdmin')?.value?.trim() || '' },
+        { clave: 'portada_subtitulo', valor: document.getElementById('portadaSubtituloAdmin')?.value?.trim() || '' },
+        { clave: 'portada_descripcion', valor: document.getElementById('portadaDescripcionAdmin')?.value?.trim() || '' }
+    ];
+
+    for (const item of updates) {
+        const { error } = await supabaseClient.from('configuracion_sistema').upsert(item, { onConflict: 'clave' });
+        if (error) {
+            mostrarMensaje(`No se pudo guardar la portada: ${error.message}`, false);
+            return;
+        }
+    }
+
+    appState.configMap = {
+        ...(appState.configMap || {}),
+        ...Object.fromEntries(updates.map((item) => [item.clave, item.valor]))
+    };
+    aplicarContenidoInstitucional(appState.configMap);
+    mostrarMensaje('Portada guardada', true);
+}
 
 async function cargarActividadesAdmin() {
     const container = document.getElementById('admin-actividades');
@@ -702,30 +773,33 @@ async function cargarProductosAdmin() {
 
     container.innerHTML = `
         ${renderPlanPlusEstadoAdmin(plusActivo)}
-        <form id="formProductoAdmin">
+        <form id="formProductoAdmin" class="admin-product-form">
             <h3>Nuevo producto</h3>
-            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">${plusActivo ? 'Cargá variedades o artículos. Las variedades van a PREMIUM/STANDARD y los artículos aparecen en Artículos destacados.' : 'Cargá variedades para el catálogo. Los artículos destacados requieren Plan Plus.'}</p>
+            <p class="admin-product-form-intro">${plusActivo ? 'Podés cargar variedades o artículos destacados. Las variedades se reservan por packs; los artículos aparecen en Artículos destacados.' : 'Cargá variedades disponibles para socios. Las reservas se realizan por packs.'}</p>
             <div class="form-grid">
-                <div class="form-group full-width"><input type="text" id="productoNombreAdmin" placeholder="Nombre" required></div>
-                <div class="form-group"><input type="text" id="productoCepaAdmin" placeholder="Cepa"></div>
-                <div class="form-group"><input type="number" step="0.1" id="productoThcAdmin" placeholder="THC %"></div>
-                <div class="form-group"><input type="number" step="0.1" id="productoCbdAdmin" placeholder="CBD %"></div>
+                <div class="form-group full-width"><label for="productoNombreAdmin">Nombre</label><input type="text" id="productoNombreAdmin" placeholder="Nombre del producto o articulo" required></div>
+                <div class="form-group"><label for="productoCepaAdmin">Cepa</label><input type="text" id="productoCepaAdmin" placeholder="Ej: híbrida, kush, candy"></div>
+                <div class="form-group"><label for="productoThcAdmin">THC %</label><input type="number" step="0.1" id="productoThcAdmin" placeholder="Ej: 18.5"></div>
+                <div class="form-group"><label for="productoCbdAdmin">CBD %</label><input type="number" step="0.1" id="productoCbdAdmin" placeholder="Ej: 1.2"></div>
+                <div class="form-group"><label for="productoIndicaPorcentajeAdmin">Índica %</label><input type="number" step="10" min="0" max="100" id="productoIndicaPorcentajeAdmin" placeholder="50"></div>
+                <div class="form-group"><label for="productoSativaPorcentajeAdmin">Sativa %</label><input type="number" step="10" min="0" max="100" id="productoSativaPorcentajeAdmin" placeholder="50"></div>
                 <div class="form-group">
+                    <label for="productoTipoCultivoAdmin">Tipo</label>
                     <select id="productoTipoCultivoAdmin">
                         ${renderOpcionesTipoProductoAdmin(plusActivo)}
                     </select>
                 </div>
-                <div class="form-group"><input type="number" step="0.01" id="productoPrecioAdmin" placeholder="Precio base" value="1600"></div>
-                <div class="form-group"><input type="number" min="0" step="1" id="productoStockPacks" placeholder="Stock en packs" value="0"></div>
-                <div class="form-group"><input type="number" min="0" step="1" id="productoBajoStockPacks" placeholder="Bajo stock desde packs" value="2"></div>
-                <div class="form-group stock-admin-control">
-                    <label><input type="checkbox" id="productoStockActivo" checked> Controlar stock</label>
-                    <small id="productoStockEquivalente">0 Packs (0g)</small>
+                <div class="form-group"><label for="productoPrecioAdmin">Precio base ($)</label><input type="number" step="0.01" id="productoPrecioAdmin" placeholder="1600" value="1600"></div>
+                <div class="form-group"><label for="productoStockPacks">Stock disponible en packs</label><input type="number" min="0" step="1" id="productoStockPacks" placeholder="0" value="0"></div>
+                <div class="form-group"><label for="productoBajoStockPacks">Bajo stock desde X packs</label><input type="number" min="0" step="1" id="productoBajoStockPacks" placeholder="2" value="2"></div>
+                <div class="form-group stock-admin-control stock-admin-control-create">
+                    <label for="productoStockActivo"><input type="checkbox" id="productoStockActivo" checked> Controlar stock</label>
+                    <small>Equivalencia en packs/gramos: <span id="productoStockEquivalente">0 Packs (0g)</span></small>
                 </div>
-                <div class="form-group full-width"><textarea id="productoDescripcionAdmin" rows="3" placeholder="Descripción"></textarea></div>
-                <div class="form-group full-width"><textarea id="productoImagenAdmin" rows="3" placeholder="URLs de imagen opcionales, una por línea"></textarea></div>
+                <div class="form-group full-width"><label for="productoDescripcionAdmin">Descripción</label><textarea id="productoDescripcionAdmin" rows="3" placeholder="Descripción visible para socios"></textarea></div>
+                <div class="form-group full-width"><label for="productoImagenAdmin">URLs de imagen opcionales</label><textarea id="productoImagenAdmin" rows="3" placeholder="Una URL por linea"></textarea></div>
                 <div class="form-group full-width">
-                    <label style="color: #c8d8b5; margin-bottom: 8px;"><i class="fas fa-image"></i> O subir varias imágenes</label>
+                    <label for="productoImagenFileAdmin"><i class="fas fa-image"></i> Fotos del producto</label>
                     <input type="file" id="productoImagenFileAdmin" accept="image/*" multiple style="background: rgba(8,15,6,0.8); border: 1px solid rgba(100,140,75,0.4); border-radius: 12px; padding: 10px; color: #e0ecd0; width: 100%;">
                     <small class="privacy-upload-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> Las imagenes son limpiadas automaticamente para proteger privacidad y ubicacion.</small>
                     <div id="productoPreview" style="margin: 10px 0; text-align: center;"></div>
@@ -787,6 +861,10 @@ async function cargarProductosAdmin() {
             cepa: esArticulo ? `ARTICULO:${tipoSeleccionado}` : document.getElementById('productoCepaAdmin').value,
             thc_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('productoThcAdmin').value) || null),
             cbd_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('productoCbdAdmin').value) || null),
+            indica_sativa: esArticulo ? null : construirPerfilIndicaSativa(
+                document.getElementById('productoIndicaPorcentajeAdmin')?.value,
+                document.getElementById('productoSativaPorcentajeAdmin')?.value
+            ),
             tipo_cultivo: esArticulo ? 'invernaculo' : tipoSeleccionado,
             precio_por_10g: parseFloat(document.getElementById('productoPrecioAdmin').value) || 1600,
             descripcion: document.getElementById('productoDescripcionAdmin').value,
