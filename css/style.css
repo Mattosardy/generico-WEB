@@ -1694,16 +1694,16 @@ body::before {
         gap: 10px;
         min-height: 92px;
         padding: 12px 8px;
-        border: 2px solid #000000;
+        border: 0 !important;
         border-radius: 18px;
-        background: rgba(255, 255, 255, 0.06);
+        background: transparent !important;
         color: var(--text-strong);
         font-size: 0.84rem;
         font-weight: 700;
         cursor: pointer;
         text-align: center;
         line-height: 1.05;
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+        box-shadow: none !important;
     }
     .mobile-hidden-dock .dock-btn i {
         font-size: 1.9rem;
@@ -4587,6 +4587,33 @@ textarea:focus-visible,
     .historia-texto-principal {
         border-radius: 18px !important;
     }
+}
+
+/* Neon brand title. */
+.header .logo h1,
+.header-main .logo h1 {
+    color: #b9ff8a !important;
+    text-shadow:
+        0 0 6px rgba(185, 255, 138, 0.95),
+        0 0 16px rgba(135, 255, 87, 0.7),
+        0 0 34px rgba(80, 230, 75, 0.52),
+        0 2px 12px rgba(0, 0, 0, 0.82) !important;
+    letter-spacing: 0.02em;
+}
+
+.header .logo p,
+.header-main .logo p {
+    color: #d7ffc5 !important;
+    text-shadow:
+        0 0 5px rgba(183, 255, 145, 0.65),
+        0 0 14px rgba(125, 235, 95, 0.38),
+        0 1px 10px rgba(0, 0, 0, 0.78) !important;
+}
+
+.header .logo-mark {
+    filter:
+        drop-shadow(0 0 8px rgba(185, 255, 138, 0.78))
+        drop-shadow(0 0 18px rgba(90, 230, 80, 0.42));
 }
 
 /* Premium visual polish: soft glass, liquid-silver accents, and calmer spacing. */
@@ -7697,6 +7724,88 @@ button.nav-admin-btn.active {
 .admin-portada-form h3 *,
 .admin-product-form h3 * {
     color: inherit !important;
+}
+
+/* Ensure club skin background images are the visible container without extra fill, borders or shadows */
+.header .nav-btn,
+.header-nav .nav-btn,
+nav .nav-btn,
+.mobile-hidden-dock .dock-btn,
+.bottom-dock .dock-btn,
+.dock-btn,
+button.nav-btn,
+button.dock-btn,
+button.btn-inicio,
+button.nav-session-btn,
+#userName.nav-user-name,
+.nav-user-name:not(.nav-user-name-hidden),
+#tabLogin,
+#tabRegister,
+.tab-btn,
+[role="tab"],
+.quick-action-btn {
+    background-color: transparent !important;
+    background-clip: padding-box !important;
+    border-color: transparent !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    box-shadow: none !important;
+}
+
+.productos-acordeon .productos-toggle,
+.admin-main-acordeon .productos-toggle,
+.admin-mensajes-acordeon .productos-toggle,
+.actividades-acordeon .productos-toggle,
+#admin .nav-admin-btn,
+button.nav-admin-btn {
+    background-color: transparent !important;
+    background-clip: padding-box !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.section-title,
+.modal-titulo,
+.admin-portada-form h3,
+.admin-product-form h3 {
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+#admin .nav-admin-btn {
+    border-radius: 18px !important;
+    min-height: 74px !important;
+    padding: 18px 20px !important;
+    justify-content: space-between !important;
+}
+
+#admin .nav-admin-bar {
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.portada-toggle-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.portada-toggle-row label {
+    flex: 1 1 100%;
+    min-width: 0;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    white-space: normal;
+}
+
+.portada-toggle-row input {
+    flex: 0 0 auto;
+    min-width: auto;
 }
 
 @media (max-width: 720px) {
