@@ -8,18 +8,20 @@ const restrictedSections = {
 
 function registrarServiceWorkerPwa() {
     if (!('serviceWorker' in navigator)) return;
-    const esLocalhost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
-    if (window.location.protocol !== 'https:' || esLocalhost) {
-        navigator.serviceWorker.getRegistrations?.()
-            .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-            .catch(() => undefined);
-        return;
-    }
+    const limpiarServiceWorkers = async () => {
+        try {
+            const registrations = await navigator.serviceWorker.getRegistrations?.() || [];
+            await Promise.all(registrations.map((registration) => registration.unregister()));
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.filter((key) => key.startsWith('cururu-')).map((key) => caches.delete(key)));
+            }
+        } catch (error) {
+            console.warn('No se pudo limpiar cache PWA:', error);
+        }
+    };
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .catch((error) => {
-                console.warn('No se pudo registrar la PWA:', error);
-            });
+        void limpiarServiceWorkers();
     });
 }
 

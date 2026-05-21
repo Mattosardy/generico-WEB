@@ -6773,6 +6773,7 @@ body,
     min-height: 100vh !important;
     height: auto !important;
     max-height: none !important;
+    overflow-y: visible !important;
 }
 
 main,
@@ -6789,6 +6790,247 @@ main,
 body.modal-open,
 body.password-temporal-required {
     overflow-y: auto !important;
+}
+
+.tour-root[hidden],
+.modal[style*="display: none"],
+.edit-modal[style*="display: none"] {
+    pointer-events: none !important;
+}
+
+.tour-root:not([hidden]),
+.modal:not([style*="display: none"]),
+.edit-modal:not([style*="display: none"]) {
+    pointer-events: auto;
+}
+
+body::before {
+    pointer-events: none !important;
+}
+
+/* Visual patch: premium silver cards and readable graphite surfaces. */
+.section,
+.historia-section,
+.club-intro-panel,
+.producto-card,
+.producto-card-premium,
+.articulo-destacado-card,
+.noticia-card,
+.actividad-card,
+.socio-dashboard,
+.admin-card,
+.admin-chart-card,
+.admin-section-panel,
+.login-container,
+.modal-content,
+.edit-modal-content,
+.carrito-socio-modal-content,
+.telegram-link-panel,
+.telegram-security-panel,
+.password-temporal-card,
+.empty-state,
+.admin-create-socio-card,
+.admin-portada-form,
+.admin-product-form,
+.modal-pedido-box,
+.tour-popover,
+.tooltip,
+.popover,
+.card,
+.panel,
+.privacy-upload-note,
+.telegram-delay-note {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(224, 230, 222, 0.95) 48%, rgba(247, 250, 245, 0.98) 100%) !important;
+    color: #0b120b !important;
+    border: 1px solid rgba(221, 231, 217, 0.92) !important;
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(96, 112, 88, 0.1) !important;
+}
+
+.section *,
+.historia-section *,
+.club-intro-panel *,
+.producto-card *,
+.producto-card-premium *,
+.articulo-destacado-card *,
+.noticia-card *,
+.actividad-card *,
+.socio-dashboard *,
+.admin-card *,
+.admin-chart-card *,
+.admin-section-panel *,
+.login-container *,
+.modal-content *,
+.edit-modal-content *,
+.carrito-socio-modal-content *,
+.telegram-link-panel *,
+.telegram-security-panel *,
+.password-temporal-card *,
+.empty-state *,
+.admin-create-socio-card *,
+.admin-portada-form *,
+.admin-product-form *,
+.modal-pedido-box *,
+.tour-popover *,
+.tooltip *,
+.popover *,
+.card *,
+.panel *,
+.privacy-upload-note *,
+.telegram-delay-note * {
+    color: inherit !important;
+}
+
+.section h1,
+.section h2,
+.section h3,
+.section h4,
+.club-intro-panel h1,
+.club-intro-panel h2,
+.club-intro-panel h3,
+.producto-card h3,
+.producto-card strong,
+.articulo-destacado-card strong,
+.noticia-card h3,
+.actividad-card h3,
+.modal-content h2,
+.modal-content h3,
+.admin-section-panel h2,
+.admin-section-panel h3,
+.socio-dashboard h2,
+.socio-dashboard h3,
+.tour-popover h3 {
+    color: #050805 !important;
+}
+
+.section p,
+.section small,
+.club-intro-panel p,
+.producto-card p,
+.articulo-destacado-card p,
+.noticia-card p,
+.actividad-card p,
+.modal-content p,
+.modal-content small,
+.admin-section-panel p,
+.admin-section-panel small,
+.socio-dashboard p,
+.socio-dashboard small,
+.tour-popover p,
+.descripcion,
+.text-muted,
+.admin-product-form-intro,
+.admin-portada-copy,
+.producto-status-row,
+.producto-agotado-texto {
+    color: #263224 !important;
+}
+
+.section input,
+.section select,
+.section textarea,
+.modal-content input,
+.modal-content select,
+.modal-content textarea,
+.admin-section-panel input,
+.admin-section-panel select,
+.admin-section-panel textarea,
+.socio-dashboard input,
+.socio-dashboard select,
+.socio-dashboard textarea,
+.login-container input,
+.login-container select,
+.login-container textarea {
+    background: #fbfcfa !important;
+    color: #070c07 !important;
+    border: 1px solid rgba(34, 48, 30, 0.22) !important;
+}
+
+.section input::placeholder,
+.section textarea::placeholder,
+.modal-content input::placeholder,
+.modal-content textarea::placeholder,
+.admin-section-panel input::placeholder,
+.admin-section-panel textarea::placeholder,
+.socio-dashboard input::placeholder,
+.socio-dashboard textarea::placeholder,
+.login-container input::placeholder,
+.login-container textarea::placeholder {
+    color: #566150 !important;
+}
+
+.header,
+.navbar,
+.productos-toggle,
+.nav-admin-btn,
+.admin-accordion-item,
+.mensaje-card,
+.historial-mensaje,
+.reserva-card,
+.entrega-card,
+.tabla-datos,
+.tour-scrim {
+    background:
+        linear-gradient(145deg, rgba(22, 24, 22, 0.96), rgba(48, 53, 47, 0.94)) !important;
+    color: #f4f6f1 !important;
+    border-color: rgba(219, 228, 216, 0.18) !important;
+}
+
+.header *,
+.navbar *,
+.productos-toggle *,
+.nav-admin-btn *,
+.admin-accordion-item *,
+.mensaje-card *,
+.historial-mensaje *,
+.reserva-card *,
+.entrega-card *,
+.tabla-datos *,
+.tour-scrim * {
+    color: inherit !important;
+}
+
+.btn-submit,
+.btn-primary,
+.btn-reservar-producto,
+.btn-mas-info,
+.tour-primary,
+.opcion-pedido.activa {
+    background: linear-gradient(135deg, #101610, #405934) !important;
+    color: #ffffff !important;
+    border-color: rgba(231, 238, 227, 0.24) !important;
+}
+
+.btn-secondary,
+.tour-secondary,
+.opcion-pedido,
+.cerrar-modal,
+.btn-edit-cancel {
+    background: linear-gradient(145deg, #eef2eb, #d8e0d4) !important;
+    color: #0b120b !important;
+    border-color: rgba(34, 48, 30, 0.18) !important;
+}
+
+.producto-overlay,
+.producto-overlay *,
+.producto-disponibilidad-badge,
+.stock-badge,
+.badge,
+.loading {
+    color: #ffffff !important;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.74);
+}
+
+.empty-state i,
+.section i,
+.modal-content i,
+.admin-section-panel i,
+.socio-dashboard i,
+.tour-popover i {
+    color: inherit !important;
 }
 
 .section,
