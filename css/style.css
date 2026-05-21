@@ -6637,6 +6637,7 @@ button,
 .action-btn,
 .submit-btn {
     border-radius: 999px;
+    max-width: 100%;
 }
 
 input,
@@ -6652,6 +6653,79 @@ textarea {
 label,
 .form-group label {
     color: #1b2718 !important;
+}
+
+.section a,
+.modal-content a,
+.admin-section-panel a,
+.socio-dashboard a,
+.login-container a {
+    color: #244f1f !important;
+    font-weight: 800;
+}
+
+.section .btn,
+.section button,
+.modal-content .btn,
+.modal-content button,
+.admin-section-panel .btn,
+.admin-section-panel button,
+.socio-dashboard .btn,
+.socio-dashboard button,
+.login-container .btn,
+.login-container button {
+    color: #12200f;
+}
+
+.section .btn-submit,
+.section .btn-primary,
+.section .tour-primary,
+.modal-content .btn-submit,
+.modal-content .btn-primary,
+.admin-section-panel .btn-submit,
+.admin-section-panel .btn-primary,
+.socio-dashboard .btn-submit,
+.socio-dashboard .btn-primary,
+.login-container .btn-submit,
+.login-container .btn-primary {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #172016, #496535) !important;
+}
+
+.nav-btn,
+.dock-btn,
+.btn-inicio,
+.user-info,
+.logo,
+.brand {
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+
+.producto-overlay,
+.producto-overlay h3,
+.producto-overlay .producto-nombre {
+    color: #ffffff !important;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.72);
+}
+
+.producto-status-row,
+.producto-agotado-texto,
+.telegram-delay-note,
+.privacy-upload-note,
+.admin-product-form-intro,
+.admin-portada-copy {
+    color: #42543d !important;
+}
+
+.loading {
+    color: #f3f6ef;
+}
+
+.section .loading,
+.modal-content .loading,
+.admin-section-panel .loading,
+.socio-dashboard .loading {
+    color: #42543d !important;
 }
 
 .modal,
@@ -6678,6 +6752,183 @@ label,
 .tour-popover {
     width: min(380px, calc(100vw - 40px));
     max-width: calc(100vw - 40px);
+}
+
+/* Urgent readability/scroll patch. Keep the app scrollable and force dark copy on light surfaces. */
+html,
+body {
+    min-height: 100% !important;
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+html {
+    position: static !important;
+}
+
+body,
+.container,
+.main-content {
+    min-height: 100vh !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+main,
+.app,
+#app,
+.page,
+.page-content {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow-y: visible !important;
+}
+
+body.modal-open,
+body.password-temporal-required {
+    overflow-y: auto !important;
+}
+
+.section,
+.historia-section,
+.club-intro-panel,
+.producto-card,
+.producto-card-premium,
+.articulo-destacado-card,
+.noticia-card,
+.actividad-card,
+.socio-dashboard,
+.admin-card,
+.admin-chart-card,
+.admin-section-panel,
+.login-container,
+.modal-content,
+.edit-modal-content,
+.carrito-socio-modal-content,
+.telegram-link-panel,
+.telegram-security-panel,
+.password-temporal-card,
+.empty-state,
+.admin-create-socio-card,
+.admin-portada-form,
+.admin-product-form,
+.modal-pedido-box,
+.tour-popover,
+.tooltip,
+.popover,
+.card,
+.panel {
+    color: #101810 !important;
+}
+
+.section *,
+.historia-section *,
+.club-intro-panel *,
+.producto-card *,
+.producto-card-premium *,
+.articulo-destacado-card *,
+.noticia-card *,
+.actividad-card *,
+.socio-dashboard *,
+.admin-card *,
+.admin-chart-card *,
+.admin-section-panel *,
+.login-container *,
+.modal-content *,
+.edit-modal-content *,
+.carrito-socio-modal-content *,
+.telegram-link-panel *,
+.telegram-security-panel *,
+.password-temporal-card *,
+.empty-state *,
+.admin-create-socio-card *,
+.admin-portada-form *,
+.admin-product-form *,
+.modal-pedido-box *,
+.tour-popover *,
+.tooltip *,
+.popover *,
+.card *,
+.panel * {
+    color: inherit;
+}
+
+.section .text-muted,
+.section small,
+.modal-content small,
+.admin-section-panel small,
+.socio-dashboard small,
+.producto-card p,
+.articulo-destacado-card p,
+.noticia-card p,
+.actividad-card p,
+.tour-popover p {
+    color: #354432 !important;
+}
+
+.section input,
+.section select,
+.section textarea,
+.modal-content input,
+.modal-content select,
+.modal-content textarea,
+.admin-section-panel input,
+.admin-section-panel select,
+.admin-section-panel textarea,
+.socio-dashboard input,
+.socio-dashboard select,
+.socio-dashboard textarea,
+.login-container input,
+.login-container select,
+.login-container textarea {
+    color: #0c120c !important;
+    background: #ffffff !important;
+}
+
+.section input::placeholder,
+.section textarea::placeholder,
+.modal-content input::placeholder,
+.modal-content textarea::placeholder,
+.admin-section-panel input::placeholder,
+.admin-section-panel textarea::placeholder,
+.login-container input::placeholder,
+.login-container textarea::placeholder {
+    color: #65705f !important;
+}
+
+.section .btn-submit,
+.section .btn-primary,
+.modal-content .btn-submit,
+.modal-content .btn-primary,
+.admin-section-panel .btn-submit,
+.admin-section-panel .btn-primary,
+.socio-dashboard .btn-submit,
+.socio-dashboard .btn-primary,
+.login-container .btn-submit,
+.login-container .btn-primary,
+.tour-primary {
+    color: #ffffff !important;
+}
+
+.section .btn-secondary,
+.modal-content .btn-secondary,
+.admin-section-panel .btn-secondary,
+.socio-dashboard .btn-secondary,
+.login-container .btn-secondary,
+.tour-secondary {
+    color: #142012 !important;
+}
+
+.producto-overlay,
+.producto-overlay *,
+.nav-btn,
+.dock-btn,
+.btn-inicio,
+.header *,
+.navbar * {
+    color: #f5f7f2 !important;
 }
 
 @media (max-width: 720px) {
@@ -6734,7 +6985,9 @@ label,
     .submit-btn,
     .action-btn {
         min-height: 42px;
+        max-width: 100%;
         white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     .tour-popover {
