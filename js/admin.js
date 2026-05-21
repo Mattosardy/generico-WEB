@@ -658,7 +658,7 @@ async function cargarEntregasAdmin() {
 
     container.innerHTML = `
         <h3 style="color:var(--text-strong); margin-bottom: 12px;">Entregas</h3>
-        <p style="color:var(--text-muted); margin: 0 0 16px;">Configurá hasta dos entregas por mes. Actividades muestra los próximos 3 periodos; si una fecha no está cargada, aparece como entrega a confirmar.</p>
+        <p style="color:var(--text-muted); margin: 0 0 16px;">Configura hasta dos entregas por mes, eligiendo cualquier fecha del calendario. Las reservas, avisos y alertas quedan sujetas a la fecha que guardes para cada entrega.</p>
         <form id="formEntregaAdmin">
             <div class="form-grid">
                 <div class="form-group full-width">

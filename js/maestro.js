@@ -293,11 +293,11 @@ async function cargarMaestroConfig() {
         <h3>Configuracion</h3>
         <div class="form-grid">
             <div class="form-group">
-                <label>Fecha primera entrega</label>
+                <label>Fecha entrega 1</label>
                 <input type="date" id="confFechaPrimer" value="${escapeHtml(fechaPrimer)}">
             </div>
             <div class="form-group">
-                <label>Fecha ultima entrega</label>
+                <label>Fecha entrega 2</label>
                 <input type="date" id="confFechaUltimo" value="${escapeHtml(fechaUltimo)}">
             </div>
             <div class="form-group full-width">
@@ -339,12 +339,6 @@ window.guardarConfigMaestro = async function() {
 
     if (!primerDate || !ultimoDate) {
         mostrarMensaje('Elegí fechas válidas para las entregas.', false);
-        return;
-    }
-
-    const diferenciaDias = Math.round((ultimoDate.getTime() - primerDate.getTime()) / (24 * 60 * 60 * 1000));
-    if (diferenciaDias < 7) {
-        mostrarMensaje('La ultima entrega debe quedar al menos una semana despues de la primera.', false);
         return;
     }
 
