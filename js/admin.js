@@ -1444,6 +1444,114 @@ document.addEventListener('DOMContentLoaded', () => {
     inicializarAcordeonesMensajesAdmin();
     inicializarAcordeonesManualAdmin();
 
+    // Inicializar el acordeón principal del admin (todas las secciones)
+    const acordeonAdminMain = document.querySelector('#admin .admin-main-acordeon');
+    if (acordeonAdminMain) inicializarAcordeonAdmin(acordeonAdminMain);
+
+    function ensureManualGridAccordion() {
+        try {
+            const manualGrid = document.querySelector('#admin-manual .manual-grid');
+            if (!manualGrid || manualGrid.classList.contains('admin-manual-acordeon-initialized')) return;
+            const bloqueItems = Array.from(manualGrid.querySelectorAll('.manual-bloque'));
+            if (!bloqueItems.length) return;
+
+            const acordeonWrapper = document.createElement('div');
+            acordeonWrapper.className = 'productos-acordeon admin-manual-acordeon';
+
+            bloqueItems.forEach((bloque, idx) => {
+                const tituloEl = bloque.querySelector('h3');
+                const contenido = Array.from(bloque.childNodes).filter(n => n !== tituloEl).map(n => n.cloneNode(true));
+                const tipo = `manual-${idx}`;
+
+                const itemWrapper = document.createElement('div');
+                itemWrapper.className = 'productos-controles';
+
+                const col = document.createElement('div');
+                col.className = 'productos-columna';
+                const h3 = document.createElement('h3');
+                h3.className = 'productos-columna-titulo';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'productos-toggle';
+                btn.dataset.tipoCultivo = tipo;
+                btn.setAttribute('aria-expanded', 'false');
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'productos-toggle-titulo';
+                titleSpan.innerHTML = tituloEl ? tituloEl.innerHTML : `Sección ${idx+1}`;
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-chevron-down productos-toggle-icono';
+                btn.appendChild(titleSpan);
+                btn.appendChild(icon);
+
+                h3.appendChild(btn);
+                col.appendChild(h3);
+                itemWrapper.appendChild(col);
+
+                const panel = document.createElement('div');
+                panel.className = 'productos-panel';
+                panel.dataset.tipoCultivo = tipo;
+                panel.hidden = true;
+                contenido.forEach(n => panel.appendChild(n));
+
+                acordeonWrapper.appendChild(itemWrapper);
+                acordeonWrapper.appendChild(panel);
+            });
+
+            manualGrid.parentNode.replaceChild(acordeonWrapper, manualGrid);
+            acordeonWrapper.classList.add('admin-manual-acordeon-initialized');
+            inicializarAcordeonAdmin(acordeonWrapper);
+        } catch (err) {
+            console.error('Error convirtiendo manual-grid en acordeón:', err);
+        }
+    }
+
+    // try once now
+    ensureManualGridAccordion();
+
+    // Fallback ligero: si la conversión completa falla, adjuntar handlers simples
+    function attachManualToggleHandlers() {
+        try {
+            const bloques = Array.from(document.querySelectorAll('#admin-manual .manual-bloque'));
+            bloques.forEach((bloque, idx) => {
+                if (bloque.dataset.toggleAttached) return;
+                const h3 = bloque.querySelector('h3');
+                if (!h3) return;
+                const contenidoNodes = Array.from(bloque.childNodes).filter(n => n !== h3);
+                const panel = document.createElement('div');
+                panel.className = 'productos-panel manual-panel-fallback';
+                contenidoNodes.forEach(n => panel.appendChild(n));
+                // create button wrapper
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'productos-toggle';
+                btn.setAttribute('aria-expanded', 'false');
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'productos-toggle-titulo';
+                titleSpan.innerHTML = h3.innerHTML;
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-chevron-down productos-toggle-icono';
+                btn.appendChild(titleSpan);
+                btn.appendChild(icon);
+                // replace h3 content with button
+                h3.innerHTML = '';
+                h3.appendChild(btn);
+                // remove old content nodes and append panel
+                bloque.appendChild(panel);
+                btn.addEventListener('click', () => {
+                    const expanded = btn.getAttribute('aria-expanded') === 'true';
+                    btn.setAttribute('aria-expanded', String(!expanded));
+                    panel.hidden = expanded;
+                    bloque.classList.toggle('activa', !expanded);
+                });
+                // start closed
+                panel.hidden = true;
+                bloque.dataset.toggleAttached = '1';
+            });
+        } catch (err) {
+            console.error('attachManualToggleHandlers error', err);
+        }
+    }
+
     document.querySelectorAll('.nav-admin-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
             const section = btn.dataset.adminSection;
@@ -1479,7 +1587,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item?.classList.add('admin-accordion-open');
             if (empty) empty.style.display = 'none';
             if (section === 'historia' && typeof cargarHistoriaAdmin === 'function') cargarHistoriaAdmin();
-            if (section === 'manual') aplicarVisibilidadManualPorRol();
+            if (section === 'manual') { aplicarVisibilidadManualPorRol(); if (typeof ensureManualGridAccordion === 'function') ensureManualGridAccordion(); if (typeof attachManualToggleHandlers === 'function') attachManualToggleHandlers(); }
             if (section === 'entregas') cargarEntregasAdmin();
             if (section === 'reservasAdmin' && typeof cargarReservasAdmin === 'function') cargarReservasAdmin();
             if (section === 'mensajes') {

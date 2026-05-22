@@ -108,6 +108,9 @@ body::before {
     object-fit: contain;
     border-radius: 10px;
     flex-shrink: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
 }
 .user-info {
     background: rgba(240, 247, 236, 0.92);
@@ -1518,9 +1521,30 @@ body::before {
     background: #7ca35a; color: #0f190c; transform: translateY(-3px);
     border-color: #8fb86a; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
+.nav-admin-bar .nav-admin-btn.productos-toggle {
+    background: var(--admin-tone, var(--surface-soft));
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+.nav-admin-bar .nav-admin-btn.productos-toggle .productos-toggle-icono {
+    color: inherit;
+}
 .nav-admin-btn:hover i, .nav-maestro-btn:hover i { transform: scale(1.1); }
 .nav-admin-btn.active, .nav-maestro-btn.active {
     background: #7ca35a; color: #0f190c; border-color: #8fb86a; box-shadow: 0 4px 12px rgba(124, 163, 90, 0.4);
+}
+.logo-mark {
+    border: none !important;
+    box-shadow: none !important;
+}
+.productos-subsection .section-title {
+    color: #b8ff6b;
+    text-shadow: 0 0 18px rgba(184, 255, 107, 0.45);
+    border-color: rgba(184, 255, 107, 0.25);
+}
+.productos-subsection .section-title i {
+    color: #b8ff6b;
+    text-shadow: 0 0 16px rgba(184, 255, 107, 0.4);
 }
 #admin.admin-panel-selected {
     background:
@@ -1540,6 +1564,30 @@ body::before {
 .admin-empty-state i {
     color: var(--accent-strong);
     font-size: 2rem;
+}
+
+/* Override final para remover borde/sombra del logo (específico y al final) */
+.logo-mark {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    background: transparent !important;
+}
+
+/* Regla con mayor especificidad para sobreescribir cualquier !important anterior */
+body .logo .logo-mark, body .logo-mark {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    background: transparent !important;
+}
+
+/* Regla extra con mayor especificidad (repite la clase) para asegurar override final */
+.logo-mark.logo-mark.logo-mark {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    background: transparent !important;
 }
 .admin-empty-state strong {
     color: var(--text-strong);
@@ -1814,6 +1862,29 @@ body::before {
         flex-direction: column;
         background: #ffffff;
         padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    }
+}
+
+/* Desktop: permitir que el nav-admin-bar crezca y scrollee si es necesario */
+@media (min-width: 769px) {
+    #admin .nav-admin-bar {
+        /* permitir crecer y scrollear en desktop */
+        max-height: calc(100vh - 260px);
+        overflow-y: auto;
+        align-content: start;
+        padding-right: 8px;
+    }
+
+    /* asegurar que las filas del acordeón se ajusten a su contenido */
+    #admin .admin-main-acordeon {
+        display: grid;
+        grid-auto-rows: auto;
+        align-items: start;
+    }
+
+    /* evitar que columnas recorten contenido por min-height inesperado */
+    #admin .nav-admin-btn {
+        min-height: 56px !important;
     }
 }
 @media (max-width: 520px) {
@@ -4229,9 +4300,9 @@ body {
     width: 38px !important;
     height: 38px !important;
     border-radius: 13px !important;
-    background: #ffffff !important;
-    border: 1px solid var(--app-line) !important;
-    box-shadow: var(--app-shadow-tight) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .user-info {
@@ -5194,6 +5265,28 @@ select:focus {
     padding: clamp(14px, 2vw, 22px);
     overflow-x: auto;
     background: rgba(8, 15, 6, 0.18);
+}
+
+/* Acordeón admin: piel y overlay */
+#admin .admin-main-acordeon .admin-section-panel {
+    background-image: url('../assets/images/acordeon.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+    /* mantener overlay legible sobre la imagen */
+    box-shadow: inset 0 0 0 9999px rgba(8, 15, 6, 0.18);
+}
+
+/* Indicador/chevrón más visible en admin */
+#admin .nav-admin-btn.productos-toggle .productos-toggle-icono {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    transition: transform 0.25s ease;
+}
+
+/* Estado abierto/cerrado claro */
+#admin .admin-main-acordeon .productos-columna.activa .productos-toggle {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    transform: translateY(-2px);
 }
 
 #admin .nav-admin-btn .productos-toggle-titulo,
@@ -7675,11 +7768,104 @@ button.nav-admin-btn.active {
     color: #071006 !important;
 }
 
+/* Force admin panel buttons to keep the accordion skin when the global "nav-admin-btn" styles appear later. */
+#admin .nav-admin-bar .nav-admin-btn,
+#admin .nav-admin-bar .nav-admin-btn:hover,
+#admin .nav-admin-bar .nav-admin-btn:focus-visible,
+#admin .nav-admin-bar .nav-admin-btn.active {
+    background-image:
+        linear-gradient(145deg, rgba(9, 12, 9, 0.38), rgba(9, 12, 9, 0.62)),
+        var(--club-skin-acordeon) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
 .productos-toggle *,
 .nav-admin-btn *,
 .productos-columna.activa .productos-toggle *,
 #admin .nav-admin-btn.active * {
     color: inherit !important;
+}
+
+/* Admin accordion polish: one clean silhouette, no stacked borders or shadows. */
+#admin .nav-admin-btn,
+#admin .productos-toggle,
+#admin .admin-main-acordeon .productos-toggle,
+#admin .admin-main-acordeon .productos-columna,
+#admin .admin-main-acordeon .admin-section-panel {
+    outline: none !important;
+}
+
+#admin .nav-admin-btn,
+#admin .productos-toggle,
+#admin .admin-main-acordeon .productos-toggle {
+    background-image:
+        linear-gradient(145deg, rgba(9, 12, 9, 0.38), rgba(9, 12, 9, 0.62)),
+        var(--club-skin-acordeon) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(236, 243, 232, 0.16) !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    transition: transform 0.2s ease, border-color 0.2s ease, filter 0.2s ease !important;
+}
+
+#admin .nav-admin-btn:hover,
+#admin .productos-toggle:hover,
+#admin .admin-main-acordeon .productos-toggle:hover,
+#admin .nav-admin-btn:focus-visible,
+#admin .productos-toggle:focus-visible,
+#admin .admin-main-acordeon .productos-toggle:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(225, 239, 214, 0.28) !important;
+    filter: brightness(1.03);
+}
+
+#admin .nav-admin-btn.active,
+#admin .productos-toggle.active,
+#admin .admin-main-acordeon .productos-columna.activa .productos-toggle,
+#admin .nav-admin-btn[aria-expanded="true"] {
+    background-image:
+        linear-gradient(135deg, rgba(124, 163, 90, 0.9), rgba(184, 216, 158, 0.88)),
+        var(--club-skin-acordeon) !important;
+    color: #071006 !important;
+    border-color: rgba(225, 239, 214, 0.28) !important;
+}
+
+#admin .admin-main-acordeon .productos-columna {
+    background: rgba(8, 15, 6, 0.18) !important;
+    border: 1px solid rgba(132, 163, 99, 0.18) !important;
+    border-radius: 18px !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}
+
+#admin .admin-main-acordeon .admin-section-panel {
+    background-image:
+        linear-gradient(180deg, rgba(8, 15, 6, 0.16), rgba(8, 15, 6, 0.16)),
+        var(--club-skin-acordeon) !important;
+    background-size: cover !important;
+    background-position: center top !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border: 1px solid rgba(228, 238, 222, 0.14) !important;
+    border-radius: 18px !important;
+    box-shadow: none !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+#admin .admin-main-acordeon .admin-section-panel::before,
+#admin .admin-main-acordeon .admin-section-panel::after {
+    content: none !important;
+    display: none !important;
 }
 
 .section-title,
