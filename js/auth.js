@@ -99,7 +99,13 @@ async function actualizarUIporRol() {
             }
             actualizarNombreUsuarioNav([socio.data.nombre], appState.rolUsuario);
         } else {
-            appState.rolUsuario = 'socio';
+            const email = String(usuario.email || '').trim().toLowerCase();
+            const adminEmails = Array.isArray(window.CURURU_ADMIN_EMAILS)
+                ? window.CURURU_ADMIN_EMAILS.map((item) => String(item || '').trim().toLowerCase())
+                : [];
+            const esAdminFallback = email && adminEmails.includes(email);
+
+            appState.rolUsuario = esAdminFallback ? 'admin' : 'socio';
             appState.socioData = null;
             if (typeof renderPasswordTemporalGate === 'function') {
                 renderPasswordTemporalGate();

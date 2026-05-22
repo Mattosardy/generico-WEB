@@ -1,5 +1,14 @@
-config.txt
+node_modules
+dist
+vite-dev.log
+backups/
 .env
 .env.local
+.env.migration
+*.dump
+config.txt
+.env*
+!.env.example
+!supabase/.env.example
 supabase/.temp/
 .wrangler/

@@ -1,14 +1,23 @@
 :root {
-    --surface-strong: rgba(255, 255, 255, 0.5);
-    --surface-soft: rgba(114, 165, 79, 0.26);
-    --surface-muted: rgba(102, 152, 70, 0.32);
-    --surface-accent: rgba(90, 141, 60, 0.36);
-    --border-soft: rgba(88, 136, 59, 0.34);
-    --text-strong: #1f3121;
-    --text-main: #2a3e2c;
-    --text-muted: #465b48;
-    --accent: #6f9952;
-    --accent-strong: #4d6f39;
+    --surface-dark: #0c0f14;
+    --surface-strong: rgba(18, 22, 28, 0.96);
+    --surface: rgba(18, 22, 28, 0.95);
+    --surface-soft: rgba(28, 34, 44, 0.82);
+    --surface-muted: rgba(34, 40, 52, 0.72);
+    --surface-accent: rgba(58, 193, 118, 0.16);
+    --border-soft: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --text-strong: #f7f8fb;
+    --text-main: #d8dbe2;
+    --text-muted: rgba(216, 219, 226, 0.72);
+    --accent: #5bf7ae;
+    --accent-strong: #8effc8;
+    --accent-muted: rgba(91, 247, 174, 0.12);
+    --panel-bg: rgba(255, 255, 255, 0.03);
+    --modal-bg: rgba(10, 14, 20, 0.96);
+    --app-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    --app-shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.09);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -1858,11 +1867,307 @@ body .logo .logo-mark, body .logo-mark {
         border-radius: 26px 26px 0 0;
         padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
     }
-    .edit-product-actions {
-        flex-direction: column;
-        background: #ffffff;
-        padding-bottom: calc(4px + env(safe-area-inset-bottom));
+}
+
+/* --- Sobrio / premium override --- */
+body {
+    background: radial-gradient(circle at top left, rgba(91, 247, 174, 0.08), transparent 22%),
+                radial-gradient(circle at 80% 15%, rgba(255, 255, 255, 0.04), transparent 12%),
+                linear-gradient(180deg, #07090e 0%, #0c1017 100%);
+    color: var(--text-main);
+}
+body::before {
+    background: transparent;
+}
+.container,
+.header,
+.section,
+.user-info,
+.header-nav,
+.nav-admin-bar,
+.nav-maestro-bar,
+.card,
+.admin-chart-card,
+.admin-empty-state,
+.productos-panel,
+.admin-section-panel,
+.galeria-flecha,
+.modal-content,
+.edit-modal-content,
+.historia-imagen,
+.entrega-card,
+.historial-table,
+#productoModal .modal-content,
+#noticiaModal .modal-content,
+#editProductoModal .edit-modal-content {
+    background: var(--surface-soft) !important;
+    border: 1px solid var(--surface-border) !important;
+    box-shadow: var(--app-shadow-soft) !important;
+}
+
+.header {
+    background: rgba(18, 22, 28, 0.92) !important;
+    border-radius: 24px;
+    box-shadow: var(--app-shadow-soft) !important;
+}
+
+.header-nav,
+.nav-admin-bar,
+.nav-maestro-bar {
+    background: rgba(24, 30, 38, 0.84) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: none !important;
+}
+
+.btn-inicio,
+.btn-cerrar,
+.nav-btn,
+.nav-admin-btn,
+.nav-maestro-btn,
+.btn-submit,
+.btn-pedido-modal,
+.modal-calificacion-btn,
+.galeria-btn,
+.cerrar-modal,
+.btn-edit-cancel,
+.btn-edit-save {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-main) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
+}
+
+.btn-inicio:hover,
+.btn-cerrar:hover,
+.nav-btn:hover,
+.nav-admin-btn:hover,
+.nav-maestro-btn:hover,
+.btn-submit:hover,
+.btn-pedido-modal:hover,
+.modal-calificacion-btn:hover,
+.galeria-btn:hover,
+.btn-edit-save:hover,
+.btn-edit-cancel:hover {
+    background: rgba(91, 247, 174, 0.14) !important;
+    border-color: rgba(91, 247, 174, 0.24) !important;
+    color: #f7f8fb !important;
+    transform: translateY(-1px) !important;
+}
+
+.nav-btn.active,
+.nav-admin-btn.active,
+.nav-maestro-btn.active {
+    background: rgba(91, 247, 174, 0.18) !important;
+    border-color: rgba(91, 247, 174, 0.28) !important;
+    color: #ffffff !important;
+}
+
+.nav-admin-btn,
+.nav-maestro-btn,
+.nav-admin-bar .nav-admin-btn.productos-toggle {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-main) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.nav-admin-btn[data-admin-section],
+.nav-admin-btn[data-admin-section] i {
+    color: var(--text-main) !important;
+}
+
+.nav-admin-btn:hover,
+.nav-maestro-btn:hover {
+    box-shadow: none !important;
+}
+
+.productos-toggle,
+.nav-admin-btn,
+.nav-maestro-btn,
+.btn-inicio,
+.btn-cerrar,
+.nav-btn {
+    border-radius: 16px !important;
+}
+
+.section-title,
+.productos-subsection .section-title,
+.modal-titulo,
+.admin-portada-form h3,
+.admin-product-form h3,
+#admin .admin-section-panel h3,
+#maestro h3 {
+    color: #f7f8fb !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.productos-subsection .section-title {
+    color: #d8dbe2 !important;
+    text-shadow: none !important;
+}
+
+.productos-subsection .section-title i {
+    color: var(--accent) !important;
+    text-shadow: none !important;
+}
+
+.section {
+    padding: 28px;
+    border-radius: 28px;
+}
+
+#admin .admin-section-panel,
+#maestro .admin-section-panel,
+.productos-panel {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.admin-empty-state {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-style: dashed !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-main) !important;
+}
+
+.modal {
+    background-color: rgba(0, 0, 0, 0.72) !important;
+}
+
+.modal-content,
+.edit-modal-content {
+    background: var(--modal-bg) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-main) !important;
+}
+
+.modal-titulo,
+.modal-descripcion,
+.modal-cepa,
+.modal-pedido-info,
+.modal-pedido-restante,
+.modal-pedido-alerta,
+.noticia-modal-meta,
+.productos-toggle-titulo,
+.productos-toggle-descripcion,
+#admin .form-group label,
+#maestro .form-group label {
+    color: var(--text-main) !important;
+}
+
+body input,
+body textarea,
+body select,
+body .form-group input,
+body .form-group textarea,
+body .form-group select {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-strong) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body input::placeholder,
+body textarea::placeholder {
+    color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.card,
+.admin-chart-card,
+.galeria-strip,
+.entrega-card,
+.historial-table,
+.estado-reserva,
+.badge,
+.thc-badge,
+.modal-thc {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+}
+
+.thc-badge,
+.badge,
+.estado-reserva {
+    color: var(--text-main) !important;
+}
+
+.galeria-btn:hover,
+.galeria-dot:hover {
+    background: rgba(91, 247, 174, 0.14) !important;
+}
+
+.logo h1,
+.header-session-name,
+.header .logo p,
+.user-info,
+.section-title,
+.modal-titulo,
+.productos-toggle-titulo,
+.productos-toggle-descripcion {
+    color: var(--text-main) !important;
+}
+
+.logo h1 {
+    color: #f7f8fb !important;
+}
+
+.header-session-name {
+    color: var(--accent) !important;
+}
+
+.btn-cerrar,
+.btn-inicio {
+    color: #f7f8fb !important;
+}
+
+.mobile-hidden-dock .dock-btn,
+.mobile-hidden-dock .dock-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-main) !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+    .header {
+        background: rgba(12, 15, 20, 0.96) !important;
     }
+    .header-nav {
+        border-top-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    .section {
+        min-height: auto !important;
+    }
+    .nav-admin-bar,
+    .nav-maestro-bar {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        padding: 14px 10px !important;
+    }
+    .nav-admin-bar::-webkit-scrollbar,
+    .nav-maestro-bar::-webkit-scrollbar {
+        height: 8px;
+    }
+    .nav-admin-bar::-webkit-scrollbar-thumb,
+    .nav-maestro-bar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+    }
+    .nav-admin-btn,
+    .nav-maestro-btn {
+        flex: 1 1 auto !important;
+        min-width: 170px;
+    }
+    .modal-content,
+    .edit-modal-content {
+        border-radius: 24px 24px 0 0 !important;
+    }
+}
+
+.edit-product-actions {
+    flex-direction: column;
+    background: #ffffff;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
 }
 
 /* Desktop: permitir que el nav-admin-bar crezca y scrollee si es necesario */
@@ -2773,6 +3078,222 @@ input[type="file"] {
         left: 12px;
         right: 12px;
         bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+}
+
+/* Final premium visual override */
+:root {
+    --surface-strong: rgba(10, 14, 20, 0.95);
+    --surface-soft: rgba(20, 28, 38, 0.9);
+    --surface-muted: rgba(16, 20, 28, 0.78);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --text-main: #dbe4f2;
+    --text-strong: #f4f8ff;
+    --text-muted: rgba(220, 226, 236, 0.72);
+    --accent: #55f3b4;
+    --accent-strong: #9bf9dc;
+    --accent-muted: rgba(85, 243, 180, 0.18);
+    --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+html,
+body {
+    background: linear-gradient(180deg, #05070b 0%, #09131b 60%, #0d171f 100%) !important;
+    color: var(--text-main) !important;
+}
+
+body::before {
+    background: none !important;
+}
+
+.container,
+.header,
+.section,
+.card,
+.admin-chart-card,
+.admin-empty-state,
+.user-info,
+.header-nav,
+.nav-admin-bar,
+.nav-maestro-bar,
+.modal-content,
+.edit-modal-content,
+.productos-panel,
+.productos-columna,
+.producto-card,
+.noticia-card,
+.entrega-card,
+.actividad-item,
+.mensaje-flotante,
+.socio-dashboard-hero,
+.socio-metric-card,
+.empty-state,
+.modal-galeria-frame,
+.galeria-strip,
+.modal-pedido-box,
+.placeholder-media,
+.admin-productos-precio,
+.form-group input,
+.form-group textarea,
+.form-group select {
+    background: rgba(18, 24, 34, 0.94) !important;
+    border: 1px solid var(--surface-border) !important;
+    box-shadow: var(--shadow-soft) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.header {
+    background: rgba(12, 16, 22, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.header-nav,
+.nav-admin-bar,
+.nav-maestro-bar {
+    background: rgba(16, 22, 30, 0.86) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.btn-inicio,
+.btn-cerrar,
+.nav-btn,
+.nav-admin-btn,
+.nav-maestro-btn,
+.btn-submit,
+.btn-pedido-modal,
+.modal-calificacion-btn,
+.galeria-btn,
+.dock-btn,
+.btn-edit-save,
+.btn-edit-cancel,
+.btn-mas-info,
+.btn-reservar-producto,
+.btn-aprobar,
+.opcion-pedido,
+.productos-toggle {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-main) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+    border-radius: 16px !important;
+}
+
+.btn-inicio:hover,
+.btn-cerrar:hover,
+.nav-btn:hover,
+.nav-admin-btn:hover,
+.nav-maestro-btn:hover,
+.btn-submit:hover,
+.btn-pedido-modal:hover,
+.modal-calificacion-btn:hover,
+.galeria-btn:hover,
+.dock-btn:hover,
+.btn-edit-save:hover,
+.btn-edit-cancel:hover,
+.btn-mas-info:hover,
+.btn-reservar-producto:hover,
+.btn-aprobar:hover,
+.opcion-pedido:hover,
+.productos-toggle:hover {
+    background: rgba(85, 243, 180, 0.14) !important;
+    border-color: rgba(85, 243, 180, 0.24) !important;
+    color: #f9fbff !important;
+    transform: translateY(-1px) !important;
+}
+
+.nav-btn.active,
+.nav-admin-btn.active,
+.nav-maestro-btn.active,
+.dock-btn.active,
+.productos-columna.activa .productos-toggle,
+.productos-toggle.active {
+    background: rgba(85, 243, 180, 0.18) !important;
+    border-color: rgba(85, 243, 180, 0.28) !important;
+    color: #ffffff !important;
+}
+
+.section-title,
+.modal-titulo,
+.admin-portada-form h3,
+.admin-product-form h3,
+#admin .admin-section-panel h3,
+#maestro h3 {
+    color: var(--text-strong) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    text-shadow: none !important;
+}
+
+.productos-subsection .section-title {
+    color: var(--text-main) !important;
+}
+
+.productos-subsection .section-title i {
+    color: var(--accent) !important;
+    text-shadow: none !important;
+}
+
+.modal {
+    background-color: rgba(0, 0, 0, 0.72) !important;
+}
+
+.modal-content,
+.edit-modal-content {
+    background: rgba(10, 14, 20, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+input,
+textarea,
+select,
+.form-group input,
+.form-group textarea,
+.form-group select,
+.admin-productos-precio {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-strong) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: rgba(255, 255, 255, 0.52) !important;
+}
+
+.logo-mark {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.section,
+.card,
+.producto-card,
+.noticia-card,
+.entrega-card,
+.actividad-item {
+    background: rgba(18, 24, 34, 0.96) !important;
+}
+
+.thc-badge,
+.badge,
+.badge-activo,
+.estado-confirmado,
+.estado-reserva {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-main) !important;
+}
+
+@media (max-width: 520px) {
+    .nav-admin-bar,
+    .nav-maestro-bar {
+        overflow-x: auto !important;
+        padding-right: 8px !important;
+    }
+
+    .nav-admin-btn,
+    .nav-maestro-btn {
+        min-width: 150px !important;
     }
 }
 
@@ -7915,4 +8436,291 @@ button.nav-admin-btn.active {
         border-radius: 16px !important;
         background-position: center !important;
     }
+}
+/* FINAL premium visual override */
+:root {
+    --surface-strong: rgba(10, 14, 20, 0.95);
+    --surface-soft: rgba(20, 28, 38, 0.9);
+    --surface-muted: rgba(16, 20, 28, 0.78);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --text-main: #dbe4f2;
+    --text-strong: #f4f8ff;
+    --text-muted: rgba(220, 226, 236, 0.72);
+    --accent: #55f3b4;
+    --accent-strong: #9bf9dc;
+    --accent-muted: rgba(85, 243, 180, 0.18);
+    --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+html,
+body {
+    background: linear-gradient(180deg, #05070b 0%, #09131b 60%, #0d171f 100%) !important;
+    color: var(--text-main) !important;
+}
+
+body::before {
+    background: none !important;
+}
+
+.container,
+.header,
+.section,
+.card,
+.admin-chart-card,
+.admin-empty-state,
+.user-info,
+.header-nav,
+.nav-admin-bar,
+.nav-maestro-bar,
+.modal-content,
+.edit-modal-content,
+.productos-panel,
+.productos-columna,
+.producto-card,
+.noticia-card,
+.entrega-card,
+.actividad-item,
+.mensaje-flotante,
+.socio-dashboard-hero,
+.socio-metric-card,
+.empty-state,
+.modal-galeria-frame,
+.galeria-strip,
+.modal-pedido-box,
+.placeholder-media,
+.admin-productos-precio,
+.form-group input,
+.form-group textarea,
+.form-group select {
+    background: rgba(18, 24, 34, 0.94) !important;
+    border: 1px solid var(--surface-border) !important;
+    box-shadow: var(--shadow-soft) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.header {
+    background: rgba(12, 16, 22, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.header-nav,
+.nav-admin-bar,
+.nav-maestro-bar {
+    background: rgba(16, 22, 30, 0.86) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.btn-inicio,
+.btn-cerrar,
+.nav-btn,
+.nav-admin-btn,
+.nav-maestro-btn,
+.btn-submit,
+.btn-pedido-modal,
+.modal-calificacion-btn,
+.galeria-btn,
+.dock-btn,
+.btn-edit-save,
+.btn-edit-cancel,
+.btn-mas-info,
+.btn-reservar-producto,
+.btn-aprobar,
+.opcion-pedido,
+.productos-toggle {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-main) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+    border-radius: 16px !important;
+}
+
+.btn-inicio:hover,
+.btn-cerrar:hover,
+.nav-btn:hover,
+.nav-admin-btn:hover,
+.nav-maestro-btn:hover,
+.btn-submit:hover,
+.btn-pedido-modal:hover,
+.modal-calificacion-btn:hover,
+.galeria-btn:hover,
+.dock-btn:hover,
+.btn-edit-save:hover,
+.btn-edit-cancel:hover,
+.btn-mas-info:hover,
+.btn-reservar-producto:hover,
+.btn-aprobar:hover,
+.opcion-pedido:hover,
+.productos-toggle:hover {
+    background: rgba(85, 243, 180, 0.14) !important;
+    border-color: rgba(85, 243, 180, 0.24) !important;
+    color: #f9fbff !important;
+    transform: translateY(-1px) !important;
+}
+
+.nav-btn.active,
+.nav-admin-btn.active,
+.nav-maestro-btn.active,
+.dock-btn.active,
+.productos-columna.activa .productos-toggle,
+.productos-toggle.active {
+    background: rgba(85, 243, 180, 0.18) !important;
+    border-color: rgba(85, 243, 180, 0.28) !important;
+    color: #ffffff !important;
+}
+
+.section-title,
+.modal-titulo,
+.admin-portada-form h3,
+.admin-product-form h3,
+#admin .admin-section-panel h3,
+#maestro h3 {
+    color: var(--text-strong) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    text-shadow: none !important;
+}
+
+.productos-subsection .section-title {
+    color: var(--text-main) !important;
+}
+
+.productos-subsection .section-title i {
+    color: var(--accent) !important;
+    text-shadow: none !important;
+}
+
+.modal {
+    background-color: rgba(0, 0, 0, 0.72) !important;
+}
+
+.modal-content,
+.edit-modal-content {
+    background: rgba(10, 14, 20, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+input,
+textarea,
+select,
+.form-group input,
+.form-group textarea,
+.form-group select,
+.admin-productos-precio {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--text-strong) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: rgba(255, 255, 255, 0.52) !important;
+}
+
+.logo-mark {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.section,
+.card,
+.producto-card,
+.noticia-card,
+.entrega-card,
+.actividad-item {
+    background: rgba(18, 24, 34, 0.96) !important;
+}
+
+.thc-badge,
+.badge,
+.badge-activo,
+.estado-confirmado,
+.estado-reserva {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-main) !important;
+}
+
+@media (max-width: 520px) {
+    .nav-admin-bar,
+    .nav-maestro-bar {
+        overflow-x: auto !important;
+        padding-right: 8px !important;
+    }
+
+    .nav-admin-btn,
+    .nav-maestro-btn {
+        min-width: 150px !important;
+    }
+}
+/* Ultimate premium visual reset: always apply dark glass buttons last */
+button.nav-btn,
+button.nav-admin-btn,
+button.nav-maestro-btn,
+button.btn-inicio,
+button.dock-btn,
+button.nav-session-btn,
+#tabLogin,
+#tabRegister,
+.tab-btn,
+[role="tab"],
+.quick-action-btn,
+.productos-toggle,
+.opcion-pedido,
+.btn-submit,
+.btn-pedido-modal,
+.modal-calificacion-btn,
+.galeria-btn,
+.btn-edit-save,
+.btn-edit-cancel,
+.btn-mas-info,
+.btn-reservar-producto,
+.btn-aprobar {
+    background: rgba(255, 255, 255, 0.06) !important;
+    background-image: none !important;
+    color: var(--text-main) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+}
+
+button.nav-btn:hover,
+button.nav-admin-btn:hover,
+button.nav-maestro-btn:hover,
+button.btn-inicio:hover,
+button.dock-btn:hover,
+button.nav-session-btn:hover,
+#tabLogin:hover,
+#tabRegister:hover,
+.tab-btn:hover,
+[role="tab"]:hover,
+.quick-action-btn:hover,
+.productos-toggle:hover,
+.opcion-pedido:hover,
+.btn-submit:hover,
+.btn-pedido-modal:hover,
+.modal-calificacion-btn:hover,
+.galeria-btn:hover,
+.btn-edit-save:hover,
+.btn-edit-cancel:hover,
+.btn-mas-info:hover,
+.btn-reservar-producto:hover,
+.btn-aprobar:hover {
+    background: rgba(85, 243, 180, 0.14) !important;
+    border-color: rgba(85, 243, 180, 0.24) !important;
+    color: #f9fbff !important;
+    transform: translateY(-1px) !important;
+}
+
+button.nav-btn.active,
+button.nav-admin-btn.active,
+button.nav-maestro-btn.active,
+button.dock-btn.active,
+.productos-toggle.active,
+.opcion-pedido.activa,
+.btn-submit.active,
+.btn-pedido-modal.active,
+.btn-reservar-producto.active,
+.btn-aprobar.active {
+    background: rgba(85, 243, 180, 0.18) !important;
+    border-color: rgba(85, 243, 180, 0.28) !important;
+    color: #ffffff !important;
 }

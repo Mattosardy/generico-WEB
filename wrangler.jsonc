@@ -1,10 +1,14 @@
-{
-  "name": "cururu-club-web",
-  "compatibility_date": "2026-05-12",
-  "main": "worker.js",
-  "assets": {
-    "directory": ".",
-    "binding": "ASSETS",
-    "run_worker_first": true
-  }
+﻿{
+    "name":  "cururu-club-web",
+    "compatibility_date":  "2026-05-12",
+    "main":  "worker.js",
+    "assets":  {
+                   "directory":  ".",
+                   "binding":  "ASSETS",
+                   "run_worker_first":  true
+               },
+    "vars":  {
+                 "SUPABASE_URL":  "https://tgxjxqyuyaeycgihjbfz.supabase.co",
+                 "SUPABASE_ANON_KEY":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRneGp4cXl1eWFleWNnaWhqYmZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMzI4MjIsImV4cCI6MjA5NDcwODgyMn0.706l1_j4Ku2HA82vsV-5TP1qn8FrZHvgYuT8M1jBOb0"
+             }
 }

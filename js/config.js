@@ -15,6 +15,10 @@ window.CURURU_PLAN = {
     planPlusTitulo: 'Artículos destacados'
 };
 
+window.CURURU_ADMIN_EMAILS = [
+    'admin@cururu.com'
+];
+
 window.appState = {
     usuarioActual: null,
     rolUsuario: 'invitado',

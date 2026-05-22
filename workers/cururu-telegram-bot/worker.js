@@ -1,4 +1,5 @@
 const JSON_HEADERS = { "Content-Type": "application/json" };
+const MAX_TELEGRAM_MESSAGE_LENGTH = 4096;
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
@@ -77,6 +78,74 @@ function telegramMessageFromUpdate(update) {
   return update?.message || update?.edited_message || null;
 }
 
+function getTelegramMessageText(message = {}) {
+  return String(message.text || message.caption || "").slice(0, MAX_TELEGRAM_MESSAGE_LENGTH);
+}
+
+function getTelegramDisplayName(from = {}, chat = {}) {
+  const username = from.username || chat.username || "";
+  if (username) return `@${username}`;
+  const fullName = [from.first_name || chat.first_name, from.last_name || chat.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return fullName || chat.title || "Usuario Telegram";
+}
+
+function getTelegramMessageDate(message = {}) {
+  if (!message.date) return new Date().toISOString();
+  return new Date(Number(message.date) * 1000).toISOString();
+}
+
+async function findSocioByTelegramChatId(supabase, chatId) {
+  if (!chatId) return null;
+  const socios = await supabase.request(
+    `socios?telegram_chat_id=eq.${encodeURIComponent(String(chatId))}&select=id,nombre,apellido,email,telegram_enabled&limit=1`,
+  );
+  return socios?.[0] || null;
+}
+
+async function registerTelegramInboundMessage(env, update, message) {
+  const supabase = buildSupabase(env);
+  const chat = message.chat || {};
+  const from = message.from || {};
+  const chatId = chat.id ? String(chat.id) : "";
+  const socio = await findSocioByTelegramChatId(supabase, chatId);
+  const payload = {
+    telegram_update_id: update?.update_id ? Number(update.update_id) : null,
+    message_id: message.message_id ? Number(message.message_id) : null,
+    socio_id: socio?.id || null,
+    chat_id: chatId,
+    telegram_user_id: from.id ? String(from.id) : null,
+    username: from.username || chat.username || null,
+    first_name: from.first_name || chat.first_name || null,
+    last_name: from.last_name || chat.last_name || null,
+    display_name: getTelegramDisplayName(from, chat),
+    text: getTelegramMessageText(message),
+    message_date: getTelegramMessageDate(message),
+    raw_update: update || {},
+  };
+
+  const inserted = await supabase.request("telegram_mensajes_entrantes", {
+    method: "POST",
+    prefer: "return=representation",
+    body: JSON.stringify([payload]),
+  });
+
+  const saved = inserted?.[0] || null;
+  console.log("Telegram inbound message stored", {
+    id: saved?.id || null,
+    chat_id: chatId,
+    telegram_user_id: payload.telegram_user_id,
+    username: payload.username,
+    socio_id: payload.socio_id,
+    has_text: Boolean(payload.text),
+    message_date: payload.message_date,
+  });
+
+  return saved;
+}
+
 function getTelegramApiBase(env) {
   const token = requireEnv(env, "TELEGRAM_BOT_TOKEN");
   return `https://api.telegram.org/bot${token}`;
@@ -84,12 +153,17 @@ function getTelegramApiBase(env) {
 
 async function sendTelegramMessage(env, chatId, text) {
   if (!chatId) throw new Error("Telegram chat_id faltante.");
+  const safeText = String(text || "").trim();
+  if (!safeText) throw new Error("Telegram text faltante.");
+  if (safeText.length > MAX_TELEGRAM_MESSAGE_LENGTH) {
+    throw new Error(`Telegram text supera ${MAX_TELEGRAM_MESSAGE_LENGTH} caracteres.`);
+  }
   const response = await fetch(`${getTelegramApiBase(env)}/sendMessage`, {
     method: "POST",
     headers: JSON_HEADERS,
     body: JSON.stringify({
       chat_id: chatId,
-      text,
+      text: safeText,
       disable_web_page_preview: true,
     }),
   });
@@ -236,26 +310,57 @@ function notifyPickupAvailable(env, user, reservation) {
 }
 
 async function handleTelegramWebhook(request, env) {
-  const expectedSecret = getEnv(env, "TELEGRAM_WEBHOOK_SECRET");
-  if (expectedSecret) {
-    const receivedSecret = request.headers.get("x-telegram-bot-api-secret-token") || "";
-    if (receivedSecret !== expectedSecret) return json({ error: "Forbidden" }, 403);
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  const expectedSecret = requireEnv(env, "TELEGRAM_WEBHOOK_SECRET");
+  const receivedSecret = request.headers.get("x-telegram-bot-api-secret-token") || "";
+  if (receivedSecret !== expectedSecret) return json({ error: "Forbidden" }, 403);
+
+  let update;
+  try {
+    update = await request.json();
+  } catch (_error) {
+    return json({ error: "Invalid JSON" }, 400);
   }
 
-  const update = await request.json();
   const message = telegramMessageFromUpdate(update);
-  const startCode = parseStartCode(message?.text);
-  if (!message || !startCode) {
+  if (!message) {
     console.log("Telegram inbound message ignored", {
-      reason: "announcements_only",
-      chat_id: message?.chat?.id ? String(message.chat.id) : null,
-      has_text: Boolean(message?.text),
+      reason: "unsupported_update",
+      update_id: update?.update_id || null,
     });
     return json({ ok: true, ignored: true });
   }
 
+  if (!message.chat?.id || !message.from?.id) {
+    console.log("Telegram inbound message rejected", {
+      reason: "incomplete_message",
+      update_id: update?.update_id || null,
+      has_chat_id: Boolean(message.chat?.id),
+      has_user_id: Boolean(message.from?.id),
+    });
+    return json({ error: "Invalid Telegram message" }, 400);
+  }
+
+  await registerTelegramInboundMessage(env, update, message);
+
   const chat = message.chat || {};
   const from = message.from || {};
+  const text = getTelegramMessageText(message);
+  const startCode = parseStartCode(text);
+  if (!startCode) {
+    console.log("Telegram inbound message acknowledged", {
+      chat_id: chat.id ? String(chat.id) : null,
+      telegram_user_id: from.id ? String(from.id) : null,
+      username: from.username || chat.username || null,
+      has_text: Boolean(text),
+    });
+    return telegramWebhookSendMessage(
+      chat.id,
+      "Cururu Club\nRecibimos tu mensaje. Un administrador lo revisara a la brevedad.",
+    );
+  }
+
   const supabaseRpc = buildSupabaseRpc(env);
   const result = await supabaseRpc.rpc("link_telegram_by_code", {
     p_code: startCode,
@@ -289,13 +394,18 @@ async function handleTelegramWebhook(request, env) {
 }
 
 async function handleNotificationSend(request, env, supabase, notificationService) {
-  const workerSecret = getEnv(env, "NOTIFICATION_WORKER_SECRET");
-  if (workerSecret && request.headers.get("authorization") !== `Bearer ${workerSecret}`) {
+  const workerSecret = requireEnv(env, "NOTIFICATION_WORKER_SECRET");
+  if (request.headers.get("authorization") !== `Bearer ${workerSecret}`) {
     return json({ error: "Forbidden" }, 403);
   }
 
   const body = await request.json();
   const message = body.message || renderMessage(body.type, body.payload);
+  if (!body?.userId) return json({ error: "userId es obligatorio" }, 400);
+  if (!String(message || "").trim()) return json({ error: "message es obligatorio" }, 400);
+  if (String(message).length > MAX_TELEGRAM_MESSAGE_LENGTH) {
+    return json({ error: `message supera ${MAX_TELEGRAM_MESSAGE_LENGTH} caracteres` }, 400);
+  }
   const result = await notificationService.send(body.userId, message, {
     channel: body.channel || "telegram",
   });
@@ -303,20 +413,51 @@ async function handleNotificationSend(request, env, supabase, notificationServic
 }
 
 async function handleTelegramSendTest(request, env) {
-  const adminSecret = getEnv(env, "X_CURURU_ADMIN_SECRET");
+  const adminSecret = requireEnv(env, "X_CURURU_ADMIN_SECRET");
   const receivedSecret = request.headers.get("x-cururu-admin-secret") || "";
-  if (adminSecret && receivedSecret !== adminSecret) return json({ error: "Forbidden" }, 403);
+  if (receivedSecret !== adminSecret) return json({ error: "Forbidden" }, 403);
 
   const body = await request.json();
   if (!body?.chat_id || !body?.text) return json({ error: "chat_id y text son obligatorios" }, 400);
+  if (String(body.text).length > MAX_TELEGRAM_MESSAGE_LENGTH) {
+    return json({ error: `text supera ${MAX_TELEGRAM_MESSAGE_LENGTH} caracteres` }, 400);
+  }
 
   const result = await sendTelegramMessage(env, body.chat_id, body.text);
   return json({ ok: true, result });
 }
 
+async function handleTelegramConfigureWebhook(request, env) {
+  const adminSecret = requireEnv(env, "X_CURURU_ADMIN_SECRET");
+  const receivedSecret = request.headers.get("x-cururu-admin-secret") || "";
+  if (receivedSecret !== adminSecret) return json({ error: "Forbidden" }, 403);
+
+  const body = await request.json().catch(() => ({}));
+  const webhookUrl = String(body.url || "").trim();
+  if (!webhookUrl || !webhookUrl.startsWith("https://")) {
+    return json({ error: "url https es obligatoria" }, 400);
+  }
+
+  const response = await fetch(`${getTelegramApiBase(env)}/setWebhook`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
+      url: webhookUrl,
+      secret_token: requireEnv(env, "TELEGRAM_WEBHOOK_SECRET"),
+      allowed_updates: ["message", "edited_message"],
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.ok === false) {
+    throw new Error(payload.description || `Telegram setWebhook ${response.status}`);
+  }
+  console.log("Telegram webhook configured", { webhook_url: webhookUrl });
+  return json({ ok: true, result: payload.result || true });
+}
+
 function workerSecretIsValid(request, env) {
-  const workerSecret = getEnv(env, "NOTIFICATION_WORKER_SECRET");
-  return !workerSecret || request.headers.get("authorization") === `Bearer ${workerSecret}`;
+  const workerSecret = requireEnv(env, "NOTIFICATION_WORKER_SECRET");
+  return request.headers.get("authorization") === `Bearer ${workerSecret}`;
 }
 
 async function processPendingTelegramNotifications(env) {
@@ -368,8 +509,16 @@ export default {
         return handleTelegramWebhook(request, env);
       }
 
+      if (url.pathname === "/webhook/telegram") {
+        return json({ error: "Method not allowed" }, 405);
+      }
+
       if (request.method === "POST" && url.pathname === "/telegram/send-test") {
         return handleTelegramSendTest(request, env);
+      }
+
+      if (request.method === "POST" && url.pathname === "/telegram/configure-webhook") {
+        return handleTelegramConfigureWebhook(request, env);
       }
 
       if (request.method === "POST" && url.pathname === "/api/notifications/send") {
@@ -384,7 +533,11 @@ export default {
 
       return json({ ok: true, service: "cururu-telegram-bot" });
     } catch (error) {
-      return json({ ok: false, error: error?.message || String(error) }, 500);
+      console.error("Cururu Telegram worker request failed", {
+        error: error?.message || String(error),
+        stack: error?.stack || null,
+      });
+      return json({ ok: false, error: "Internal worker error" }, 500);
     }
   },
   async scheduled(_event, env, ctx) {

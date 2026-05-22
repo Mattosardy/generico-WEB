@@ -347,8 +347,11 @@ async function obtenerReservas(socioId) {
 }
 
 // Confirmar reserva
-async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = null, extras = {}) {
+async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = null) {
     try {
+        if (!producto?.id) {
+            return { success: false, message: 'El pedido debe tener una variedad seleccionada.' };
+        }
         const fechaReserva = new Date(fechaRetiro);
         const reserva = {
             socio_id: socioId,
@@ -358,23 +361,13 @@ async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = n
             fecha_retiro: fechaRetiro,
             tipo_entrega: tipo === 'primer' ? 'primer_jueves' : 'ultimo_jueves',
             fecha_confirmacion: new Date(),
-            estado: 'pendiente'
+            estado: 'pendiente',
+            producto_id: producto.id,
+            producto_nombre: producto.nombre || null
         };
-        if (producto?.id) {
-            reserva.producto_id = producto.id;
-            reserva.producto_nombre = producto.nombre || null;
-        }
-        let { data, error } = await supabaseClient
+        const { data, error } = await supabaseClient
             .from('reservas_mensuales')
             .insert([reserva]);
-
-        if (error && producto?.id && String(error.message || '').toLowerCase().includes('producto')) {
-            delete reserva.producto_id;
-            delete reserva.producto_nombre;
-            ({ data, error } = await supabaseClient
-                .from('reservas_mensuales')
-                .insert([reserva]));
-        }
         
         if (error) throw error;
         return { success: true, data };

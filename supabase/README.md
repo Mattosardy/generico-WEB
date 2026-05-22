@@ -17,9 +17,21 @@ El token del bot no va en el frontend. El worker separado `workers/cururu-telegr
 - `TELEGRAM_BOT_TOKEN`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `X_CURURU_ADMIN_SECRET` opcional para proteger `/telegram/send-test`
-- `TELEGRAM_WEBHOOK_SECRET` opcional si el webhook se configura con secret token
-- `NOTIFICATION_WORKER_SECRET` opcional para endpoints internos
+- `X_CURURU_ADMIN_SECRET`
+- `TELEGRAM_WEBHOOK_SECRET`
+- `NOTIFICATION_WORKER_SECRET`
+
+El webhook productivo queda en:
+
+```text
+https://<worker-url>/webhook/telegram
+```
+
+Si se usa el dominio por defecto de Cloudflare Workers, normalmente sera:
+
+```text
+https://cururu-telegram-bot.<tu-subdominio>.workers.dev/webhook/telegram
+```
 
 Configurar el nombre publico del bot en `js/config.js`:
 
@@ -46,6 +58,30 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
 8. Probar un mensaje desde el panel admin. Queda en `notificaciones_programadas` con `canal = 'telegram'`.
 9. Ejecutar el despacho con `POST https://<worker-url>/api/notifications/dispatch-pending`.
 
+### Mensajes entrantes de Telegram
+
+El endpoint `POST /webhook/telegram` tambien recibe mensajes normales enviados por socios al bot.
+El worker extrae y guarda en `telegram_mensajes_entrantes`:
+
+- `chat_id`
+- `telegram_user_id`
+- `username`, `first_name`, `last_name` y `display_name`
+- `text`
+- `message_date`
+- `raw_update` completo para depuracion
+- `socio_id` cuando el `chat_id` ya esta vinculado a un socio
+
+La tabla tiene RLS activado y no se escribe desde el frontend. El Worker necesita `SUPABASE_SERVICE_ROLE_KEY` configurada como secret para registrar los mensajes. El webhook rechaza requests que no incluyan el header `X-Telegram-Bot-Api-Secret-Token` con el valor configurado en `TELEGRAM_WEBHOOK_SECRET`.
+
+Luego responde automaticamente:
+
+```text
+Cururu Club
+Recibimos tu mensaje. Un administrador lo revisara a la brevedad.
+```
+
+El flujo existente de `/start CODIGO` para vincular Telegram sigue funcionando y tambien queda registrado como mensaje entrante.
+
 ### Telegram Security Lite
 
 Seguridad reforzada: la plataforma puede exigir validacion por Telegram al vincular la cuenta y tambien al detectar un dispositivo nuevo. Esto reduce accesos no autorizados y protege los datos del club y de sus socios.
@@ -57,6 +93,115 @@ La mejora se apoya en:
 - vencimiento de 24 horas;
 - tabla `socio_dispositivos_verificados` para permitir varios dispositivos verificados por socio;
 - validacion post-login, sin bloquear el primer acceso antes de vincular Telegram.
+
+### Pruebas y operacion del webhook
+
+#### 1. Levantar el proyecto localmente
+
+Frontend estatico:
+
+```bash
+npx serve .
+```
+
+Worker Telegram:
+
+```bash
+cd workers/cururu-telegram-bot
+npx wrangler dev
+```
+
+Configurar secretos del worker, nunca en archivos publicos:
+
+```bash
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
+npx wrangler secret put NOTIFICATION_WORKER_SECRET
+```
+
+`SUPABASE_URL` y `SUPABASE_ANON_KEY` estan en `wrangler.jsonc`; el token del bot y service role deben ir como secrets.
+
+#### 2. Probar el endpoint localmente
+
+Con el worker en `http://127.0.0.1:8787`:
+
+```bash
+curl -X POST "http://127.0.0.1:8787/webhook/telegram" \
+  -H "Content-Type: application/json" \
+  -H "X-Telegram-Bot-Api-Secret-Token: <TELEGRAM_WEBHOOK_SECRET>" \
+  -d '{
+    "update_id": 1000001,
+    "message": {
+      "message_id": 10,
+      "date": 1778860800,
+      "chat": { "id": 123456789, "type": "private", "username": "socio_test", "first_name": "Socio" },
+      "from": { "id": 123456789, "is_bot": false, "username": "socio_test", "first_name": "Socio" },
+      "text": "Hola Cururu"
+    }
+  }'
+```
+
+Respuesta esperada: JSON con `method: "sendMessage"`. En logs de Wrangler debe aparecer `Telegram inbound message stored`.
+
+#### 3. Configurar el webhook en Telegram
+
+```bash
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
+  -d "url=https://<worker-url>/webhook/telegram" \
+  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
+```
+
+Verificar configuracion:
+
+```bash
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
+```
+
+#### 4. Verificar que Telegram esta enviando mensajes
+
+1. Enviar un mensaje cualquiera al bot desde Telegram.
+2. Revisar logs del worker:
+
+```bash
+npx wrangler tail cururu-telegram-bot
+```
+
+3. Confirmar en Supabase:
+
+```sql
+select
+  created_at,
+  chat_id,
+  telegram_user_id,
+  username,
+  display_name,
+  text,
+  socio_id
+from public.telegram_mensajes_entrantes
+order by created_at desc
+limit 20;
+```
+
+#### 5. Volver atras o borrar el webhook
+
+Quitar webhook en Telegram:
+
+```bash
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/deleteWebhook"
+```
+
+Verificar que quedo desactivado:
+
+```bash
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
+```
+
+Si tambien se quiere retirar la tabla de mensajes entrantes:
+
+```sql
+drop table if exists public.telegram_mensajes_entrantes;
+```
 
 ### Envio directo de prueba
 
