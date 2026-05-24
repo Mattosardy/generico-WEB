@@ -411,7 +411,6 @@ window.construirPerfilIndicaSativa = construirPerfilIndicaSativa;
 
 async function cargarAdminData() {
     const cards = document.getElementById('adminCards');
-    if (!cards) return;
 
     const [socios, solicitudes, productos, reservas] = await Promise.all([
         supabaseClient.from('socios').select('*', { count: 'exact', head: true }),
@@ -420,13 +419,15 @@ async function cargarAdminData() {
         supabaseClient.from('reservas_mensuales').select('*', { count: 'exact', head: true }).neq('estado', 'cancelado')
     ]);
 
-    cards.innerHTML = `
-        <div class="card"><div class="card-number">${socios.count || 0}</div><div class="card-label">Socios</div></div>
-        <div class="card"><div class="card-number">${solicitudes.count || 0}</div><div class="card-label">Solicitudes</div></div>
-        <div class="card"><div class="card-number">${productos.count || 0}</div><div class="card-label">Productos</div></div>
-        <div class="card"><div class="card-number">${reservas.count || 0}</div><div class="card-label">Pedidos</div></div>
-        <div class="card"><div class="card-number"><i class="fas fa-circle-question"></i></div><div class="card-label">Manual</div></div>
-    `;
+    if (cards) {
+        cards.innerHTML = `
+            <div class="card"><div class="card-number">${socios.count || 0}</div><div class="card-label">Socios</div></div>
+            <div class="card"><div class="card-number">${solicitudes.count || 0}</div><div class="card-label">Solicitudes</div></div>
+            <div class="card"><div class="card-number">${productos.count || 0}</div><div class="card-label">Productos</div></div>
+            <div class="card"><div class="card-number">${reservas.count || 0}</div><div class="card-label">Pedidos</div></div>
+            <div class="card"><div class="card-number"><i class="fas fa-circle-question"></i></div><div class="card-label">Manual</div></div>
+        `;
+    }
 
     await Promise.all([
         cargarHistoriaAdmin(),
@@ -621,33 +622,46 @@ function calcularRangoHorarioEntrega(horaInicio = '18:00') {
     return { inicio, fin, texto: `${inicio} a ${fin}` };
 }
 
-function renderEntregasPeriodoAdmin(configMap, lugarEntrega) {
-    return obtenerMesesEntregaProximos(3).map((periodo) => `
-        <div class="form-group full-width entrega-periodo-admin">
-            <h4>${escapeHtml(periodo.etiqueta)}</h4>
-            <div class="entrega-periodo-grid">
-                ${[1, 2].map((indice) => {
-                    const entrega = obtenerEntregaPeriodoConfig(configMap, periodo.mesClave, indice);
-                    const rango = calcularRangoHorarioEntrega(entrega.hora);
-                    return `
-                        <div class="entrega-slot-admin" data-mes-clave="${escapeHtml(periodo.mesClave)}" data-indice="${indice}">
-                            <strong>Entrega ${indice}</strong>
-                            <label>Fecha de entrega</label>
-                            <input type="date" class="entrega-fecha-admin" value="${escapeHtml(entrega.fecha)}">
-                            <label>Hora de inicio</label>
-                            <input type="time" class="entrega-hora-admin" value="${escapeHtml(rango.inicio)}">
-                            <label>Horario visible</label>
-                            <input type="text" class="entrega-rango-admin" value="${escapeHtml(rango.texto)}" readonly>
-                            <label>Lugar</label>
-                            <input type="text" class="entrega-lugar-admin" value="${escapeHtml(entrega.lugar || lugarEntrega)}">
-                            <label>Mensaje automatico para socios</label>
-                            <textarea class="entrega-mensaje-admin" rows="3">${escapeHtml(entrega.mensaje)}</textarea>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
+function renderEntregasPeriodoAdmin(configMap, lugarEntrega, mesSeleccionado = obtenerMesesEntregaProximos(3)[0]?.mesClave) {
+    const periodos = obtenerMesesEntregaProximos(3);
+    const mesActivo = periodos.find((periodo) => periodo.mesClave === mesSeleccionado)?.mesClave || periodos[0]?.mesClave;
+
+    return `
+        <div class="form-group full-width">
+            <label>Mes y año a editar</label>
+            <select id="entregaMesSeleccionAdmin" class="entrega-mes-admin">
+                ${periodos.map((periodo) => `
+                    <option value="${escapeHtml(periodo.mesClave)}" ${periodo.mesClave === mesActivo ? 'selected' : ''}>${escapeHtml(periodo.etiqueta)}</option>
+                `).join('')}
+            </select>
         </div>
-    `).join('');
+        ${periodos.map((periodo) => `
+            <div class="form-group full-width entrega-periodo-admin ${periodo.mesClave === mesActivo ? '' : 'is-hidden'}" data-mes-clave="${escapeHtml(periodo.mesClave)}">
+                <h4>${escapeHtml(periodo.etiqueta)}</h4>
+                <div class="entrega-periodo-grid">
+                    ${[1, 2].map((indice) => {
+                        const entrega = obtenerEntregaPeriodoConfig(configMap, periodo.mesClave, indice);
+                        const rango = calcularRangoHorarioEntrega(entrega.hora);
+                        return `
+                            <div class="entrega-slot-admin" data-mes-clave="${escapeHtml(periodo.mesClave)}" data-indice="${indice}">
+                                <strong>Entrega ${indice}</strong>
+                                <label>Fecha de entrega</label>
+                                <input type="date" class="entrega-fecha-admin" value="${escapeHtml(entrega.fecha)}">
+                                <label>Hora de inicio</label>
+                                <input type="time" class="entrega-hora-admin" value="${escapeHtml(rango.inicio)}">
+                                <label>Horario visible</label>
+                                <input type="text" class="entrega-rango-admin" value="${escapeHtml(rango.texto)}" readonly>
+                                <label>Lugar</label>
+                                <input type="text" class="entrega-lugar-admin" value="${escapeHtml(entrega.lugar || lugarEntrega)}">
+                                <label>Mensaje automatico para socios</label>
+                                <textarea class="entrega-mensaje-admin" rows="3">${escapeHtml(entrega.mensaje)}</textarea>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `).join('')}
+    `;
 }
 
 async function cargarEntregasAdmin() {
@@ -673,9 +687,33 @@ async function cargarEntregasAdmin() {
                 <div class="form-group full-width">
                     <button type="submit" class="btn-submit">Guardar calendario de entregas</button>
                 </div>
+                <div class="form-group full-width">
+                    ${construirGoogleCalendarEmbedHTML({
+                        badge: 'Google Calendar',
+                        titulo: 'Calendario embebido en el panel admin',
+                        descripcion: 'Mirá el calendario oficial de entregas desde Google dentro del panel de administración cuando la URL esté configurada.',
+                        fallbackTitle: 'Calendario embebido sin configurar',
+                        fallbackDescripcion: 'El calendario interno actual sigue activo y podés habilitar el embed con una URL válida en la configuración del frontend.',
+                        panelClass: 'google-calendar-panel-admin'
+                    })}
+                </div>
             </div>
         </form>
     `;
+
+    const selector = document.getElementById('entregaMesSeleccionAdmin');
+    const paneles = container.querySelectorAll('.entrega-periodo-admin');
+    const aplicarSeleccionEntrega = () => {
+        const seleccionado = selector?.value || paneles[0]?.dataset.mesClave;
+        paneles.forEach((panel) => {
+            const visible = panel.dataset.mesClave === seleccionado;
+            panel.classList.toggle('is-hidden', !visible);
+            panel.setAttribute('aria-hidden', String(!visible));
+        });
+    };
+
+    selector?.addEventListener('change', aplicarSeleccionEntrega);
+    aplicarSeleccionEntrega();
 
     container.querySelectorAll('.entrega-hora-admin').forEach((input) => {
         input.addEventListener('input', (event) => {
@@ -1215,6 +1253,58 @@ function construirAccionesReservaAdmin(reserva, origen = 'admin') {
     return `<button type="button" class="btn-aprobar" onclick="actualizarEstadoReservaAdmin('${reserva.id}', 'confirmado', '${origen}')">Confirmar</button>`;
 }
 
+function formatearFechaExportacion(valor) {
+    if (!valor) return '';
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return String(valor);
+    return fecha.toLocaleDateString('es-UY');
+}
+
+function obtenerNombreCompletoSocioReserva(reserva = {}) {
+    const nombre = [reserva.socios?.nombre, reserva.socios?.apellido].filter(Boolean).join(' ').trim();
+    return nombre || 'Sin socio';
+}
+
+function obtenerPedidosMesActual(reservas = []) {
+    const hoy = new Date();
+    return (reservas || []).filter((reserva) => {
+        const fecha = new Date(reserva.fecha_retiro);
+        if (Number.isNaN(fecha.getTime())) return false;
+        return fecha.getMonth() === hoy.getMonth() && fecha.getFullYear() === hoy.getFullYear();
+    });
+}
+
+function exportarPedidosMesExcel(reservas = []) {
+    if (!window.XLSX || typeof window.XLSX.utils?.json_to_sheet !== 'function') {
+        mostrarMensaje('La exportación a Excel no está disponible en este navegador.', false);
+        return;
+    }
+
+    const pedidosMes = obtenerPedidosMesActual(reservas);
+    if (!pedidosMes.length) {
+        mostrarMensaje('No hay pedidos para exportar en el mes actual.', false);
+        return;
+    }
+
+    const hoja = XLSX.utils.json_to_sheet(pedidosMes.map((reserva) => ({
+        'Fecha retiro': formatearFechaExportacion(reserva.fecha_retiro),
+        'Socio': obtenerNombreCompletoSocioReserva(reserva),
+        'Variedad': obtenerVariedadReservaAdmin(reserva),
+        'Cantidad (g)': Number(reserva.cantidad_gramos) || 0,
+        'Estado': obtenerEtiquetaEstadoReservaAdmin(reserva.estado),
+        'Registrada': formatearFechaExportacion(reserva.created_at)
+    })));
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Pedidos del mes');
+    const hoy = new Date();
+    const nombreArchivo = `pedidos_${hoy.getFullYear()}_${String(hoy.getMonth() + 1).padStart(2, '0')}.xlsx`;
+    XLSX.writeFile(libro, nombreArchivo);
+    mostrarMensaje(`Exportación descargada: ${nombreArchivo}`, true);
+}
+
+window.exportarPedidosMesExcel = exportarPedidosMesExcel;
+
 function renderizarTablaReservasAdmin(data, origen = 'admin') {
     return (data || []).length ? `
         <div class="admin-tabla-scroll">
@@ -1245,10 +1335,20 @@ async function cargarReservasAdmin() {
         return;
     }
     container.innerHTML = `
-        <h3 style="color:var(--text-strong); margin-bottom: 12px;">Pedidos</h3>
-        <p style="color:var(--text-muted); margin: 0 0 12px;">Control de pedidos mensuales: variedad, packs, fecha de retiro y estado operativo.</p>
+        <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-bottom: 12px;">
+            <div>
+                <h3 style="color:var(--text-strong); margin-bottom: 12px;">Pedidos</h3>
+                <p style="color:var(--text-muted); margin: 0;">Control de pedidos mensuales: variedad, packs, fecha de retiro y estado operativo.</p>
+            </div>
+            <button type="button" id="btnExportarPedidosMes" class="btn-submit"><i class="fas fa-file-excel"></i> Exportar pedidos del mes</button>
+        </div>
         ${renderizarTablaReservasAdmin(data, 'admin')}
     `;
+
+    const boton = document.getElementById('btnExportarPedidosMes');
+    if (boton) {
+        boton.addEventListener('click', () => exportarPedidosMesExcel(data));
+    }
 }
 
 window.actualizarEstadoReservaAdmin = async function(reservaId, estado, origen = 'admin') {
@@ -1552,18 +1652,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    document.querySelectorAll('.nav-admin-btn').forEach((btn) => {
+    document.querySelectorAll('.admin-main-acordeon .productos-toggle[data-admin-section]').forEach((btn) => {
         btn.addEventListener('click', () => {
             const section = btn.dataset.adminSection;
             const panel = document.getElementById(`admin-${section}`);
-            const item = btn.closest('.admin-accordion-item');
             const estaAbierto = btn.getAttribute('aria-expanded') === 'true' && panel && panel.style.display !== 'none';
 
-            document.querySelectorAll('.nav-admin-btn').forEach((other) => {
+            document.querySelectorAll('.admin-main-acordeon .productos-toggle[data-admin-section]').forEach((other) => {
                 other.classList.remove('active');
                 other.setAttribute('aria-expanded', 'false');
                 other.closest('.productos-columna')?.classList.remove('activa');
-                other.closest('.admin-accordion-item')?.classList.remove('admin-accordion-open');
             });
             const tone = getComputedStyle(btn).getPropertyValue('--admin-tone').trim() || 'rgba(124, 163, 90, 0.28)';
             const admin = document.getElementById('admin');
@@ -1584,7 +1682,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
             btn.setAttribute('aria-expanded', 'true');
             btn.closest('.productos-columna')?.classList.add('activa');
-            item?.classList.add('admin-accordion-open');
             if (empty) empty.style.display = 'none';
             if (section === 'historia' && typeof cargarHistoriaAdmin === 'function') cargarHistoriaAdmin();
             if (section === 'manual') { aplicarVisibilidadManualPorRol(); if (typeof ensureManualGridAccordion === 'function') ensureManualGridAccordion(); if (typeof attachManualToggleHandlers === 'function') attachManualToggleHandlers(); }

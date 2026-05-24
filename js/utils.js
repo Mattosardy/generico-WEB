@@ -3,6 +3,10 @@ function mostrarMensaje(mensaje, esExito = true) {
     div.className = `mensaje-flotante ${esExito ? 'mensaje-exito' : 'mensaje-error'}`;
     div.setAttribute('role', 'status');
     div.setAttribute('aria-live', 'polite');
+    div.style.setProperty('background', 'linear-gradient(135deg, #e7f4d8, #c8e0a7)', 'important');
+    div.style.setProperty('color', '#10200f', 'important');
+    div.style.setProperty('border', '1px solid rgba(24, 40, 17, 0.18)', 'important');
+    div.style.setProperty('box-shadow', '0 14px 34px rgba(64, 123, 37, 0.18)', 'important');
     div.innerHTML = `<i class="fas ${esExito ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${mensaje}`;
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 4000);
@@ -50,6 +54,50 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = normalizarTextoVisual(text);
     return div.innerHTML;
+}
+
+function obtenerGoogleCalendarEmbedUrl() {
+    const valor = String(window.GOOGLE_CALENDAR_EMBED_URL || '').trim();
+    if (!valor) return '';
+    if (/(PONER_AQUI|TODO|INCOMPLETO|REEMPLAZAR)/i.test(valor)) return '';
+    return valor;
+}
+
+function construirGoogleCalendarEmbedHTML(opciones = {}) {
+    const url = obtenerGoogleCalendarEmbedUrl();
+    const badge = opciones.badge || 'Google Calendar';
+    const titulo = opciones.titulo || 'Calendario de entregas';
+    const descripcion = opciones.descripcion || 'Mirá el calendario de entregas de forma embebida cuando tenés una URL válida configurada.';
+    const fallbackTitle = opciones.fallbackTitle || 'Calendario embebido sin configurar';
+    const fallbackDescripcion = opciones.fallbackDescripcion || 'El calendario interno actual sigue disponible y podés activar el embebido con una URL válida.';
+
+    if (!url) {
+        return `
+            <div class="google-calendar-panel ${escapeHtml(opciones.panelClass || '')}">
+                <div class="google-calendar-panel-copy">
+                    <span class="dashboard-eyebrow">${escapeHtml(badge)}</span>
+                    <strong>${escapeHtml(fallbackTitle)}</strong>
+                    <p>${escapeHtml(fallbackDescripcion)}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="google-calendar-panel ${escapeHtml(opciones.panelClass || '')}">
+            <div class="google-calendar-panel-copy">
+                <span class="dashboard-eyebrow">${escapeHtml(badge)}</span>
+                <strong>${escapeHtml(titulo)}</strong>
+                <p>${escapeHtml(descripcion)}</p>
+            </div>
+            <div class="google-calendar-actions">
+                <a class="btn-submit google-calendar-open-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Abrir en Google Calendar</a>
+            </div>
+            <div class="google-calendar-wrapper">
+                <iframe class="google-calendar-frame" title="${escapeHtml(titulo)}" src="${escapeHtml(url)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+        </div>
+    `;
 }
 
 const IMAGE_UPLOAD_SUPPORTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -342,9 +390,12 @@ function construirEventoEntregaCalendarioHTML(evento, opciones = {}) {
     const horario = evento.horario || formatearHoraRangoEntrega(evento.hora);
     const titulo = evento.titulo || (evento.fechaTexto ? `Entrega ${evento.fechaTexto}` : 'Entrega');
     const detalle = evento.reservaResumen || evento.detalle;
+    const estado = evento.entregaAConfirmar ? 'Pendiente' : 'Confirmada';
+    const estadoClase = evento.entregaAConfirmar ? 'estado-pendiente' : 'estado-confirmada';
     return `
-        <${tag}${actionAttrs} class="entrega-calendar-event ${evento.destacado ? 'destacado' : ''}">
+        <${tag}${actionAttrs} class="entrega-calendar-event ${evento.destacado ? 'destacado' : ''} ${estadoClase}">
             <strong>${escapeHtml(titulo)}</strong>
+            <span class="entrega-calendar-state ${estadoClase}">${escapeHtml(estado)}</span>
             ${horario ? `<span>${escapeHtml(horario)}</span>` : ''}
             ${detalle ? `<small>${escapeHtml(detalle)}</small>` : ''}
             ${evento.lugar ? `<em class="entrega-calendar-place">${escapeHtml(evento.lugar)}</em>` : ''}
@@ -440,6 +491,11 @@ function construirCalendarioEntregasHTML(eventos = [], opciones = {}) {
 
     return `
         <div class="entrega-google-calendar entrega-google-calendar-single" data-entrega-calendar data-active-index="${indiceInicial}">
+            <div class="entrega-calendar-legend">
+                <span><i class="fas fa-circle"></i> Hoy</span>
+                <span><i class="fas fa-circle estado-confirmada"></i> Confirmada</span>
+                <span><i class="fas fa-circle estado-pendiente"></i> Pendiente</span>
+            </div>
             <div class="entrega-calendar-shell-head">
                 <button type="button" class="entrega-calendar-nav" data-entrega-calendar-nav="-1" aria-label="Mes anterior" ${indiceInicial === 0 ? 'disabled' : ''}>
                     <i class="fas fa-chevron-left"></i>
@@ -617,7 +673,7 @@ function obtenerIdentificadorSocioPedido() {
 }
 
 function obtenerImagenFallback(producto) {
-    return crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+    return crearPlaceholderProducto();
 }
 
 function esRutaLocalInvalida(valor) {
@@ -651,6 +707,31 @@ function crearPlaceholderConstruccion(titulo = 'EN CONSTRUCCION', detalle = 'Fot
             <path d="M526 430h148M556 486h88" stroke="rgba(220,232,207,0.55)" stroke-width="8" stroke-linecap="round"/>
             <text x="600" y="575" fill="#f7faf5" font-family="Poppins, Arial, sans-serif" font-size="58" font-weight="700" text-anchor="middle" letter-spacing="2">${titulo}</text>
             <text x="600" y="635" fill="#dce8cf" font-family="Open Sans, Arial, sans-serif" font-size="30" text-anchor="middle">${detalle}</text>
+        </svg>
+    `;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.replace(/\n\s+/g, ' ').trim())}`;
+}
+
+function crearPlaceholderProducto() {
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+            <defs>
+                <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#f7faf1"/>
+                    <stop offset="100%" stop-color="#e8f1db"/>
+                </linearGradient>
+                <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#8db467"/>
+                    <stop offset="100%" stop-color="#5d7d43"/>
+                </linearGradient>
+            </defs>
+            <rect width="1200" height="800" fill="url(#bg)"/>
+            <rect x="78" y="78" width="1044" height="644" rx="42" fill="rgba(255,255,255,0.88)" stroke="#d9e6c4" stroke-width="4"/>
+            <circle cx="600" cy="320" r="120" fill="#f0f6e4"/>
+            <path d="M600 235c33 0 59 27 59 62 0 16-6 31-16 43-11 13-17 29-17 46 0 10 3 18 8 25-6 0-12-3-16-7-8-6-12-15-12-25 0-14 5-27 13-37 7-8 10-19 10-30 0-20-9-37-23-49-15-12-34-15-51-8-3 1-6 4-9 6 16-23 41-37 68-37z" fill="url(#accent)"/>
+            <path d="M600 284c-15 11-26 29-26 48 0 18 7 36 18 48 8 8 19 13 29 13 11 0 21-5 29-13 12-12 18-30 18-48 0-19-10-37-26-48-4-3-9-1-11 3-2 3-1 8 2 11 13 9 21 25 21 41 0 14-5 28-15 38-6 6-14 9-22 9-9 0-17-3-23-9-10-10-15-24-15-38 0-14 7-27 18-36 3-3 4-8 2-11-2-4-7-6-11-3z" fill="#fcfdf8"/>
+            <path d="M590 432h22l-8 33h-6z" fill="url(#accent)"/>
+            <path d="M578 500c-9-10-15-24-15-38h74c0 14-6 28-15 38" fill="#d2e2bf"/>
         </svg>
     `;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.replace(/\n\s+/g, ' ').trim())}`;

@@ -472,24 +472,35 @@ function obtenerCategoriasArticulosDestacados(articulosPorCategoria = {}) {
     }));
 }
 
+function limpiarReferenciaPesoArticulo(texto = '') {
+    return String(texto || '')
+        .replace(/\s*\(?\b(?:20|40)\s*g\b\)?/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/\s+([,.;:])/g, '$1')
+        .replace(/\(\s*\)/g, '')
+        .trim();
+}
+
 function renderizarTarjetaArticuloDestacado(articulo) {
     const imagenes = normalizarListaImagenes(articulo.imagen_url).slice(0, 3);
-    const imagenPrincipal = imagenes[0] || crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+    const imagenPrincipal = imagenes[0] || crearPlaceholderProducto();
     const precio = Number(articulo.precio_por_10g || 0);
     const disponible = articulo.disponible !== false;
     const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
     const precioVisible = typeof formatearPrecioVisible === 'function'
         ? formatearPrecioVisible(precio)
         : (precio ? `$${precio.toFixed(0)}` : '');
+    const tituloArticulo = limpiarReferenciaPesoArticulo(articulo.nombre);
+    const descripcionArticulo = limpiarReferenciaPesoArticulo(articulo.descripcion || obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(articulo)));
     return `
         <article class="articulo-destacado-card" data-producto-id="${escapeHtml(String(articulo.id))}" data-producto='${serializarProductoParaDataset(articulo)}'>
             <div class="articulo-destacado-media">
-                <img src="${imagenPrincipal}" alt="${escapeHtml(articulo.nombre)}" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
+                <img src="${imagenPrincipal}" alt="${escapeHtml(tituloArticulo)}" onerror="this.onerror=null; this.src='${crearPlaceholderProducto()}';">
             </div>
             <div class="articulo-destacado-body">
                 <span>${disponible ? 'Disponible' : 'No disponible'}</span>
-                <strong>${escapeHtml(articulo.nombre)}</strong>
-                <p>${escapeHtml(articulo.descripcion || obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(articulo)))}</p>
+                <strong>${escapeHtml(tituloArticulo)}</strong>
+                <p>${escapeHtml(descripcionArticulo)}</p>
                 ${precioVisible ? `<em class="${puedeVerPrecios ? '' : 'precio-restringido'}">${escapeHtml(precioVisible)}</em>` : ''}
             </div>
         </article>
@@ -567,7 +578,7 @@ function construirEstadoProductoHTML(producto) {
 
 function renderizarTarjetaProducto(producto) {
     const imagenes = normalizarListaImagenes(producto.imagen_url).slice(0, 3);
-    const imagenPrincipal = imagenes[0] || crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+    const imagenPrincipal = imagenes[0] || crearPlaceholderProducto();
     const disponible = producto.disponible !== false;
     const indicaSativa = producto.indica_sativa || '50% Indica - 50% Sativa';
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
@@ -579,7 +590,7 @@ function renderizarTarjetaProducto(producto) {
         <div class="producto-card${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${serializarProductoParaDataset(producto)}'>
             <div class="producto-miniatura">
                 <span class="producto-disponibilidad-badge ${(!disponible || bloqueadoPorStock) ? 'agotado' : 'disponible'}">${bloqueadoPorStock ? 'SIN STOCK' : (disponible ? 'Disponible' : 'Agotado')}</span>
-                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
+                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" style="width:100%;height:160px;object-fit:cover;" onerror="this.onerror=null; this.src='${crearPlaceholderProducto()}';">
             </div>
             ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}
             <div class="producto-detalle">
@@ -597,13 +608,13 @@ function renderizarTarjetaProducto(producto) {
 
 function renderizarTarjetaProductoCompacta(producto) {
     const imagenes = normalizarListaImagenes(producto.imagen_url).slice(0, 3);
-    const imagenPrincipal = imagenes[0] || crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+    const imagenPrincipal = imagenes[0] || crearPlaceholderProducto();
     const claseNuevo = productoEsNuevo(producto) ? ' producto-nuevo' : '';
     const claseStock = obtenerClaseStockProducto(producto);
     return `
         <div class="producto-card producto-card-compacta${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(producto.id))}" data-producto='${serializarProductoParaDataset(producto)}'>
             <div class="producto-miniatura">
-                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
+                <img src="${imagenPrincipal}" alt="${escapeHtml(producto.nombre)}" onerror="this.onerror=null; this.src='${crearPlaceholderProducto()}';">
                 ${renderizarBadgeStockProducto(producto, true)}
                 <div class="producto-overlay">
                     ${renderizarEstrellas(producto.promedio, producto.totalCalificaciones)}

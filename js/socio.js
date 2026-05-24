@@ -107,6 +107,13 @@ function renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo,
         <div class="reservas-activity-events">
             ${construirCalendarioEntregasHTML(eventos.map(construirEventoCalendarioReservaUsuario))}
         </div>
+        ${construirGoogleCalendarEmbedHTML({
+            badge: 'Google Calendar',
+            titulo: 'Calendario embebido',
+            descripcion: 'Visualizá el calendario oficial de entregas del club en la misma sección cuando tengas una URL de Google Calendar configurada.',
+            fallbackTitle: 'Calendario embebido sin configurar',
+            fallbackDescripcion: 'El calendario interno actual sigue disponible y podés activar el embed con una URL válida en la configuración del frontend.'
+        })}
     `;
 
     container.style.display = '';

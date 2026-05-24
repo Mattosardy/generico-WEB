@@ -50,6 +50,42 @@ function obtenerTotalPedidoMesActual() {
         - Number(appState.reservaEditandoGramos || 0);
 }
 
+const GRAMOS_POR_UNIDAD_ARTICULO = 20;
+
+function productoModalEsArticulo() {
+    return typeof productoEsArticulo === 'function' && productoEsArticulo(appState.productoModalActual || {});
+}
+
+function unidadesDesdeGramosPedido(gramos) {
+    const gramosNumero = Number(gramos || 0);
+    if (!Number.isFinite(gramosNumero) || gramosNumero <= 0) return 0;
+    return Math.max(0, Math.round(gramosNumero / GRAMOS_POR_UNIDAD_ARTICULO));
+}
+
+function formatearCantidadPedido(gramos, esArticulo = false) {
+    if (!esArticulo) return formatearPacksReserva(gramos);
+    const unidades = unidadesDesdeGramosPedido(gramos);
+    return `${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`;
+}
+
+function formatearResumenDisponible(gramos, esArticulo = false) {
+    if (!esArticulo) return `${gramosAPacks(gramos)} packs`;
+    const unidades = unidadesDesdeGramosPedido(gramos);
+    return `${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`;
+}
+
+function formatearTextoDisponibles(gramos, esArticulo = false) {
+    if (!esArticulo) return `${gramosAPacks(gramos)} packs disponibles`;
+    const unidades = unidadesDesdeGramosPedido(gramos);
+    return `${unidades} ${unidades === 1 ? 'unidad disponible' : 'unidades disponibles'}`;
+}
+
+function obtenerPrecioArticuloDesdeGramos(gramos, precioBase) {
+    const unidades = unidadesDesdeGramosPedido(gramos);
+    const precioBaseNumero = Number(precioBase || 0);
+    return precioBaseNumero * unidades;
+}
+
 function actualizarEstadoPedidoModal() {
     const restante = 40 - obtenerTotalPedidoMesActual();
     const packsRestantes = gramosAPacks(restante);
@@ -58,15 +94,19 @@ function actualizarEstadoPedidoModal() {
     const botonEl = document.getElementById('btnRealizarPedido');
     if (!restanteEl || !alertaEl || !botonEl) return;
 
+    const esArticulo = productoModalEsArticulo();
     const cicloActual = obtenerCicloClub();
     const stock = typeof obtenerInfoStockProducto === 'function'
         ? obtenerInfoStockProducto(appState.productoModalActual || {})
         : { stockActivo: false, stockPacks: 0, gramosDisponibles: 0, sinStock: false };
     const detalleStock = stock.stockActivo
-        ? ` Stock: ${formatearPacksDisponibles(stock.stockPacks, stock.gramosDisponibles)}.`
+        ? ` Stock: ${esArticulo ? formatearTextoDisponibles(stock.gramosDisponibles, true) : formatearPacksDisponibles(stock.stockPacks, stock.gramosDisponibles)}.`
         : '';
     const passwordTemporalPendiente = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
-    restanteEl.textContent = `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${packsRestantes} de 2 packs.${detalleStock}`;
+    const disponibleTexto = esArticulo
+        ? formatearTextoDisponibles(restante, true)
+        : `${packsRestantes} de 2 packs`;
+    restanteEl.textContent = `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${disponibleTexto}.${detalleStock}`;
     alertaEl.textContent = '';
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         const gramos = Number(btn.dataset.gramos);
@@ -74,7 +114,7 @@ function actualizarEstadoPedidoModal() {
         btn.classList.toggle('activa', gramos === appState.gramosSeleccionadosPedido);
         btn.disabled = passwordTemporalPendiente || gramos > restante || sinStockParaCantidad;
         if (sinStockParaCantidad) {
-            btn.title = 'No hay packs suficientes para esta cantidad';
+            btn.title = esArticulo ? 'No hay unidades suficientes para esta cantidad' : 'No hay packs suficientes para esta cantidad';
         } else {
             btn.removeAttribute('title');
         }
@@ -98,18 +138,18 @@ function actualizarEstadoPedidoModal() {
         return;
     }
     if (appState.gramosSeleccionadosPedido > restante) {
-        alertaEl.textContent = `No podés pedir ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}. Te quedan ${packsRestantes} packs en este ciclo.`;
+        alertaEl.textContent = `No podés pedir ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, esArticulo)}. Te quedan ${formatearTextoDisponibles(restante, esArticulo)} en este ciclo.`;
         botonEl.disabled = true;
         return;
     }
     if (stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual || {}, appState.gramosSeleccionadosPedido)) {
-        alertaEl.textContent = `No hay packs suficientes para pedir ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}.`;
+        alertaEl.textContent = `No hay ${esArticulo ? 'unidades' : 'packs'} suficientes para pedir ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, esArticulo)}.`;
         botonEl.disabled = true;
         return;
     }
     const seleccion = document.querySelector(`#opcionesPedido .opcion-pedido[data-gramos="${appState.gramosSeleccionadosPedido}"]`);
     const restanteLuego = Math.max(0, restante - Number(appState.gramosSeleccionadosPedido || 0));
-    restanteEl.textContent = `Pedido seleccionado: ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}. Quedan ${gramosAPacks(restanteLuego)} packs disponibles en este ciclo.${detalleStock}`;
+    restanteEl.textContent = `Pedido seleccionado: ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, esArticulo)}. Quedan ${formatearTextoDisponibles(restanteLuego, esArticulo)} en este ciclo.${detalleStock}`;
     const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
     botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'}${puedeVerPrecios && seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
     botonEl.disabled = false;
@@ -125,12 +165,13 @@ function inicializarPedidoModal() {
             const gramos = Number(btn.dataset.gramos);
             const precio = Number(btn.dataset.precio || 0);
             const restante = 40 - obtenerTotalPedidoMesActual();
+            const esArticulo = productoModalEsArticulo();
             if (gramos > restante) {
-                mostrarMensaje(`Te quedan ${gramosAPacks(restante)} packs disponibles en este ciclo.`, false);
+                mostrarMensaje(`Te quedan ${formatearTextoDisponibles(restante, esArticulo)} en este ciclo.`, false);
                 return;
             }
             if (typeof productoTieneStockParaGramos === 'function' && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos)) {
-                mostrarMensaje('No hay packs suficientes para esa cantidad.', false);
+                mostrarMensaje(`No hay ${esArticulo ? 'unidades' : 'packs'} suficientes para esa cantidad.`, false);
                 return;
             }
             appState.gramosSeleccionadosPedido = gramos;
@@ -160,14 +201,15 @@ async function realizarPedidoProducto() {
         return;
     }
 
+    const esArticulo = productoModalEsArticulo();
     if (typeof obtenerInfoStockProducto === 'function') {
         const stock = obtenerInfoStockProducto(appState.productoModalActual);
         if (stock.sinStock) {
-            mostrarMensaje('No hay stock disponible para esta variedad.', false);
+            mostrarMensaje(`No hay stock disponible para ${esArticulo ? 'este artículo' : 'esta variedad'}.`, false);
             return;
         }
         if (stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual, appState.gramosSeleccionadosPedido)) {
-            mostrarMensaje('No hay packs suficientes para esa cantidad.', false);
+            mostrarMensaje(`No hay ${esArticulo ? 'unidades' : 'packs'} suficientes para esa cantidad.`, false);
             return;
         }
     }
@@ -197,7 +239,7 @@ async function realizarPedidoProducto() {
             : null);
     const totalActual = obtenerTotalPedidoMesActual();
     if (totalActual + appState.gramosSeleccionadosPedido > 40) {
-        mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${gramosAPacks(totalActual)} packs en este ciclo.`, false);
+        mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${formatearResumenDisponible(totalActual, esArticulo)} en este ciclo.`, false);
         return;
     }
 
@@ -219,7 +261,7 @@ async function realizarPedidoProducto() {
         return;
     }
 
-    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${normalizarTextoVisual(appState.productoModalActual.nombre)} - ${formatearPacksReserva(appState.gramosSeleccionadosPedido)}. Revisá el detalle en tu carrito.`, true);
+    mostrarMensaje(`${reservaExistente ? 'Pedido modificado' : 'Pedido enviado'}: ${normalizarTextoVisual(appState.productoModalActual.nombre)} - ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, esArticulo)}. Revisá el detalle en tu carrito.`, true);
     cerrarProductoModal();
     if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
 }
@@ -233,7 +275,7 @@ window.cambiarImagenGaleria = function(direccion) {
     if (imagenPrincipal) {
         imagenPrincipal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+            this.src = crearPlaceholderProducto();
         };
         imagenPrincipal.src = appState.galeriaActual.imagenes[nuevoIndice];
     }
@@ -247,7 +289,7 @@ window.irAImagen = function(indice) {
     if (imagenPrincipal) {
         imagenPrincipal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+            this.src = crearPlaceholderProducto();
         };
         imagenPrincipal.src = appState.galeriaActual.imagenes[indice];
     }
@@ -264,7 +306,7 @@ window.seleccionarImagenProducto = function(indice) {
     if (principal) {
         principal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+            this.src = crearPlaceholderProducto();
         };
         principal.src = imagen;
     }
@@ -276,7 +318,7 @@ function renderizarGaleriaProductoModal(imagenes, titulo) {
     const imagenesVisibles = normalizarListaImagenes(imagenes).slice(0, 3);
     const imagenesFinales = imagenesVisibles.length
         ? imagenesVisibles
-        : [crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')];
+        : [crearPlaceholderProducto()];
     const imagenPrincipal = imagenesFinales[0];
     const tieneGaleria = imagenesFinales.length > 1;
     return `
@@ -294,7 +336,7 @@ function renderizarGaleriaProductoModal(imagenes, titulo) {
                 <div class="galeria-strip">
                     ${imagenesFinales.map((imagen, index) => `
                         <button type="button" class="galeria-thumb${index === 0 ? ' activa' : ''}" onclick="seleccionarImagenProducto(${index})" aria-label="Ver imagen ${index + 1}">
-                            <img src="${imagen}" alt="${escapeHtml(titulo)} ${index + 1}" onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')}';">
+                            <img src="${imagen}" alt="${escapeHtml(titulo)} ${index + 1}" onerror="this.onerror=null; this.src='${crearPlaceholderProducto()}';">
                         </button>
                     `).join('')}
                 </div>
@@ -338,6 +380,7 @@ async function abrirModal(producto) {
     appState.gramosSeleccionadosPedido = null;
     appState.reservaEditandoGramos = 0;
     const precioBase = producto.precio_por_10g || 1600;
+    const precioBaseNumero = Number(precioBase) || 0;
     const disponible = producto.disponible !== false;
     const esArticulo = typeof productoEsArticulo === 'function' && productoEsArticulo(producto);
 
@@ -354,7 +397,7 @@ async function abrirModal(producto) {
     let imagenesArray = [...imagenesBase, ...normalizarListaImagenes(imagenesGaleria)]
         .filter((imagen, index, lista) => imagen && lista.indexOf(imagen) === index)
         .slice(0, 3);
-    if (!imagenesArray.length) imagenesArray = [crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion')];
+    if (!imagenesArray.length) imagenesArray = [crearPlaceholderProducto()];
 
     appState.galeriaActual = { imagenes: imagenesArray, indice: 0, productoId: producto.id };
 
@@ -364,7 +407,7 @@ async function abrirModal(producto) {
     if (imagenPrincipal) {
         imagenPrincipal.onerror = function onErrorImagen() {
             this.onerror = null;
-            this.src = crearPlaceholderConstruccion('EN CONSTRUCCION', 'Foto en preparacion');
+            this.src = crearPlaceholderProducto();
         };
     }
 
@@ -376,8 +419,13 @@ async function abrirModal(producto) {
         ? (typeof obtenerTituloTipoCultivo === 'function' && typeof obtenerTipoCatalogoProducto === 'function' ? obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(producto)) : 'Artículo destacado')
         : normalizarTextoVisual(producto.cepa || 'Cepa especial');
     document.getElementById('modalDescripcion').textContent = normalizarTextoVisual(producto.descripcion || '');
+    const precioUnidadTexto = precioBaseNumero
+        ? (typeof formatearPrecioVisible === 'function'
+            ? formatearPrecioVisible(precioBaseNumero)
+            : `$${precioBaseNumero.toFixed(0)}`)
+        : '';
     document.getElementById('modalThc').textContent = esArticulo
-        ? `${disponible ? 'Disponible' : 'No disponible'}${precioBase ? ` | ${typeof formatearPrecioVisible === 'function' ? formatearPrecioVisible(precioBase) : `$${Number(precioBase).toFixed(0)}`}` : ''}`
+        ? `${disponible ? 'Disponible' : 'No disponible'}${precioUnidadTexto ? ` | ${precioUnidadTexto} por unidad` : ''}`
         : `THC: ${producto.thc_porcentaje || '?'}% | CBD: ${producto.cbd_porcentaje || '?'}%`;
     if (!esArticulo && typeof obtenerInfoStockProducto === 'function') {
         const stock = obtenerInfoStockProducto(producto);
@@ -390,23 +438,35 @@ async function abrirModal(producto) {
     document.getElementById('panelCalificacion').style.display = 'none';
     document.getElementById('calificacionMensaje').innerHTML = '';
     calificacionSeleccionada = 0;
-
-    const pedidoBox = document.querySelector('#productoModal .modal-pedido-box');
-    if (pedidoBox) pedidoBox.style.display = esArticulo ? 'none' : '';
-
-    if (esArticulo) {
-        document.getElementById('productoModal').style.display = 'flex';
-        return;
+    const botonCalificacion = document.getElementById('btnMostrarCalificacion');
+    if (botonCalificacion) {
+        botonCalificacion.style.display = esArticulo ? 'none' : '';
     }
 
-    const opcionesDisponibles = [20, 40];
+    const pedidoBox = document.querySelector('#productoModal .modal-pedido-box');
+    if (pedidoBox) pedidoBox.style.display = '';
+
+    const pedidoTitulo = document.querySelector('#productoModal .modal-pedido-titulo');
+    if (pedidoTitulo) {
+        pedidoTitulo.textContent = esArticulo ? 'Pedido por unidad' : 'Pedido mensual';
+    }
+    const pedidoInfo = document.querySelector('#productoModal .modal-pedido-info');
+    if (pedidoInfo) {
+        pedidoInfo.innerHTML = esArticulo
+            ? 'Elegí la cantidad por unidad para este pedido:<br><span style="display:block;margin-top:6px;color:var(--text-muted);">Las entregas de artículos se realizarán junto a la entrega de la mensu.</span>'
+            : 'Elegí la cantidad para este pedido mensual:';
+    }
+
+    const opcionesDisponibles = esArticulo ? [GRAMOS_POR_UNIDAD_ARTICULO] : [20, 40];
     const opcionesContainer = document.getElementById('opcionesPedido');
     opcionesContainer.innerHTML = opcionesDisponibles.map((gramos) => {
-        const precioTotal = (precioBase * gramos / 10).toFixed(0);
+        const precioTotal = esArticulo
+            ? obtenerPrecioArticuloDesdeGramos(gramos, precioBaseNumero).toFixed(0)
+            : (precioBaseNumero * gramos / 10).toFixed(0);
         const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
         const precioAttr = puedeVerPrecios ? ` data-precio="${precioTotal}"` : '';
         const precioLabel = puedeVerPrecios ? ` - $${precioTotal}` : '';
-        return `<button type="button" class="opcion-pedido" data-gramos="${gramos}"${precioAttr}>${formatearPacksReserva(gramos)}${precioLabel}</button>`;
+        return `<button type="button" class="opcion-pedido" data-gramos="${gramos}"${precioAttr}>${formatearCantidadPedido(gramos, esArticulo)}${precioLabel}</button>`;
     }).join('');
 
     const stockModal = typeof obtenerInfoStockProducto === 'function'
@@ -683,6 +743,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === document.getElementById('editProductoModal')) cerrarEditProducto();
     });
 });
-
 
 
