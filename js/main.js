@@ -17,6 +17,41 @@ function registrarServiceWorkerPwa() {
     });
 }
 
+let cururuInstallPrompt = null;
+
+function obtenerInstruccionesInstalacion() {
+    const esIos = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+    if (esIos) return 'En iPhone/iPad: abrí esta web en Safari, tocá Compartir y elegí Agregar a pantalla de inicio.';
+    return 'Si no aparece el instalador, abrí el menú del navegador y elegí Instalar app o Agregar a pantalla de inicio.';
+}
+
+function inicializarInstalacionPwa() {
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        cururuInstallPrompt = event;
+    });
+
+    window.addEventListener('appinstalled', () => {
+        cururuInstallPrompt = null;
+        if (typeof mostrarMensaje === 'function') mostrarMensaje('App instalada correctamente.', true);
+    });
+
+    document.querySelectorAll('[data-install-app]').forEach((boton) => {
+        boton.addEventListener('click', async () => {
+            if (!cururuInstallPrompt) {
+                const mensaje = obtenerInstruccionesInstalacion();
+                if (typeof mostrarMensaje === 'function') mostrarMensaje(mensaje, true);
+                else alert(mensaje);
+                return;
+            }
+
+            cururuInstallPrompt.prompt();
+            await cururuInstallPrompt.userChoice;
+            cururuInstallPrompt = null;
+        });
+    });
+}
+
 function actualizarBotonAudio() {
     const audio = document.getElementById('backgroundAudio');
     const boton = document.getElementById('btnAudioToggle');
@@ -262,6 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     registrarServiceWorkerPwa();
     inicializarPlaceholders();
     inicializarAudioFondo();
+    inicializarInstalacionPwa();
     if (typeof actualizarBotonesSesion === 'function') actualizarBotonesSesion(false);
 
     document.getElementById('btnLogin')?.addEventListener('click', iniciarSesion);

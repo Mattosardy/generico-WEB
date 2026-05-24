@@ -1,6 +1,16 @@
-function sumarGramosReservadosEnCiclo(reservas = [], ciclo = obtenerCicloClub()) {
+function reservaEsArticulo(reserva, productos = []) {
+    if (typeof productoEsArticulo !== 'function') return false;
+    const producto = productos.find((item) => String(item.id) === String(reserva?.producto_id));
+    return producto ? productoEsArticulo(producto) : false;
+}
+
+function sumarGramosReservadosEnCiclo(reservas = [], ciclo = obtenerCicloClub(), productos = []) {
     return reservas
-        .filter((reserva) => reserva?.estado !== 'cancelado' && fechaEstaEnCicloClub(reserva?.fecha_retiro, ciclo))
+        .filter((reserva) => (
+            reserva?.estado !== 'cancelado'
+            && fechaEstaEnCicloClub(reserva?.fecha_retiro, ciclo)
+            && !reservaEsArticulo(reserva, productos)
+        ))
         .reduce((total, reserva) => total + Number(reserva?.cantidad_gramos || 0), 0);
 }
 
@@ -367,12 +377,13 @@ async function cargarReservasSocio() {
     appState.fechasEntrega = calcularFechasEntrega();
     appState.cicloClubActual = obtenerCicloClub();
     const reservas = await obtenerReservas(appState.socioData.id);
+    const productos = typeof obtenerProductos === 'function' ? await obtenerProductos() : [];
     appState.reservasSocio = reservas;
     const reservaPrimer = obtenerReservaActivaPorEntrega(reservas, 'primer_jueves', appState.fechasEntrega.primerJueves);
     const reservaUltimo = obtenerReservaActivaPorEntrega(reservas, 'ultimo_jueves', appState.fechasEntrega.ultimoJueves);
     const puedePrimer = puedeConfirmar(appState.fechasEntrega.primerJueves, configSistema.horasLimitePrimer);
     const puedeUltimo = puedeConfirmar(appState.fechasEntrega.ultimoJueves, configSistema.horasLimiteUltimo);
-    const gramosReservadosCiclo = sumarGramosReservadosEnCiclo(reservas, appState.cicloClubActual);
+    const gramosReservadosCiclo = sumarGramosReservadosEnCiclo(reservas, appState.cicloClubActual, productos);
     const gramosRestantesCiclo = Math.max(0, 40 - gramosReservadosCiclo);
     appState.gramosReservadosCiclo = gramosReservadosCiclo;
     const reservasActivas = [reservaPrimer, reservaUltimo].filter(reservaEstaActiva);

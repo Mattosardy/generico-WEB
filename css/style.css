@@ -1500,6 +1500,22 @@ body::before {
     line-height: 1.5;
     margin: 0;
 }
+.manual-install-link {
+    appearance: none;
+    border: 1px solid rgba(50, 94, 53, 0.28);
+    border-radius: 10px;
+    background: #9fd08d;
+    color: #111;
+    cursor: pointer;
+    font-weight: 800;
+    padding: 9px 16px;
+}
+.manual-install-link:hover,
+.manual-install-link:focus-visible {
+    background: #b7dfa8;
+    outline: 2px solid rgba(50, 94, 53, 0.3);
+    outline-offset: 2px;
+}
 #admin .admin-section-panel h3,
 #maestro h3 {
     color: var(--text-strong);
@@ -9044,6 +9060,55 @@ select,
     }
 }
 
+@media (max-width: 720px) {
+    body {
+        background: #f7faf6 !important;
+    }
+
+    .container,
+    .section,
+    .historia-section,
+    .club-intro-panel,
+    .historia-content,
+    .historia-imagen,
+    .historia-texto-principal {
+        background: transparent !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .section {
+        padding: 14px 10px !important;
+        border-radius: 0 !important;
+    }
+
+    .club-intro-panel {
+        padding: 14px 0 18px !important;
+        margin-bottom: 18px !important;
+    }
+
+    .historia-imagen {
+        padding: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    .historia-imagen img.historia-media-principal {
+        border-radius: 14px !important;
+    }
+
+    .section-title {
+        border-bottom-color: rgba(41, 62, 46, 0.08) !important;
+    }
+
+    .section::before,
+    .club-intro-panel::before,
+    .historia-imagen::before,
+    .historia-texto-principal::before {
+        display: none !important;
+        content: none !important;
+    }
+}
+
 @media (max-width: 390px) {
     .header-nav .nav-btn,
     .header-nav .nav-session-btn,
@@ -9065,3 +9130,152 @@ select,
     }
 }
 
+/* Limpieza visual de acordeones: deja el foco en el boton y elimina marcos duplicados. */
+.productos-acordeon,
+.admin-main-acordeon,
+.admin-mensajes-acordeon,
+.admin-manual-acordeon,
+.actividades-acordeon {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    gap: 10px !important;
+    padding: 0 !important;
+}
+
+.productos-acordeon .productos-controles,
+.admin-main-acordeon .productos-controles,
+.admin-mensajes-acordeon .productos-controles,
+.admin-manual-acordeon .productos-controles,
+.actividades-acordeon .productos-controles,
+.productos-acordeon .productos-columna,
+.admin-main-acordeon .productos-columna,
+.admin-mensajes-acordeon .productos-columna,
+.admin-manual-acordeon .productos-columna,
+.actividades-acordeon .productos-columna {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.productos-acordeon .productos-columna-titulo,
+.admin-main-acordeon .productos-columna-titulo,
+.admin-mensajes-acordeon .productos-columna-titulo,
+.admin-manual-acordeon .productos-columna-titulo,
+.actividades-acordeon .productos-columna-titulo {
+    margin: 0 !important;
+}
+
+.productos-acordeon .productos-toggle,
+.admin-main-acordeon .productos-toggle,
+.admin-mensajes-acordeon .productos-toggle,
+.admin-manual-acordeon .productos-toggle,
+.actividades-acordeon .productos-toggle {
+    border: 0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 20px rgba(12, 18, 12, 0.12) !important;
+    min-height: 64px !important;
+    padding: 13px 15px !important;
+}
+
+.productos-columna.activa > .productos-columna-titulo > .productos-toggle,
+.productos-columna.activa .productos-toggle,
+.productos-toggle.active,
+.admin-main-acordeon .productos-toggle.active,
+.admin-mensajes-acordeon .productos-toggle.active,
+.admin-manual-acordeon .productos-toggle.active,
+.actividades-acordeon .productos-toggle.active {
+    border: 0 !important;
+    box-shadow: 0 10px 24px rgba(67, 102, 52, 0.18) !important;
+}
+
+.productos-acordeon .productos-panel,
+.admin-main-acordeon .productos-panel,
+.admin-main-acordeon .admin-section-panel,
+.admin-mensajes-acordeon .productos-panel,
+.admin-manual-acordeon .productos-panel,
+.actividades-acordeon .productos-panel {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin-top: 4px !important;
+    padding: 10px 2px 16px !important;
+}
+
+@media (max-width: 720px) {
+    .productos-acordeon,
+    .admin-main-acordeon,
+    .admin-mensajes-acordeon,
+    .admin-manual-acordeon,
+    .actividades-acordeon {
+        gap: 8px !important;
+    }
+
+    .productos-acordeon .productos-toggle,
+    .admin-main-acordeon .productos-toggle,
+    .admin-mensajes-acordeon .productos-toggle,
+    .admin-manual-acordeon .productos-toggle,
+    .actividades-acordeon .productos-toggle {
+        min-height: 58px !important;
+        padding: 11px 12px !important;
+    }
+
+    .productos-acordeon .productos-panel,
+    .admin-main-acordeon .productos-panel,
+    .admin-main-acordeon .admin-section-panel,
+    .admin-mensajes-acordeon .productos-panel,
+    .admin-manual-acordeon .productos-panel,
+    .actividades-acordeon .productos-panel {
+        padding: 8px 0 14px !important;
+    }
+}
+
+/* Subacordeones dentro de un menu activo: verdes y a ancho completo. */
+.productos-panel .productos-acordeon,
+.admin-section-panel .productos-acordeon {
+    width: 100% !important;
+}
+
+.productos-panel .productos-acordeon .productos-controles,
+.admin-section-panel .productos-acordeon .productos-controles {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+}
+
+.productos-panel .productos-acordeon .productos-columna,
+.admin-section-panel .productos-acordeon .productos-columna,
+.productos-panel .productos-acordeon .productos-columna-titulo,
+.admin-section-panel .productos-acordeon .productos-columna-titulo,
+.productos-panel .productos-acordeon .productos-toggle,
+.admin-section-panel .productos-acordeon .productos-toggle {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.productos-panel .productos-acordeon .productos-toggle,
+.admin-section-panel .productos-acordeon .productos-toggle {
+    background: linear-gradient(135deg, #7ca35a 0%, #b8d89e 100%) !important;
+    color: #071006 !important;
+    border: 0 !important;
+    box-shadow: 0 8px 18px rgba(67, 102, 52, 0.16) !important;
+}
+
+.productos-panel .productos-acordeon .productos-toggle *,
+.admin-section-panel .productos-acordeon .productos-toggle * {
+    color: #071006 !important;
+}
+
+.productos-panel .productos-acordeon .productos-toggle:hover,
+.productos-panel .productos-acordeon .productos-toggle:focus-visible,
+.productos-panel .productos-acordeon .productos-toggle.active,
+.productos-panel .productos-acordeon .productos-columna.activa .productos-toggle,
+.admin-section-panel .productos-acordeon .productos-toggle:hover,
+.admin-section-panel .productos-acordeon .productos-toggle:focus-visible,
+.admin-section-panel .productos-acordeon .productos-toggle.active,
+.admin-section-panel .productos-acordeon .productos-columna.activa .productos-toggle {
+    background: linear-gradient(135deg, #6e984f 0%, #c8e7b0 100%) !important;
+    box-shadow: 0 10px 22px rgba(67, 102, 52, 0.24) !important;
+}

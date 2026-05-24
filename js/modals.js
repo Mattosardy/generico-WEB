@@ -86,8 +86,19 @@ function obtenerPrecioArticuloDesdeGramos(gramos, precioBase) {
     return precioBaseNumero * unidades;
 }
 
+function obtenerOpcionesPedidoArticulo(producto = {}) {
+    const stock = typeof obtenerInfoStockProducto === 'function'
+        ? obtenerInfoStockProducto(producto)
+        : { stockActivo: false, gramosDisponibles: 0 };
+    const unidadesMaximas = stock.stockActivo
+        ? unidadesDesdeGramosPedido(stock.gramosDisponibles)
+        : 5;
+    const totalUnidades = Math.max(1, Math.min(unidadesMaximas || 1, 10));
+    return Array.from({ length: totalUnidades }, (_, index) => (index + 1) * GRAMOS_POR_UNIDAD_ARTICULO);
+}
+
 function actualizarEstadoPedidoModal() {
-    const restante = 40 - obtenerTotalPedidoMesActual();
+    const restante = Math.max(0, 40 - obtenerTotalPedidoMesActual());
     const packsRestantes = gramosAPacks(restante);
     const restanteEl = document.getElementById('pedidoRestante');
     const alertaEl = document.getElementById('pedidoAlerta');
@@ -104,15 +115,17 @@ function actualizarEstadoPedidoModal() {
         : '';
     const passwordTemporalPendiente = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
     const disponibleTexto = esArticulo
-        ? formatearTextoDisponibles(restante, true)
+        ? 'Los artículos no descuentan cupo mensual'
         : `${packsRestantes} de 2 packs`;
-    restanteEl.textContent = `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${disponibleTexto}.${detalleStock}`;
+    restanteEl.textContent = esArticulo
+        ? `${disponibleTexto}.${detalleStock}`
+        : `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${disponibleTexto}.${detalleStock}`;
     alertaEl.textContent = '';
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         const gramos = Number(btn.dataset.gramos);
         const sinStockParaCantidad = stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos);
         btn.classList.toggle('activa', gramos === appState.gramosSeleccionadosPedido);
-        btn.disabled = passwordTemporalPendiente || gramos > restante || sinStockParaCantidad;
+        btn.disabled = passwordTemporalPendiente || (!esArticulo && gramos > restante) || sinStockParaCantidad;
         if (sinStockParaCantidad) {
             btn.title = esArticulo ? 'No hay unidades suficientes para esta cantidad' : 'No hay packs suficientes para esta cantidad';
         } else {
@@ -137,7 +150,7 @@ function actualizarEstadoPedidoModal() {
         botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido';
         return;
     }
-    if (appState.gramosSeleccionadosPedido > restante) {
+    if (!esArticulo && appState.gramosSeleccionadosPedido > restante) {
         alertaEl.textContent = `No podés pedir ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, esArticulo)}. Te quedan ${formatearTextoDisponibles(restante, esArticulo)} en este ciclo.`;
         botonEl.disabled = true;
         return;
@@ -149,7 +162,9 @@ function actualizarEstadoPedidoModal() {
     }
     const seleccion = document.querySelector(`#opcionesPedido .opcion-pedido[data-gramos="${appState.gramosSeleccionadosPedido}"]`);
     const restanteLuego = Math.max(0, restante - Number(appState.gramosSeleccionadosPedido || 0));
-    restanteEl.textContent = `Pedido seleccionado: ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, esArticulo)}. Quedan ${formatearTextoDisponibles(restanteLuego, esArticulo)} en este ciclo.${detalleStock}`;
+    restanteEl.textContent = esArticulo
+        ? `Pedido seleccionado: ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, true)}. Los artículos se entregan junto a la mensu.${detalleStock}`
+        : `Pedido seleccionado: ${formatearCantidadPedido(appState.gramosSeleccionadosPedido, false)}. Quedan ${formatearTextoDisponibles(restanteLuego, false)} en este ciclo.${detalleStock}`;
     const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
     botonEl.innerHTML = `${appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido'}${puedeVerPrecios && seleccion?.dataset.precio ? ` - $${seleccion.dataset.precio}` : ''}`;
     botonEl.disabled = false;
@@ -164,9 +179,9 @@ function inicializarPedidoModal() {
         btn.onclick = () => {
             const gramos = Number(btn.dataset.gramos);
             const precio = Number(btn.dataset.precio || 0);
-            const restante = 40 - obtenerTotalPedidoMesActual();
+            const restante = Math.max(0, 40 - obtenerTotalPedidoMesActual());
             const esArticulo = productoModalEsArticulo();
-            if (gramos > restante) {
+            if (!esArticulo && gramos > restante) {
                 mostrarMensaje(`Te quedan ${formatearTextoDisponibles(restante, esArticulo)} en este ciclo.`, false);
                 return;
             }
@@ -238,7 +253,7 @@ async function realizarPedidoProducto() {
             ? obtenerReservaActivaPorEntrega(reservas, tipoEntrega === 'primer' ? 'primer_jueves' : 'ultimo_jueves', fechaEntrega)
             : null);
     const totalActual = obtenerTotalPedidoMesActual();
-    if (totalActual + appState.gramosSeleccionadosPedido > 40) {
+    if (!esArticulo && totalActual + appState.gramosSeleccionadosPedido > 40) {
         mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${formatearResumenDisponible(totalActual, esArticulo)} en este ciclo.`, false);
         return;
     }
@@ -457,7 +472,7 @@ async function abrirModal(producto) {
             : 'Elegí la cantidad para este pedido mensual:';
     }
 
-    const opcionesDisponibles = esArticulo ? [GRAMOS_POR_UNIDAD_ARTICULO] : [20, 40];
+    const opcionesDisponibles = esArticulo ? obtenerOpcionesPedidoArticulo(producto) : [20, 40];
     const opcionesContainer = document.getElementById('opcionesPedido');
     opcionesContainer.innerHTML = opcionesDisponibles.map((gramos) => {
         const precioTotal = esArticulo
@@ -743,5 +758,4 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === document.getElementById('editProductoModal')) cerrarEditProducto();
     });
 });
-
 
