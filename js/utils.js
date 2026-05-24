@@ -964,7 +964,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
                 <img
                     src="${imagenPrincipal}"
                     alt="Historia Cururú Club"
-                    style="width: 100%; max-height: 300px; border-radius: 16px; object-fit: cover;"
+                    class="historia-media-principal"
                     onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('Sitio en construcción')}';"
                 >
             `;
@@ -1047,7 +1047,7 @@ window.seleccionarHistoriaImagen = function(indice) {
         <img
             src="${imagen}"
             alt="Historia Cururú Club"
-            style="width: 100%; max-height: 300px; border-radius: 16px; object-fit: cover;"
+            class="historia-media-principal"
             onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('Sitio en construcción')}';"
         >
     `;

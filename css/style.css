@@ -4251,6 +4251,15 @@ body::before {
     border-radius: 12px !important;
 }
 
+.historia-imagen img.historia-media-principal {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain !important;
+    background: #ffffff;
+}
+
 .historia-texto-principal {
     border: 1px solid rgba(67, 105, 48, 0.14);
     border-radius: 14px;
