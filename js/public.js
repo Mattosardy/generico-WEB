@@ -484,26 +484,19 @@ function limpiarReferenciaPesoArticulo(texto = '') {
 function renderizarTarjetaArticuloDestacado(articulo) {
     const imagenes = normalizarListaImagenes(articulo.imagen_url).slice(0, 3);
     const imagenPrincipal = imagenes[0] || crearPlaceholderProducto();
-    const precio = Number(articulo.precio_por_10g || 0);
-    const disponible = articulo.disponible !== false;
-    const puedeVerPrecios = typeof usuarioPuedeVerPrecios !== 'function' || usuarioPuedeVerPrecios();
-    const precioVisible = typeof formatearPrecioVisible === 'function'
-        ? formatearPrecioVisible(precio)
-        : (precio ? `$${precio.toFixed(0)}` : '');
     const tituloArticulo = limpiarReferenciaPesoArticulo(articulo.nombre);
-    const descripcionArticulo = limpiarReferenciaPesoArticulo(articulo.descripcion || obtenerTituloTipoCultivo(obtenerTipoCatalogoProducto(articulo)));
+    const claseNuevo = productoEsNuevo(articulo) ? ' producto-nuevo' : '';
+    const claseStock = obtenerClaseStockProducto(articulo);
     return `
-        <article class="articulo-destacado-card" data-producto-id="${escapeHtml(String(articulo.id))}" data-producto='${serializarProductoParaDataset(articulo)}'>
-            <div class="articulo-destacado-media">
+        <div class="producto-card producto-card-compacta${claseNuevo}${claseStock}" data-producto-id="${escapeHtml(String(articulo.id))}" data-producto='${serializarProductoParaDataset(articulo)}'>
+            <div class="producto-miniatura">
                 <img src="${imagenPrincipal}" alt="${escapeHtml(tituloArticulo)}" onerror="this.onerror=null; this.src='${crearPlaceholderProducto()}';">
+                ${renderizarBadgeStockProducto(articulo, true)}
+                <div class="producto-overlay">
+                    <h3 class="producto-nombre">${escapeHtml(tituloArticulo)}</h3>
+                </div>
             </div>
-            <div class="articulo-destacado-body">
-                <span>${disponible ? 'Disponible' : 'No disponible'}</span>
-                <strong>${escapeHtml(tituloArticulo)}</strong>
-                <p>${escapeHtml(descripcionArticulo)}</p>
-                ${precioVisible ? `<em class="${puedeVerPrecios ? '' : 'precio-restringido'}">${escapeHtml(precioVisible)}</em>` : ''}
-            </div>
-        </article>
+        </div>
     `;
 }
 
@@ -867,6 +860,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === noticiaModal) cerrarNoticiaModal();
     });
 });
-
 
 
