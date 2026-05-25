@@ -775,7 +775,7 @@ body::before {
 .producto-miniatura > .producto-stock-badge {
     position: absolute;
     left: 10px;
-    bottom: 10px;
+    top: 10px;
     z-index: 2;
     margin: 0;
     backdrop-filter: blur(12px);
@@ -4007,6 +4007,17 @@ body::before {
     height: 100% !important;
     object-fit: contain !important;
     display: block;
+}
+
+.producto-card.producto-card-compacta .producto-miniatura > .producto-stock-badge {
+    top: 7px;
+    left: 7px;
+    bottom: auto;
+    z-index: 3;
+    max-width: calc(100% - 14px);
+    padding: 4px 7px;
+    font-size: 0.58rem;
+    line-height: 1;
 }
 
 .producto-card.producto-card-compacta .producto-detalle {
