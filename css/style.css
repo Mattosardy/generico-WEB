@@ -9312,6 +9312,10 @@ select,
     border-radius: 20px 20px 0 0 !important;
 }
 
+.articulos-destacados-lista .articulo-destacado-body {
+    display: none !important;
+}
+
 .articulos-destacados-lista .articulo-destacado-media img {
     width: 100% !important;
     height: 100% !important;
