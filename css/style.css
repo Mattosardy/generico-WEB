@@ -6887,7 +6887,8 @@ button.entrega-calendar-event {
     margin-top: 4px;
 }
 
-.club-intro-badges span {
+.club-intro-badges span,
+.club-intro-badge-action {
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -6895,8 +6896,18 @@ button.entrega-calendar-event {
     border-radius: 999px;
     background: #eef6ea;
     color: var(--app-green);
+    border: 0;
+    cursor: pointer;
+    font: inherit;
     font-weight: 800;
     font-size: 0.78rem;
+}
+
+.club-intro-badge-action:hover,
+.club-intro-badge-action:focus-visible {
+    background: #dff0d8;
+    outline: 2px solid rgba(34, 78, 31, 0.18);
+    outline-offset: 2px;
 }
 
 .dashboard-grams-progress {
@@ -8877,6 +8888,7 @@ h4 {
 .section-title + p,
 .dashboard-eyebrow,
 .club-intro-badges span,
+.club-intro-badge-action,
 .thc-badge,
 .reserva-status-badge,
 .text-muted,
@@ -8886,6 +8898,7 @@ h4 {
 
 .dashboard-eyebrow,
 .club-intro-badges span,
+.club-intro-badge-action,
 .thc-badge,
 .reserva-status-badge {
     background: var(--page-accent-soft) !important;
