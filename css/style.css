@@ -9295,3 +9295,43 @@ select,
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
 }
+
+/* Articulos destacados con el mismo ritmo visual que variedades: foto arriba, texto abajo. */
+.articulos-destacados-lista .articulo-destacado-card {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.articulos-destacados-lista .articulo-destacado-media {
+    width: 100% !important;
+    height: 160px !important;
+    border-radius: 20px 20px 0 0 !important;
+}
+
+.articulos-destacados-lista .articulo-destacado-media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+
+.articulos-destacados-lista .articulo-destacado-body {
+    align-content: start !important;
+    gap: 7px !important;
+    padding: 14px !important;
+    text-align: left !important;
+}
+
+@media (max-width: 720px) {
+    .articulos-destacados-lista .articulo-destacado-media {
+        height: 108px !important;
+    }
+
+    .articulos-destacados-lista .articulo-destacado-body {
+        padding: 10px 8px !important;
+    }
+}
