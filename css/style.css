@@ -4866,6 +4866,7 @@ body::before {
 
 .tabla-reservas-excel th {
     background: #eef5ea;
+    color: #000000 !important;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -9396,4 +9397,14 @@ select,
     .articulos-destacados-lista .articulo-destacado-body {
         padding: 10px 8px !important;
     }
+}
+
+#admin .tabla-datos.tabla-reservas-excel thead th {
+    color: #000000 !important;
+    background: #eef5ea !important;
+}
+
+#admin .tabla-datos.tabla-reservas-excel thead th.tabla-reservas-encabezado,
+#admin .tabla-datos.tabla-reservas-excel thead th.tabla-reservas-encabezado * {
+    color: #000000 !important;
 }

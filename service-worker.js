@@ -1,4 +1,4 @@
-const CURURU_CACHE_VERSION = 'cururu-pwa-v13-20260524';
+const CURURU_CACHE_VERSION = 'cururu-pwa-v14-20260525-pedidos';
 const CURURU_APP_SHELL = [
     '/',
     '/index.html',

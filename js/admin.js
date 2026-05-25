@@ -1232,6 +1232,19 @@ function obtenerVariedadReservaAdmin(reserva) {
     return principal;
 }
 
+function reservaAdminEsArticulo(reserva = {}) {
+    const producto = reserva.productos || {};
+    const cepa = String(producto.cepa || '').trim().toUpperCase();
+    if (cepa.startsWith('ARTICULO:')) return true;
+    return typeof productoEsArticulo === 'function' && producto?.id && productoEsArticulo(producto);
+}
+
+function formatearCantidadReservaAdmin(reserva = {}) {
+    if (!reservaAdminEsArticulo(reserva)) return formatearPacksReserva(reserva.cantidad_gramos);
+    const unidades = Math.max(0, Math.round(Number(reserva.cantidad_gramos || 0) / 20));
+    return `${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`;
+}
+
 function obtenerEtiquetaEstadoReservaAdmin(estado) {
     const etiquetas = {
         pendiente: 'Pendiente de confirmacion',
@@ -1290,7 +1303,7 @@ function exportarPedidosMesExcel(reservas = []) {
         'Fecha retiro': formatearFechaExportacion(reserva.fecha_retiro),
         'Socio': obtenerNombreCompletoSocioReserva(reserva),
         'Variedad': obtenerVariedadReservaAdmin(reserva),
-        'Cantidad (g)': Number(reserva.cantidad_gramos) || 0,
+        'Cantidad': formatearCantidadReservaAdmin(reserva),
         'Estado': obtenerEtiquetaEstadoReservaAdmin(reserva.estado),
         'Registrada': formatearFechaExportacion(reserva.created_at)
     })));
@@ -1306,16 +1319,17 @@ function exportarPedidosMesExcel(reservas = []) {
 window.exportarPedidosMesExcel = exportarPedidosMesExcel;
 
 function renderizarTablaReservasAdmin(data, origen = 'admin') {
+    const encabezadoPedidoAttrs = 'class="tabla-reservas-encabezado" style="color: #000000 !important; background: #eef5ea !important;"';
     return (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos tabla-reservas-excel">
-            <thead><tr><th>Fecha retiro</th><th>Socio</th><th>Variedad</th><th>Cantidad</th><th>Estado</th><th>Registrada</th><th>Accion</th></tr></thead>
+            <thead><tr><th ${encabezadoPedidoAttrs}>Fecha retiro</th><th ${encabezadoPedidoAttrs}>Socio</th><th ${encabezadoPedidoAttrs}>Variedad</th><th ${encabezadoPedidoAttrs}>Cantidad</th><th ${encabezadoPedidoAttrs}>Estado</th><th ${encabezadoPedidoAttrs}>Registrada</th><th ${encabezadoPedidoAttrs}>Accion</th></tr></thead>
             <tbody>${data.map((reserva) => `
                 <tr>
                     <td data-label="Fecha retiro">${reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : '-'}</td>
                     <td data-label="Socio">${escapeHtml(reserva.socios?.nombre || '-')} ${escapeHtml(reserva.socios?.apellido || '')}</td>
                     <td data-label="Variedad">${escapeHtml(obtenerVariedadReservaAdmin(reserva))}</td>
-                    <td data-label="Cantidad">${escapeHtml(formatearPacksReserva(reserva.cantidad_gramos))}</td>
+                    <td data-label="Cantidad">${escapeHtml(formatearCantidadReservaAdmin(reserva))}</td>
                     <td data-label="Estado"><span class="reserva-status-badge estado-${escapeHtml(String(reserva.estado || 'pendiente').toLowerCase())}">${escapeHtml(obtenerEtiquetaEstadoReservaAdmin(reserva.estado))}</span></td>
                     <td data-label="Registrada">${reserva.created_at ? new Date(reserva.created_at).toLocaleDateString('es-UY') : '-'}</td>
                     <td data-label="Accion">${construirAccionesReservaAdmin(reserva, origen)}</td>
@@ -1329,7 +1343,10 @@ function renderizarTablaReservasAdmin(data, origen = 'admin') {
 async function cargarReservasAdmin() {
     const container = document.getElementById('admin-reservasAdmin');
     if (!container) return;
-    const { data, error } = await supabaseClient.from('reservas_mensuales').select('*, socios(nombre, apellido)').order('fecha_retiro', { ascending: false });
+    const { data, error } = await supabaseClient
+        .from('reservas_mensuales')
+        .select('*, socios(nombre, apellido), productos(nombre, cepa, tipo_cultivo)')
+        .order('fecha_retiro', { ascending: false });
     if (error) {
         container.innerHTML = '<div class="loading">No se pudieron cargar las reservas.</div>';
         return;
@@ -1462,27 +1479,34 @@ function inicializarAcordeonesMensajesAdmin() {
     const acordeon = document.querySelector('#admin-mensajes .admin-mensajes-acordeon');
     inicializarAcordeonAdmin(acordeon, async (tipoCultivo) => {
         if (tipoCultivo === 'bandeja-entrada') await cargarTelegramInboxMensajes();
+        if (tipoCultivo === 'nuevo-mensaje') {
+            await cargarSociosParaMensajes();
+            await cargarHistorialMensajes();
+        }
     });
 }
 
 function inicializarAcordeonAdmin(acordeon, onOpen) {
     if (!acordeon || acordeon.dataset.inicializado === 'true') return;
     acordeon.dataset.inicializado = 'true';
-    acordeon.querySelectorAll('.productos-toggle').forEach((toggle) => {
+    const obtenerItemsPropios = (selector) => Array.from(acordeon.querySelectorAll(selector))
+        .filter((elemento) => elemento.closest('.productos-acordeon') === acordeon);
+
+    obtenerItemsPropios('.productos-toggle').forEach((toggle) => {
         toggle.addEventListener('click', async () => {
             const tipoCultivo = toggle.dataset.tipoCultivo;
             const columna = toggle.closest('.productos-columna');
-            const panel = acordeon.querySelector(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`);
+            const panel = obtenerItemsPropios(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`)[0];
             if (!columna || !panel || columna.hidden) return;
 
             const expandido = toggle.getAttribute('aria-expanded') === 'true';
-            acordeon.querySelectorAll('.productos-columna.activa').forEach((columnaActiva) => {
+            obtenerItemsPropios('.productos-columna.activa').forEach((columnaActiva) => {
                 if (columnaActiva === columna) return;
                 const toggleActivo = columnaActiva.querySelector('.productos-toggle');
                 if (toggleActivo) toggleActivo.setAttribute('aria-expanded', 'false');
                 columnaActiva.classList.remove('activa');
             });
-            acordeon.querySelectorAll('.productos-panel').forEach((panelActivo) => {
+            obtenerItemsPropios('.productos-panel').forEach((panelActivo) => {
                 if (panelActivo !== panel) panelActivo.hidden = true;
             });
 
@@ -1543,10 +1567,6 @@ function inicializarAcordeonesManualAdmin() {
 document.addEventListener('DOMContentLoaded', () => {
     inicializarAcordeonesMensajesAdmin();
     inicializarAcordeonesManualAdmin();
-
-    // Inicializar el acordeón principal del admin (todas las secciones)
-    const acordeonAdminMain = document.querySelector('#admin .admin-main-acordeon');
-    if (acordeonAdminMain) inicializarAcordeonAdmin(acordeonAdminMain);
 
     function ensureManualGridAccordion() {
         try {
@@ -1688,6 +1708,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (section === 'entregas') cargarEntregasAdmin();
             if (section === 'reservasAdmin' && typeof cargarReservasAdmin === 'function') cargarReservasAdmin();
             if (section === 'mensajes') {
+                cargarSociosParaMensajes();
                 cargarTelegramInboxMensajes();
                 cargarHistorialMensajes();
             }

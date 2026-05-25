@@ -316,7 +316,7 @@ async function cargarMaestroReservas() {
     if (!container) return;
     const { data, error } = await supabaseClient
         .from('reservas_mensuales')
-        .select('*, socios(nombre, apellido)')
+        .select('*, socios(nombre, apellido), productos(nombre, cepa, tipo_cultivo)')
         .order('fecha_retiro', { ascending: false });
     if (error) {
         container.innerHTML = '<p>No se pudieron cargar las reservas.</p>';
