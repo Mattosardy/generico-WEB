@@ -9235,6 +9235,8 @@ select,
 /* Subacordeones dentro de un menu activo: verdes y a ancho completo. */
 .productos-panel .productos-acordeon,
 .admin-section-panel .productos-acordeon {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     width: 100% !important;
 }
 
@@ -9278,4 +9280,18 @@ select,
 .admin-section-panel .productos-acordeon .productos-columna.activa .productos-toggle {
     background: linear-gradient(135deg, #6e984f 0%, #c8e7b0 100%) !important;
     box-shadow: 0 10px 22px rgba(67, 102, 52, 0.24) !important;
+}
+
+#admin-manual .admin-manual-acordeon,
+#admin-manual .admin-manual-acordeon .productos-controles,
+#admin-manual .admin-manual-acordeon .productos-columna,
+#admin-manual .admin-manual-acordeon .productos-columna-titulo,
+#admin-manual .admin-manual-acordeon .productos-toggle {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+#admin-manual .admin-manual-acordeon {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
 }
