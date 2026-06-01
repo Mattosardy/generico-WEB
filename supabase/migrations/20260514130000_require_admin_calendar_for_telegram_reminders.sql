@@ -1,4 +1,4 @@
-create or replace function public.queue_monthly_telegram_reservation_reminders(
+﻿create or replace function public.queue_monthly_telegram_reservation_reminders(
     target_date date default ((timezone('America/Montevideo'::text, now()))::date)
 )
 returns integer
@@ -92,7 +92,7 @@ begin
             select
                 s.id,
                 entrega.tipo_reserva,
-                'Cururu Club' || chr(10) ||
+                'Nombre del Club' || chr(10) ||
                 'Tenes hasta 48 horas antes de la fecha de entrega para realizar tu reserva.' || chr(10) ||
                 'Retiro: ' || lower(entrega.etiqueta) || ', ' || to_char(entrega.fecha_entrega, 'DD/MM/YYYY') || ' de ' ||
                 to_char(entrega.hora_entrega, 'HH24:MI') || ' a ' ||
@@ -143,7 +143,7 @@ begin
             select
                 r.socio_id,
                 entrega.tipo_entrega,
-                'Cururu Club' || chr(10) ||
+                'Nombre del Club' || chr(10) ||
                 coalesce(nullif(trim(entrega.mensaje), ''), 'Recordatorio de entrega.') || chr(10) ||
                 'Tu retiro esta coordinado para ' || to_char(entrega.fecha_entrega, 'DD/MM/YYYY') || ' de ' ||
                 to_char(entrega.hora_entrega, 'HH24:MI') || ' a ' ||

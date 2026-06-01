@@ -1,16 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#f7faf6">
+    <meta name="theme-color" content="#f8fff9">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Cururu Club">
+    <meta name="apple-mobile-web-app-title" content="generico_WEB">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="format-detection" content="telephone=no">
-    <meta name="description" content="Area privada de Cururu Club para socios, pedidos mensuales, entregas y novedades del club.">
-    <title>Cururu Club | Area de socios</title>
+    <meta name="description" content="Plantilla generico_WEB para clubes: area privada de socios, pedidos mensuales, entregas y novedades.">
+    <title>'GENERICO' WEB | Area de socios</title>
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
@@ -19,6 +19,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css?v=20260525-pedidos-head-negro">
+    <link rel="stylesheet" href="css/theme-generico.css?v=20260527-cart-delete-modal-bg">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -27,11 +28,18 @@
 
 <div class="container">
     <div class="header">
-        <div class="header-main">
+        <div class="header-main app-home-button" data-section="inicio" role="button" tabindex="0" aria-label="Volver al inicio">
             <span id="headerSessionName" class="header-session-name" aria-live="polite"></span>
             <div class="logo">
-                <h1><img src="assets/images/logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Cururú Club</h1>
+                <h1><img src="assets/images/logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Generic WEB</h1>
                 <p>Area privada de socios · Pedidos · Entregas</p>
+            </div>
+            <div class="app-session-actions">
+                <button id="btnLogin" class="btn-inicio nav-session-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesion</button>
+                <button id="userName" class="nav-user-name">Invitado</button>
+                <div id="userMenuDropdown" class="user-menu-dropdown" hidden>
+                    <button id="btnLogout" class="btn-cerrar nav-session-btn user-menu-item" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</button>
+                </div>
             </div>
             <div class="mobile-hidden-dock" aria-hidden="true">
                 <button class="dock-btn" data-section="inicio" id="dockBtnInicio"><i class="fas fa-house"></i><span>Inicio</span></button>
@@ -43,14 +51,10 @@
             </div>
         </div>
         <div class="header-nav" id="navContainer">
-            <button class="nav-btn active" data-section="inicio"><i class="fas fa-house"></i><span>Inicio</span></button>
-            <button class="nav-btn" data-section="productos"><i class="fas fa-leaf"></i><span>Productos</span></button>
-            <button class="nav-btn auth-only" data-section="actividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
-            <button class="nav-btn admin-only" data-section="admin" id="navBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
-            <button class="nav-btn maestro-only" data-section="maestro" id="navBtnMaestro" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
-            <button id="btnLogin" class="btn-inicio nav-session-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-            <button id="userName" class="nav-user-name">Invitado</button>
-            <button id="btnLogout" class="btn-cerrar nav-session-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+            <button class="nav-btn app-main-btn" data-section="productos"><i class="fas fa-leaf"></i><span>CATALOGO</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-section="carrito" style="display: none;"><i class="fas fa-cart-shopping"></i><span>CARRITO</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-smart-section="actividades" style="display: none;"><i class="fas fa-bell"></i><span>ACTIVIDADES</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-section="menu" style="display: none;"><i class="fas fa-bars"></i><span>MENU</span></button>
             <button class="nav-btn nav-audio-btn" id="btnAudioToggle" type="button" aria-label="Silenciar música" title="Silenciar música">
                 <i class="fas fa-volume-high"></i>
             </button>
@@ -70,40 +74,27 @@
             <div class="club-intro-panel" id="portadaInstitucional">
                 <span class="dashboard-eyebrow" id="portadaTitulo">Club privado para socios</span>
                 <h2 id="portadaSubtitulo">Pedidos mensuales, entregas claras y novedades en un solo lugar.</h2>
-                <p id="portadaDescripcion">Cururu Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.</p>
+                <p id="portadaDescripcion">Nombre del Club centraliza la informacion institucional, las actividades, los pedidos y la comunicacion interna para que cada socio tenga una experiencia simple y ordenada.</p>
                 <div class="club-intro-badges" aria-label="Resumen del servicio">
-                    <span><i class="fas fa-leaf"></i> Variedades disponibles</span>
-                    <span><i class="fas fa-calendar-check"></i> Pedidos de 1 o 2 packs por mes</span>
+                    <span><i class="fas fa-leaf"></i> Catalogo configurable</span>
+                    <span><i class="fas fa-calendar-check"></i> Pedidos y entregas configurables</span>
                     <span><i class="fas fa-bell"></i> Avisos y entregas organizadas</span>
                     <span><i class="fas fa-pen-to-square"></i> Posibilidad de modificar o eliminar pedidos según disponibilidad y estado</span>
-                    <button type="button" class="club-intro-badge-action" data-install-app><i class="fas fa-mobile-screen-button"></i> Instalar Cururú en el dispositivo</button>
+                    <button type="button" class="club-intro-badge-action" data-install-app><i class="fas fa-mobile-screen-button"></i> Instalar generico_WEB en el dispositivo</button>
                 </div>
             </div>
             <div class="historia-content">
-                <!-- VIDEO CENTRADO ARRIBA -->
+                <!-- IMAGEN CENTRADA ARRIBA -->
                 <div class="historia-imagen" id="historiaMediaPrincipal">
-                    <div class="placeholder-media" style="min-height: 300px; border-radius: 16px;">Sitio en construcción</div>
+                    <img src="assets/images/home_inst.png" alt="generico_WEB" class="historia-media-principal">
                 </div>
                 <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
                 
                 <!-- TEXTO DEBAJO -->
                 <div class="historia-texto historia-texto-principal" data-institutional-block="standby" hidden aria-hidden="true">
-                    <div id="historiaTituloPrincipal" class="modal-titulo" style="margin-bottom: 14px;">Cururú Club Cannábico</div>
-                    <div id="historiaTextoPrincipal" class="historia-texto-contenido">Flores de alta calidad y una experiencia cuidada para quienes buscan elegir y consumir de forma consciente.</div>
-                    <div id="historiaTextoAdicional" class="historia-texto-contenido" hidden>Ofrecemos más de 6 variedades durante todo el año, cultivadas con estrategias biominerales en STANDARD y PREMIUM con luz asistida, logrando consistencia en cada cosecha.
-
-¿Qué ofrecemos?
-- Calidad superior con variedades a elección
-- Mismo estándar todo el año
-- Precios según tipo de cultivo (STANDARD o PREMIUM)
-
-Condiciones:
-- Mínimo: 20 g por variedad / mes
-- Máximo: 40 g por variedad / mes (combinables entre variedades)
-
-Si te interesa, coordinamos una reunión y te contamos cómo trabajamos.
-
-Cururú Club Cannábico - calidad y transparencia.</div>
+                    <div id="historiaTituloPrincipal" class="modal-titulo" style="margin-bottom: 14px;">Nombre del Club</div>
+                    <div id="historiaTextoPrincipal" class="historia-texto-contenido">Contenido institucional del club.</div>
+                    <div id="historiaTextoAdicional" class="historia-texto-contenido" hidden>Espacio preparado para cargar la historia, los servicios y la informacion publica del club.</div>
                     <div class="historia-toggle">
                         <button type="button" id="btnLeerMasHistoria" class="btn-leer-mas">
                             <i class="fas fa-chevron-down"></i> Mostrar más
@@ -111,9 +102,9 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                     </div>
                     
                 <div class="historia-cifras">
-                        <div class="cifra"><span class="cifra-numero" id="cifra-socios">+38</span><span class="cifra-texto">Socios activos</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-cepas">120+</span><span class="cifra-texto">Cepas cultivadas</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-anios">8</span><span class="cifra-texto">Años de experiencia</span></div>
+                        <div class="cifra"><span class="cifra-numero" id="cifra-socios">0</span><span class="cifra-texto">Socios activos</span></div>
+                        <div class="cifra"><span class="cifra-numero" id="cifra-cepas">0</span><span class="cifra-texto">Items de catalogo</span></div>
+                        <div class="cifra"><span class="cifra-numero" id="cifra-anios">0</span><span class="cifra-texto">Anios de actividad</span></div>
                     </div>
                 </div>
                 <div id="socioDashboard" class="socio-dashboard auth-only" style="display: none;"></div>
@@ -123,7 +114,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
 
     <!-- ACTIVIDADES -->
     <div id="actividades" class="section" style="display: none;">
-        <div id="cururuNews" class="cururu-news-section">
+        <div id="genericoNews" class="generico-news-section">
             <h2 class="section-title">
                 <i class="fas fa-bell"></i> Agenda y pedidos
             </h2>
@@ -238,16 +229,65 @@ Cururú Club Cannábico - calidad y transparencia.</div>
                     </form>
                 </div>
             </div>
-            <div id="actividades-container" class="actividades-grid">
-                <div class="loading">Cargando actividades...</div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-listado" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-calendar-alt"></i> Actividades</span>
+                        <span class="productos-toggle-descripcion">Encuentros, regalos y eventos</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="actividades-listado" hidden>
+                <div id="actividades-container" class="actividades-grid">
+                    <div class="loading">Cargando actividades...</div>
+                </div>
+            </div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-sorteos" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-trophy"></i> Sorteos</span>
+                        <span class="productos-toggle-descripcion">Sorteos y regalos publicados</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="actividades-sorteos" hidden>
+                <div class="empty-state"><i class="fas fa-trophy"></i><strong>Sorteos</strong><span>Los sorteos cargados por administracion aparecen junto a las actividades vigentes.</span></div>
             </div>
         </div>
     </div>
 
     <!-- PRODUCTOS -->
     <div id="productos" class="section" style="display: none;">
-        <h2 class="section-title"><i class="fas fa-leaf"></i> Variedades disponibles</h2>
+        <h2 class="section-title"><i class="fas fa-leaf"></i> Catalogo</h2>
         <div id="productos-container" class="productos-grid"><div class="loading">Cargando productos...</div></div>
+    </div>
+
+    <!-- CARRITO -->
+    <div id="carrito" class="section auth-only" style="display: none;">
+        <div id="carritoPantallaBody"><div class="loading">Cargando carrito...</div></div>
+    </div>
+
+    <!-- MENU -->
+    <div id="menu" class="section auth-only" style="display: none;">
+        <h2 class="section-title"><i class="fas fa-bars"></i> Menu</h2>
+        <div class="productos-acordeon actividades-acordeon menu-acordeon">
+            <div id="menuManualSlot"></div>
+            <div id="menuCuentaSlot"></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="menu-telegram" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fab fa-telegram"></i> Activar Telegram</span>
+                        <span class="productos-toggle-descripcion">Avisos y verificacion de seguridad</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="menu-telegram" hidden>
+                <div id="telegramLinkPanel" class="telegram-link-panel"></div>
+            </div>
+        </div>
     </div>
     
     <!-- LOGIN -->
@@ -497,7 +537,7 @@ Cururú Club Cannábico - calidad y transparencia.</div>
     </div>
     
     <div class="footer">
-        <p>🌿 Cururú Club · Cultura · Comunidad 🌿</p>
+        <p>🌿 Nombre del Club · Cultura · Comunidad 🌿</p>
         <p style="font-size: 0.7rem;">© 2025 - Todos los derechos reservados</p>
         <p class="footer-legal">Plataforma privada para socios. La informacion y los pedidos se gestionan dentro del marco interno del club.</p>
         <p class="footer-cameo"><a href="https://mattosardy.github.io/telecomt3-card/" class="footer-cameo-link" target="_blank" rel="noopener noreferrer">Conectividad y soporte digital · <strong>Telecom T3</strong></a></p>
@@ -590,22 +630,22 @@ Cururú Club Cannábico - calidad y transparencia.</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 window.__SUPABASE_ENV__ = {
-    url: "https://tgxjxqyuyaeycgihjbfz.supabase.co",
-    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRneGp4cXl1eWFleWNnaWhqYmZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMzI4MjIsImV4cCI6MjA5NDcwODgyMn0.706l1_j4Ku2HA82vsV-5TP1qn8FrZHvgYuT8M1jBOb0"
+    url: "https://bszxuffixynbpcvjbzfa.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzenh1ZmZpeHluYnBjdmpiemZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDAyMzAsImV4cCI6MjA5NTMxNjIzMH0.pt7Wqk3jsmr9e0pQPTYmApfl9oktXM4Jd_YASz0te9E"
 };
 </script>
-<script src="js/supabase-client.js?v=20260521-env-cleanup"></script>
+<script src="js/supabase-client.js?v=20260527-cart-delete"></script>
 
-<script src="js/config.js?v=20260521-env-cleanup"></script>
-<script src="js/utils.js?v=20260521-env-cleanup"></script>
+<script src="js/config.js?v=20260526-restore-functional"></script>
+<script src="js/utils.js?v=20260526-restore-functional"></script>
 <script src="js/notifications.js?v=20260521-env-cleanup"></script>
-<script src="js/auth.js?v=20260521-env-cleanup"></script>
-<script src="js/public.js?v=20260524-articulos-miniaturas"></script>
-<script src="js/socio.js?v=20260521-env-cleanup"></script>
-<script src="js/modals.js?v=20260521-env-cleanup"></script>
+<script src="js/auth.js?v=20260526-restore-functional"></script>
+<script src="js/public.js?v=20260526-restore-functional"></script>
+<script src="js/socio.js?v=20260527-cart-delete"></script>
+<script src="js/modals.js?v=20260527-cart-delete"></script>
 <script src="js/admin.js?v=20260525-pedidos-head-negro"></script>
 <script src="js/maestro.js?v=20260521-env-cleanup"></script>
 <script src="js/tour.js?v=20260521-env-cleanup"></script>
-<script src="js/main.js?v=20260521-sw-cleanup"></script>
+<script src="js/main.js?v=20260526-menu-audio-polish"></script>
 </body>
 </html>

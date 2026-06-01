@@ -1,13 +1,13 @@
 {
-  "name": "Cururu Club",
-  "short_name": "Cururu",
-  "description": "Area privada de Cururu Club para socios, pedidos mensuales, entregas y novedades.",
+  "name": "generico_WEB",
+  "short_name": "generico_WEB",
+  "description": "Plantilla generico_WEB para clubes: area privada de socios, pedidos mensuales, entregas y novedades.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#050505",
-  "background_color": "#050505",
+  "theme_color": "#f8fff9",
+  "background_color": "#f8fff9",
   "icons": [
     {
       "src": "/assets/icons/icon-192.png",

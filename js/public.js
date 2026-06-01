@@ -15,12 +15,12 @@
         if (entregasFuturas[1]?.fecha) configSistema.fechaEntregaUltimo = entregasFuturas[1].fecha;
         configSistema.horasLimitePrimer = 48;
         configSistema.horasLimiteUltimo = 48;
-        const videoGuardado = localStorage.getItem('cururu_historia_video_url') || '';
+        const videoGuardado = localStorage.getItem('generico_historia_video_url') || '';
         const videoHistoria = String(configMap.historia_video_url || videoGuardado || window.defaultHistoriaVideoUrl || '').trim();
         if (videoHistoria) {
             configMap.historia_video_url = videoHistoria;
             appState.historiaVideoActual = videoHistoria;
-            localStorage.setItem('cururu_historia_video_url', videoHistoria);
+            localStorage.setItem('generico_historia_video_url', videoHistoria);
         }
 
         aplicarContenidoInstitucional(configMap);
@@ -29,7 +29,7 @@
         console.warn('No se pudo cargar la configuración del sitio', error);
         const configMap = {};
         appState.configMap = configMap;
-        const videoGuardado = localStorage.getItem('cururu_historia_video_url') || '';
+        const videoGuardado = localStorage.getItem('generico_historia_video_url') || '';
         const videoHistoria = String(videoGuardado || window.defaultHistoriaVideoUrl || '').trim();
         if (videoHistoria) {
             configMap.historia_video_url = videoHistoria;
@@ -116,11 +116,11 @@ function configSistemaBooleano(clave, fallback = false) {
 }
 
 function planPlusActivo() {
-    return window.CURURU_PLAN?.plusActivo === true;
+    return window.GENERICO_PLAN?.plusActivo === true;
 }
 
 function obtenerTituloPlanPlus() {
-    const tituloDeploy = String(window.CURURU_PLAN?.planPlusTitulo || PLAN_PLUS_TITULO_DEFAULT).trim() || PLAN_PLUS_TITULO_DEFAULT;
+    const tituloDeploy = String(window.GENERICO_PLAN?.planPlusTitulo || PLAN_PLUS_TITULO_DEFAULT).trim() || PLAN_PLUS_TITULO_DEFAULT;
     return String(obtenerConfigSistemaValor('plan_plus_titulo', tituloDeploy)).trim() || tituloDeploy;
 }
 
@@ -210,9 +210,9 @@ function renderizarBadgeStockProducto(producto = {}, compacto = false) {
     return `<div class="producto-stock-badge${info.sinStock ? ' sin-stock' : ''}${info.bajoStock ? ' bajo-stock' : ''}">${estado}${detalle}</div>`;
 }
 
-const STORAGE_PRODUCTOS_VISTOS = 'cururu_productos_vistos_v1';
-const STORAGE_NOTICIAS_VISTAS = 'cururu_noticias_vistas_v1';
-const STORAGE_ACTIVIDADES_VISTAS = 'cururu_actividades_vistas_v1';
+const STORAGE_PRODUCTOS_VISTOS = 'generico_productos_vistos_v1';
+const STORAGE_NOTICIAS_VISTAS = 'generico_noticias_vistas_v1';
+const STORAGE_ACTIVIDADES_VISTAS = 'generico_actividades_vistas_v1';
 const novedadesActuales = {
     productos: [],
     noticias: [],
@@ -280,7 +280,7 @@ function construirCalendarioEntregasPublicoHTML(actividadesEntrega = []) {
     const meses = actividadesEntrega.map((actividad) => normalizarFechaEventoCalendario(actividad.fecha));
     const eventos = actividadesEntrega.map((actividad) => {
         const horario = calcularRangoHorarioActividad(actividad.hora);
-        const lugar = actividad.ubicacion && actividad.ubicacion !== 'Cururu Club' ? actividad.ubicacion : 'Lugar de Siempre';
+        const lugar = actividad.ubicacion && actividad.ubicacion !== 'Nombre del Club' ? actividad.ubicacion : 'Lugar de Siempre';
         const titulo = `${actividad.entregaIndice || ''}a Entrega Mensual`.trim();
         return {
             fecha: actividad.fecha,
@@ -361,7 +361,7 @@ function renderActividadPublica(actividad, iconosTipo) {
     if (tipo === 'entrega') {
         const fecha = formatearFechaEntregaActividad(actividad.fecha);
         const horario = calcularRangoHorarioActividad(actividad.hora);
-        const lugar = actividad.ubicacion && actividad.ubicacion !== 'Cururu Club' ? actividad.ubicacion : 'Lugar de Siempre';
+        const lugar = actividad.ubicacion && actividad.ubicacion !== 'Nombre del Club' ? actividad.ubicacion : 'Lugar de Siempre';
         const estado = actividad.entregaAConfirmar
             ? `Entrega a confirmar (${actividad.mesEtiqueta || 'proximo periodo'})`
             : `Proxima Entrega: ${fecha} de ${horario}`;

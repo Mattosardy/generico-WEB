@@ -1,0 +1,3 @@
+﻿-- generico_WEB - seed vacio para plantilla
+-- No cargar datos reales de clubes en este archivo.
+-- La estructura se mantiene en generico_schema_migration.sql.

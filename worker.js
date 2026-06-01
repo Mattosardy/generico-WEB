@@ -1,4 +1,4 @@
-const NO_CACHE_HEADERS = {
+﻿const NO_CACHE_HEADERS = {
   "Cache-Control": "no-cache, no-store, must-revalidate",
   "Pragma": "no-cache",
   "Expires": "0",
@@ -7,14 +7,27 @@ const NO_CACHE_HEADERS = {
 const BLOCKED_ASSET_PREFIXES = [
   "/.git",
   "/.env",
+  "/.vscode/",
+  "/backups/",
+  "/dist/",
   "/supabase/",
   "/workers/",
 ];
 
 const BLOCKED_ASSET_PATHS = new Set([
+  "/.assetsignore",
   "/.gitignore",
+  "/.tmp-style.css",
+  "/agents.md",
+  "/generico-documentacion.md",
+  "/index copy 2.html",
+  "/manual.md",
+  "/memories.md",
   "/package-lock.json",
   "/package.json",
+  "/test.js",
+  "/vite-pwa-test.err.log",
+  "/vite-pwa-test.log",
   "/vite-dev.log",
   "/worker.js",
   "/wrangler.jsonc",
@@ -27,6 +40,8 @@ function getEnv(env, key) {
 function isBlockedAssetPath(pathname) {
   const normalized = pathname.toLowerCase();
   return BLOCKED_ASSET_PATHS.has(normalized)
+    || normalized.endsWith(".log")
+    || normalized.endsWith(".md")
     || normalized.endsWith(".sql")
     || normalized.endsWith(".dump")
     || BLOCKED_ASSET_PREFIXES.some((prefix) => normalized.startsWith(prefix));
@@ -235,7 +250,7 @@ export default {
       return applyAssetCacheHeaders(withRuntimeEnv, url.pathname);
     }
 
-    return new Response("Cururu WhatsApp Webhook OK", {
+    return new Response("Nombre del Club WhatsApp Webhook OK", {
       status: 200,
       headers: NO_CACHE_HEADERS,
     });

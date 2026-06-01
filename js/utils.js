@@ -15,40 +15,45 @@ function mostrarMensaje(mensaje, esExito = true) {
 function normalizarTextoVisual(text) {
     if (text === null || text === undefined) return '';
     let valor = String(text);
-    if (!/[ÃÂâïð]/.test(valor)) return valor;
+    const mojibakePattern = /[\u00c3\u00c2\u00e2\u00ef\u00f0]/;
+    if (!mojibakePattern.test(valor)) return valor;
 
     try {
         valor = decodeURIComponent(escape(valor));
     } catch (error) {
-        // Si el texto ya viene parcialmente dañado, aplicamos reemplazos puntuales abajo.
+        // Fallback for text that already arrived partially mojibaked.
     }
 
-    return valor
-        .replace(/â€œ/g, '“')
-        .replace(/â€/g, '”')
-        .replace(/â€\u009d/g, '”')
-        .replace(/â€™/g, '’')
-        .replace(/â€˜/g, '‘')
-        .replace(/â€“/g, '-')
-        .replace(/â€”/g, '-')
-        .replace(/Â·/g, '·')
-        .replace(/Â/g, '')
-        .replace(/ï¿¼/g, '')
-        .replace(/ðŸ‘‰/g, '👉')
-        .replace(/Ã¡/g, 'á')
-        .replace(/Ã©/g, 'é')
-        .replace(/Ã­/g, 'í')
-        .replace(/Ã³/g, 'ó')
-        .replace(/Ãº/g, 'ú')
-        .replace(/Ã±/g, 'ñ')
-        .replace(/Ã/g, 'Á')
-        .replace(/Ã‰/g, 'É')
-        .replace(/Ã/g, 'Í')
-        .replace(/Ã“/g, 'Ó')
-        .replace(/Ãš/g, 'Ú')
-        .replace(/Ã‘/g, 'Ñ');
-}
+    const replacements = [
+        ['\u00e2\u20ac\u0153', '"'],
+        ['\u00e2\u20ac\u009d', '"'],
+        ['\u00e2\u20ac\u2122', "'"],
+        ['\u00e2\u20ac\u02dc', "'"],
+        ['\u00e2\u20ac\u201c', '-'],
+        ['\u00e2\u20ac\u009d', '-'],
+        ['\u00c2\u00b7', '-'],
+        ['\u00c2', ''],
+        ['\u00ef\u00bf\u00bc', ''],
+        ['\u00c3\u00a1', '\u00e1'],
+        ['\u00c3\u00a9', '\u00e9'],
+        ['\u00c3\u00ad', '\u00ed'],
+        ['\u00c3\u00b3', '\u00f3'],
+        ['\u00c3\u00ba', '\u00fa'],
+        ['\u00c3\u00b1', '\u00f1'],
+        ['\u00c3\u0081', '\u00c1'],
+        ['\u00c3\u2030', '\u00c9'],
+        ['\u00c3\u008d', '\u00cd'],
+        ['\u00c3\u201c', '\u00d3'],
+        ['\u00c3\u0160', '\u00da'],
+        ['\u00c3\u2018', '\u00d1']
+    ];
 
+    replacements.forEach(([from, to]) => {
+        valor = valor.split(from).join(to);
+    });
+
+    return valor;
+}
 function escapeHtml(text) {
     if (text === null || text === undefined) return '';
     const div = document.createElement('div');
@@ -540,8 +545,8 @@ function actualizarCalendarioEntregasVisible(calendar) {
     });
 }
 
-if (typeof document !== 'undefined' && !window.__cururuDeliveryCalendarBound) {
-    window.__cururuDeliveryCalendarBound = true;
+if (typeof document !== 'undefined' && !window.__genericoDeliveryCalendarBound) {
+    window.__genericoDeliveryCalendarBound = true;
     document.addEventListener('click', (event) => {
         const btn = event.target.closest('[data-entrega-calendar-nav]');
         if (!btn) return;
@@ -806,7 +811,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
     const portadaDefaults = {
         portada_titulo: 'Club privado para socios',
         portada_subtitulo: 'Pedidos mensuales, entregas claras y novedades en un solo lugar.',
-        portada_descripcion: 'Cururu Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.'
+        portada_descripcion: 'Nombre del Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.'
     };
     const tieneClavePortada = (clave) => Object.prototype.hasOwnProperty.call(configMap, clave);
     const valorPortada = (clave) => {
@@ -832,7 +837,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
     const historiaAdicional = document.getElementById('historiaTextoAdicional');
     const btnLeerMasHistoria = document.getElementById('btnLeerMasHistoria');
     const historiaTextoPlano = typeof configMap.historia_texto === 'string' ? configMap.historia_texto.trim() : '';
-    const tituloHistoriaPredeterminado = 'Cururú Club Cannábico';
+    const tituloHistoriaPredeterminado = 'generico_WEB';
     const resumenHistoria = 'Flores de alta calidad y una experiencia cuidada para quienes buscan elegir y consumir de forma consciente.';
     const normalizarTextoHistoria = (texto) => String(texto || '')
         .normalize('NFD')
@@ -854,7 +859,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
 
         const resumenNormalizado = normalizarTextoHistoria(resumenHistoria);
         const primerBloqueNormalizado = normalizarTextoHistoria(bloques[0]);
-        const primerBloqueEsTitulo = primerBloqueNormalizado.includes('cururu club cannabico');
+        const primerBloqueEsTitulo = primerBloqueNormalizado.includes('generico club cannabico');
         let bloquesRestantes = primerBloqueEsTitulo ? bloques.slice(1) : [...bloques];
 
         if (!bloquesRestantes.length) return '';
@@ -879,7 +884,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
             .find(Boolean);
         if (!primerBloque) return tituloHistoriaPredeterminado;
         const tituloNormalizado = normalizarTextoHistoria(primerBloque);
-        return tituloNormalizado.includes('cururu club cannabico')
+        return tituloNormalizado.includes('generico club cannabico')
             ? primerBloque
             : tituloHistoriaPredeterminado;
     };
@@ -895,7 +900,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
     if (historiaAdicional) {
         let textoAdicional = '';
         if (historiaTextoPlano) {
-            const textoSinTitulo = historiaTextoPlano.replace(/^Cururú Club Cannábico\s*/i, '').trim();
+            const textoSinTitulo = historiaTextoPlano.replace(/^generico_WEB\s*/i, '').trim();
             textoAdicional = textoSinTitulo.startsWith(resumenHistoria)
                 ? textoSinTitulo.slice(resumenHistoria.length).trim()
                 : textoSinTitulo;
@@ -942,28 +947,21 @@ function aplicarContenidoInstitucional(configMap = {}) {
     if (historiaMedia && historiaGaleria) {
         const esInvitado = appState.rolUsuario === 'invitado';
         const videoActualEnPantalla = historiaMedia.querySelector('video source')?.src || historiaMedia.querySelector('video')?.currentSrc || '';
-        const imagenesHistoria = normalizarListaImagenes(configMap.historia_galeria);
-        const videoGuardado = localStorage.getItem('cururu_historia_video_url') || '';
+        const imagenesHistoria = normalizarListaImagenes(configMap.historia_galeria || window.defaultHistoriaImagenUrl);
+        const videoGuardado = localStorage.getItem('generico_historia_video_url') || '';
         const videoHistoria = String(configMap.historia_video_url || '').trim();
         if (videoHistoria) {
             appState.historiaVideoActual = videoHistoria;
-            localStorage.setItem('cururu_historia_video_url', videoHistoria);
+            localStorage.setItem('generico_historia_video_url', videoHistoria);
         }
         const videoPresentacion = videoHistoria || appState.historiaVideoActual || videoGuardado || videoActualEnPantalla || window.defaultHistoriaVideoUrl || '';
 
-        if (esInvitado && videoPresentacion) {
-            historiaMedia.innerHTML = `
-                <video autoplay muted defaultMuted loop playsinline style="width: min(100%, 260px); aspect-ratio: 9 / 16; max-height: min(70dvh, 460px); margin: 0 auto; border-radius: 16px; object-fit: cover; background: #111; pointer-events: none;" disablepictureinpicture controlslist="nodownload nofullscreen noplaybackrate">
-                    <source src="${videoPresentacion}" type="video/mp4">
-                    Tu navegador no soporta videos.
-                </video>
-            `;
-        } else if (imagenesHistoria.length) {
+        if (imagenesHistoria.length) {
             const imagenPrincipal = obtenerImagenPrincipal(imagenesHistoria, 'Sitio en construcción');
             historiaMedia.innerHTML = `
                 <img
                     src="${imagenPrincipal}"
-                    alt="Historia Cururú Club"
+                    alt="Historia generico_WEB"
                     class="historia-media-principal"
                     onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('Sitio en construcción')}';"
                 >
@@ -1005,9 +1003,9 @@ function aplicarContenidoInstitucional(configMap = {}) {
 }
 
 function inicializarPlaceholders() {
-    if (localStorage.getItem('cururu_placeholders')) return;
+    if (localStorage.getItem('generico_placeholders')) return;
     const images = {
-        'cururu-dream': { color: '#2d5a27', text: 'Cururu Dream' },
+        'generico-dream': { color: '#2d5a27', text: 'generico_WEB Dream' },
         'sapo-kush': { color: '#3a6b2d', text: 'Sapo Kush' },
         'rana-verde': { color: '#4a7a3a', text: 'Rana Verde' },
         'red-pop': { color: '#8b3a3a', text: 'Red Pop' }
@@ -1026,10 +1024,10 @@ function inicializarPlaceholders() {
         ctx.fillText(config.text, 200, 140);
         ctx.font = '14px Poppins, Arial';
         ctx.fillStyle = '#a0b890';
-        ctx.fillText('Cururú Club', 200, 170);
+        ctx.fillText('generico_WEB', 200, 170);
         placeholders[name] = canvas.toDataURL('image/jpeg', 0.9);
     });
-    localStorage.setItem('cururu_placeholders', JSON.stringify(placeholders));
+    localStorage.setItem('generico_placeholders', JSON.stringify(placeholders));
 }
 
 
@@ -1046,7 +1044,7 @@ window.seleccionarHistoriaImagen = function(indice) {
     historiaMedia.innerHTML = `
         <img
             src="${imagen}"
-            alt="Historia Cururú Club"
+            alt="Historia generico_WEB"
             class="historia-media-principal"
             onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('Sitio en construcción')}';"
         >

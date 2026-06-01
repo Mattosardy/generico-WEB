@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+﻿import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +45,7 @@ function normalizeUyPhone(value: string) {
 function technicalEmailFromPhone(phone: string) {
   const digits = normalizeUyPhone(phone).replace(/[^\d]/g, "");
   if (!digits) throw new Error("El telefono es obligatorio.");
-  return `socio_${digits}@cururu.local`;
+  return `socio_${digits}@nombre-del-club.local`;
 }
 
 function generateTemporaryPassword(length = 12) {

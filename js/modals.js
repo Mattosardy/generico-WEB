@@ -1,10 +1,10 @@
 ﻿function obtenerPedidosProductos() {
-    localStorage.removeItem('cururu_pedidos_productos');
+    localStorage.removeItem('generico_pedidos_productos');
     return [];
 }
 
 function guardarPedidosProductos(pedidos) {
-    localStorage.removeItem('cururu_pedidos_productos');
+    localStorage.removeItem('generico_pedidos_productos');
 }
 
 function normalizarTipoCultivoEdicion(tipoCultivo) {
@@ -86,6 +86,15 @@ function obtenerPrecioArticuloDesdeGramos(gramos, precioBase) {
     return precioBaseNumero * unidades;
 }
 
+function obtenerPrecioVariedadDesdeGramos(gramos, precioPack) {
+    const precioPackNumero = Number(precioPack || 0);
+    const packs = typeof gramosAPacks === 'function'
+        ? gramosAPacks(gramos)
+        : Number(gramos || 0) / GRAMOS_POR_UNIDAD_ARTICULO;
+    if (!Number.isFinite(precioPackNumero) || !Number.isFinite(packs)) return 0;
+    return precioPackNumero * packs;
+}
+
 function obtenerMaxUnidadesPedidoArticulo(producto = {}) {
     const stock = typeof obtenerInfoStockProducto === 'function'
         ? obtenerInfoStockProducto(producto)
@@ -102,7 +111,7 @@ function obtenerPrecioPedidoSeleccionado(gramos, esArticulo = false) {
     if (!precioBaseNumero || !Number(gramos || 0)) return 0;
     return esArticulo
         ? obtenerPrecioArticuloDesdeGramos(gramos, precioBaseNumero)
-        : (precioBaseNumero * Number(gramos) / 10);
+        : obtenerPrecioVariedadDesdeGramos(gramos, precioBaseNumero);
 }
 
 function actualizarEstadoPedidoModal() {
@@ -281,7 +290,11 @@ async function realizarPedidoProducto() {
 
     const reservas = await obtenerReservas(appState.socioData.id);
     const reservaExistente = appState.reservaEditandoId
-        ? reservas.find((reserva) => String(reserva.id) === String(appState.reservaEditandoId))
+        ? reservas.find((reserva) => (
+            String(reserva.id) === String(appState.reservaEditandoId)
+            && String(reserva.socio_id) === String(appState.socioData.id)
+            && reserva.estado !== 'cancelado'
+        ))
         : (typeof obtenerReservaActivaPorEntrega === 'function'
             ? obtenerReservaActivaPorEntrega(reservas, tipoEntrega === 'primer' ? 'primer_jueves' : 'ultimo_jueves', fechaEntrega)
             : null);
@@ -521,7 +534,7 @@ async function abrirModal(producto) {
         `;
     } else {
         opcionesContainer.innerHTML = [20, 40].map((gramos) => {
-            const precioTotal = (precioBaseNumero * gramos / 10).toFixed(0);
+            const precioTotal = obtenerPrecioVariedadDesdeGramos(gramos, precioBaseNumero).toFixed(0);
             const precioAttr = puedeVerPreciosPedido ? ` data-precio="${precioTotal}"` : '';
             const precioLabel = puedeVerPreciosPedido ? ` - $${precioTotal}` : '';
             return `<button type="button" class="opcion-pedido" data-gramos="${gramos}"${precioAttr}>${formatearCantidadPedido(gramos, false)}${precioLabel}</button>`;
@@ -552,7 +565,11 @@ async function abrirModal(producto) {
             const fechaEntrega = tipoEntrega === 'primer_jueves' ? fechas.primerJueves : fechas.ultimoJueves;
             const reservas = tipoEntrega ? await obtenerReservas(appState.socioData.id) : [];
             const reserva = appState.reservaEditandoId
-                ? reservas.find((item) => String(item.id) === String(appState.reservaEditandoId))
+                ? reservas.find((item) => (
+                    String(item.id) === String(appState.reservaEditandoId)
+                    && String(item.socio_id) === String(appState.socioData.id)
+                    && item.estado !== 'cancelado'
+                ))
                 : (tipoEntrega ? obtenerReservaActivaPorEntrega(reservas, tipoEntrega, fechaEntrega) : null);
             appState.reservaEditandoGramos = Number(reserva?.cantidad_gramos || 0);
             if (appState.reservaEditandoId && appState.reservaEditandoGramos > 0) {

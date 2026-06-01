@@ -1,5 +1,5 @@
 // ============================================
-// SUPABASE CLIENT - CURURÚ CLUB
+// SUPABASE CLIENT - GENERICO CLUB
 // VERSIÓN CON LOGIN POR EMAIL
 // ============================================
 
@@ -54,6 +54,30 @@ function limpiarSesionLocalSupabase() {
         });
     } catch (error) {
         console.warn('No se pudo limpiar la sesión local de Supabase:', error);
+    }
+}
+
+async function cancelarReserva(reservaId, socioId) {
+    try {
+        if (!reservaId || !socioId) {
+            return { success: false, message: 'No se pudo validar el pedido y el socio.' };
+        }
+
+        const { data, error } = await supabaseClient
+            .from('reservas_mensuales')
+            .update({ estado: 'cancelado' })
+            .eq('id', reservaId)
+            .eq('socio_id', socioId)
+            .select();
+
+        if (error) throw error;
+        if (!data || !data.length) {
+            return { success: false, message: 'No se encontro un pedido activo para este socio.' };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error al cancelar reserva:', error.message);
+        return { success: false, message: error.message };
     }
 }
 
@@ -477,6 +501,7 @@ window.obtenerSocioPorEmail = obtenerSocioPorEmail;
 window.obtenerReservas = obtenerReservas;
 window.confirmarReserva = confirmarReserva;
 window.modificarReserva = modificarReserva;
+window.cancelarReserva = cancelarReserva;
 
 // Autenticación WhatsApp (mantenida)
 window.loginConWhatsapp = loginConWhatsapp;

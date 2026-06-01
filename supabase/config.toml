@@ -1,4 +1,4 @@
-project_id = "cururu-club-local"
+﻿project_id = "generico-web-local"
 
 [api]
 enabled = true

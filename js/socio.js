@@ -211,14 +211,23 @@ function construirItemCarritoReservaHTML(reserva) {
     const nombre = reserva.producto_nombre || 'Variedad a definir';
     const estado = obtenerEtiquetaEstadoReserva(reserva, true);
     return `
-        <button type="button" class="carrito-modal-item" data-reserva-id="${escapeHtml(String(reserva.id))}" data-tipo="${escapeHtml(tipoReserva)}">
-            <span class="carrito-modal-item-icon"><i class="fas fa-leaf"></i></span>
-            <span class="carrito-modal-item-copy">
-                <strong>${escapeHtml(nombre)}</strong>
-                <small>${escapeHtml(formatearPacksReserva(reserva.cantidad_gramos))} - ${escapeHtml(fecha)} - ${escapeHtml(estado)}</small>
-            </span>
-            <i class="fas fa-pen carrito-modal-item-action" aria-hidden="true"></i>
-        </button>
+        <article class="carrito-modal-item" data-reserva-id="${escapeHtml(String(reserva.id))}" data-tipo="${escapeHtml(tipoReserva)}">
+            <div class="carrito-modal-item-main">
+                <span class="carrito-modal-item-icon"><i class="fas fa-leaf"></i></span>
+                <span class="carrito-modal-item-copy">
+                    <strong>${escapeHtml(nombre)}</strong>
+                    <small>${escapeHtml(formatearPacksReserva(reserva.cantidad_gramos))} - ${escapeHtml(fecha)} - ${escapeHtml(estado)}</small>
+                </span>
+            </div>
+            <div class="carrito-modal-item-actions">
+                <button type="button" class="carrito-modal-action carrito-modal-edit" data-carrito-editar data-reserva-id="${escapeHtml(String(reserva.id))}" data-tipo="${escapeHtml(tipoReserva)}">
+                    <i class="fas fa-pen" aria-hidden="true"></i> Editar
+                </button>
+                <button type="button" class="carrito-modal-action carrito-modal-delete" data-carrito-eliminar data-reserva-id="${escapeHtml(String(reserva.id))}">
+                    <i class="fas fa-trash-can" aria-hidden="true"></i> Eliminar selección
+                </button>
+            </div>
+        </article>
     `;
 }
 
@@ -251,7 +260,10 @@ async function abrirCarritoSocio() {
     const body = modal.querySelector('#carritoSocioModalBody');
     body.innerHTML = '<div class="loading">Cargando carrito...</div>';
     modal.style.display = 'flex';
+    await renderCarritoSocioEn(body, true);
+}
 
+async function renderCarritoSocioEn(body, esModal = false) {
     const reservas = await obtenerReservas(appState.socioData.id);
     appState.reservasSocio = reservas;
     const ciclo = appState.cicloClubActual || obtenerCicloClub();
@@ -283,12 +295,29 @@ async function abrirCarritoSocio() {
         </section>
     `;
 
-    body.querySelectorAll('.carrito-modal-item').forEach((btn) => {
+    body.querySelectorAll('[data-carrito-editar]').forEach((btn) => {
         btn.addEventListener('click', async () => {
-            cerrarCarritoSocioModal();
+            if (esModal) cerrarCarritoSocioModal();
             await modificarReservaHandler(btn.dataset.reservaId, btn.dataset.tipo);
         });
     });
+
+    body.querySelectorAll('[data-carrito-eliminar]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            await eliminarReservaCarritoHandler(btn.dataset.reservaId);
+        });
+    });
+}
+
+async function abrirCarritoPantalla() {
+    const body = document.getElementById('carritoPantallaBody');
+    if (!body) return;
+    if (!appState.socioData?.id) {
+        body.innerHTML = '<div class="empty-state"><i class="fas fa-cart-shopping"></i><strong>Carrito</strong><span>Inicia sesion para ver tus pedidos.</span></div>';
+        return;
+    }
+    body.innerHTML = '<div class="loading">Cargando carrito...</div>';
+    await renderCarritoSocioEn(body, false);
 }
 
 function cerrarCarritoSocioModal() {
@@ -350,7 +379,6 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
                 <small>retiros marcados como completados.</small>
             </article>
         </div>
-        <div id="telegramLinkPanel" class="telegram-link-panel"></div>
     `;
 
     if (typeof renderTelegramLinkPanel === 'function') renderTelegramLinkPanel();
@@ -401,7 +429,11 @@ async function modificarReservaHandler(reservaId, tipo) {
         return;
     }
     const reservas = await obtenerReservas(appState.socioData.id);
-    const reserva = reservas.find((item) => String(item.id) === String(reservaId));
+    const reserva = reservas.find((item) => (
+        String(item.id) === String(reservaId)
+        && String(item.socio_id) === String(appState.socioData.id)
+        && reservaEstaActiva(item)
+    ));
     if (!reserva) {
         mostrarMensaje('No se encontro el pedido.', false);
         return;
@@ -421,4 +453,44 @@ async function modificarReservaHandler(reservaId, tipo) {
     appState.reservaEditandoId = reserva.id;
     appState.reservaEditandoTipo = tipo;
     await abrirModal(productoActual);
+}
+
+async function eliminarReservaCarritoHandler(reservaId) {
+    if (!appState.socioData?.id) {
+        mostrarMensaje('Inicia sesion para eliminar el pedido.', false);
+        return;
+    }
+    const reservas = await obtenerReservas(appState.socioData.id);
+    const reserva = reservas.find((item) => (
+        String(item.id) === String(reservaId)
+        && String(item.socio_id) === String(appState.socioData.id)
+        && reservaEstaActiva(item)
+    ));
+    if (!reserva) {
+        mostrarMensaje('No se encontro un pedido activo para este socio.', false);
+        await cargarReservasSocio();
+        if (document.getElementById('carrito')?.style.display !== 'none' && typeof abrirCarritoPantalla === 'function') {
+            await abrirCarritoPantalla();
+        } else {
+            await abrirCarritoSocio();
+        }
+        return;
+    }
+
+    const confirmar = window.confirm('¿Eliminar esta selección del carrito? El pedido quedará marcado como cancelado.');
+    if (!confirmar) return;
+
+    const resultado = await cancelarReserva(reserva.id, appState.socioData.id);
+    if (!resultado.success) {
+        mostrarMensaje(`No se pudo eliminar la selección: ${resultado.message || 'error desconocido'}`, false);
+        return;
+    }
+
+    mostrarMensaje('Selección eliminada del carrito.', true);
+    await cargarReservasSocio();
+    if (document.getElementById('carrito')?.style.display !== 'none' && typeof abrirCarritoPantalla === 'function') {
+        await abrirCarritoPantalla();
+    } else {
+        await abrirCarritoSocio();
+    }
 }

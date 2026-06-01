@@ -25,7 +25,7 @@ async function subirArchivoPublico(bucket, file, prefijo) {
 
 function obtenerConfigHistoriaPredeterminada() {
     return {
-        texto: `Cururú Club Cannábico
+        texto: `generico_WEB
 
 Flores de alta calidad y una experiencia cuidada para quienes buscan elegir y consumir de forma consciente.
 
@@ -42,7 +42,7 @@ Condiciones:
 
 Si te interesa, coordinamos una reunión y te contamos cómo trabajamos.
 
-Cururú Club Cannábico - calidad y transparencia.`,
+generico_WEB - calidad y transparencia.`,
         socios: '38',
         cepas: '120',
         anios: '8',

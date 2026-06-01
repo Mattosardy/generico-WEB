@@ -1,4 +1,4 @@
-create or replace function public.queue_monthly_telegram_reservation_reminders(
+﻿create or replace function public.queue_monthly_telegram_reservation_reminders(
     target_date date default ((timezone('America/Montevideo'::text, now()))::date)
 )
 returns integer
@@ -30,7 +30,7 @@ begin
         select
             s.id,
             'recordatorio_ultimo_jueves',
-            'Cururu Club' || chr(10) ||
+            'Nombre del Club' || chr(10) ||
             'Recordatorio de reserva.' || chr(10) ||
             'Retiro: ultimo jueves, ' || to_char(ultimo_jueves, 'DD/MM/YYYY') || chr(10) ||
             'Tenes tiempo hasta ' || to_char(limite_ultimo at time zone 'America/Montevideo', 'DD/MM/YYYY HH24:MI') || ' para confirmar tu retiro.',
@@ -75,7 +75,7 @@ begin
         select
             s.id,
             'recordatorio_primer_jueves',
-            'Cururu Club' || chr(10) ||
+            'Nombre del Club' || chr(10) ||
             'Recordatorio de reserva.' || chr(10) ||
             'Retiro: primer jueves, ' || to_char(primer_jueves, 'DD/MM/YYYY') || chr(10) ||
             'Tenes tiempo hasta ' || to_char(limite_primer at time zone 'America/Montevideo', 'DD/MM/YYYY HH24:MI') || ' para confirmar tu retiro.',

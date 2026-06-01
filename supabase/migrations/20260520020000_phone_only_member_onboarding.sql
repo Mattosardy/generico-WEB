@@ -1,4 +1,4 @@
-begin;
+﻿begin;
 
 alter table public.socios
   add column if not exists debe_cambiar_password boolean not null default false,
@@ -25,7 +25,7 @@ begin
     raise exception 'El telefono es obligatorio para generar email tecnico.';
   end if;
 
-  return 'socio_' || phone_digits || '@cururu.local';
+  return 'socio_' || phone_digits || '@nombre-del-club.local';
 end;
 $$;
 

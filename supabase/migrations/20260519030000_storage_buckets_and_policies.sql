@@ -1,4 +1,4 @@
--- Cururu Club - Storage buckets and policies
+﻿-- Nombre del Club - Storage buckets and policies
 -- Creates the public buckets used by the frontend and restricts writes to admin/maestro users.
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -24,25 +24,25 @@ set
     file_size_limit = excluded.file_size_limit,
     allowed_mime_types = excluded.allowed_mime_types;
 
-drop policy if exists storage_buckets_public_select_cururu on storage.buckets;
-drop policy if exists storage_objects_public_select_cururu on storage.objects;
-drop policy if exists storage_objects_admin_insert_cururu on storage.objects;
-drop policy if exists storage_objects_admin_update_cururu on storage.objects;
-drop policy if exists storage_objects_admin_delete_cururu on storage.objects;
+drop policy if exists storage_buckets_public_select_generico on storage.buckets;
+drop policy if exists storage_objects_public_select_generico on storage.objects;
+drop policy if exists storage_objects_admin_insert_generico on storage.objects;
+drop policy if exists storage_objects_admin_update_generico on storage.objects;
+drop policy if exists storage_objects_admin_delete_generico on storage.objects;
 
-create policy storage_buckets_public_select_cururu
+create policy storage_buckets_public_select_generico
 on storage.buckets
 for select
 to anon, authenticated
 using (id in ('productos', 'noticias'));
 
-create policy storage_objects_public_select_cururu
+create policy storage_objects_public_select_generico
 on storage.objects
 for select
 to anon, authenticated
 using (bucket_id in ('productos', 'noticias'));
 
-create policy storage_objects_admin_insert_cururu
+create policy storage_objects_admin_insert_generico
 on storage.objects
 for insert
 to authenticated
@@ -51,7 +51,7 @@ with check (
     and public.is_admin_or_maestro()
 );
 
-create policy storage_objects_admin_update_cururu
+create policy storage_objects_admin_update_generico
 on storage.objects
 for update
 to authenticated
@@ -64,7 +64,7 @@ with check (
     and public.is_admin_or_maestro()
 );
 
-create policy storage_objects_admin_delete_cururu
+create policy storage_objects_admin_delete_generico
 on storage.objects
 for delete
 to authenticated

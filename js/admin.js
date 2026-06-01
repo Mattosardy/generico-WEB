@@ -480,7 +480,7 @@ function portadaActivaAdmin(configMap = {}) {
 function renderizarPortadaAdmin(container, configMap = {}) {
     const titulo = valorPortadaAdmin(configMap, 'portada_titulo', 'Club privado para socios');
     const subtitulo = valorPortadaAdmin(configMap, 'portada_subtitulo', 'Pedidos mensuales, entregas claras y novedades en un solo lugar.');
-    const descripcion = valorPortadaAdmin(configMap, 'portada_descripcion', 'Cururu Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.');
+    const descripcion = valorPortadaAdmin(configMap, 'portada_descripcion', 'Nombre del Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.');
 
     container.insertAdjacentHTML('afterbegin', `
         <form id="formPortadaAdmin" class="admin-portada-form">

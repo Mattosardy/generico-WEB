@@ -1,4 +1,4 @@
-create or replace function public.fecha_entrega_configurada(
+﻿create or replace function public.fecha_entrega_configurada(
     p_clave text,
     p_target_date date,
     p_fallback date
@@ -111,7 +111,7 @@ begin
             select
                 s.id,
                 entrega.tipo_reserva,
-                'Cururu Club' || chr(10) ||
+                'Nombre del Club' || chr(10) ||
                 'Tenes hasta 48 horas antes de la fecha de entrega para realizar tu reserva.' || chr(10) ||
                 'Retiro: ' || lower(entrega.etiqueta) || ', ' || to_char(entrega.fecha_entrega, 'DD/MM/YYYY') || chr(10) ||
                 'Tenes tiempo hasta ' || to_char(limite_reserva at time zone 'America/Montevideo', 'DD/MM/YYYY HH24:MI') || ' para confirmar tu retiro.',
@@ -157,7 +157,7 @@ begin
             select
                 r.socio_id,
                 entrega.tipo_entrega,
-                'Cururu Club' || chr(10) ||
+                'Nombre del Club' || chr(10) ||
                 coalesce(nullif(trim(cfg.valor), ''), nullif(trim(cfg_legacy.valor), ''), 'Recordatorio de entrega.') || chr(10) ||
                 'Tu retiro esta coordinado para ' || to_char(entrega.fecha_entrega, 'DD/MM/YYYY') || chr(10) ||
                 'Cantidad: ' || coalesce(r.cantidad_gramos::text, '-') || 'g' ||

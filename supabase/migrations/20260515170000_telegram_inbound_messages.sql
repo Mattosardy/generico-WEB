@@ -1,4 +1,4 @@
-create table if not exists public.telegram_mensajes_entrantes (
+﻿create table if not exists public.telegram_mensajes_entrantes (
     id uuid primary key default gen_random_uuid(),
     telegram_update_id bigint,
     message_id bigint,
@@ -27,7 +27,7 @@ create index if not exists idx_telegram_mensajes_entrantes_socio_id
     on public.telegram_mensajes_entrantes(socio_id);
 
 comment on table public.telegram_mensajes_entrantes is
-    'Mensajes entrantes recibidos por el webhook de Telegram del worker Cururu.';
+    'Mensajes entrantes recibidos por el webhook de Telegram del worker Nombre del Club.';
 
 comment on column public.telegram_mensajes_entrantes.raw_update is
     'Payload completo recibido desde Telegram para depuracion y trazabilidad.';

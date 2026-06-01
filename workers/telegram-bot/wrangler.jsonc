@@ -1,0 +1,13 @@
+{
+  "name": "telegram-bot",
+  "compatibility_date": "2026-05-12",
+  "main": "worker.js",
+  "vars": {
+    "SUPABASE_URL": "https://bszxuffixynbpcvjbzfa.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzenh1ZmZpeHluYnBjdmpiemZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDAyMzAsImV4cCI6MjA5NTMxNjIzMH0.pt7Wqk3jsmr9e0pQPTYmApfl9oktXM4Jd_YASz0te9E"
+  },
+  "triggers": {
+    "crons": ["*/2 * * * *"]
+  }
+}
+

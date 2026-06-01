@@ -1,9 +1,10 @@
-const CURURU_CACHE_VERSION = 'cururu-pwa-v14-20260525-pedidos';
-const CURURU_APP_SHELL = [
+﻿const GENERICO_CACHE_VERSION = 'generico-pwa-v15-20260526-restore-functional';
+const GENERICO_APP_SHELL = [
     '/',
     '/index.html',
     '/manifest.webmanifest',
     '/css/style.css',
+    '/css/theme-generico.css',
     '/js/config.js',
     '/js/utils.js',
     '/js/supabase-client.js',
@@ -24,8 +25,8 @@ const CURURU_APP_SHELL = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CURURU_CACHE_VERSION)
-            .then((cache) => cache.addAll(CURURU_APP_SHELL))
+        caches.open(GENERICO_CACHE_VERSION)
+            .then((cache) => cache.addAll(GENERICO_APP_SHELL))
             .then(() => self.skipWaiting())
     );
 });
@@ -35,7 +36,7 @@ self.addEventListener('activate', (event) => {
         caches.keys()
             .then((keys) => Promise.all(
                 keys
-                    .filter((key) => key.startsWith('cururu-') && key !== CURURU_CACHE_VERSION)
+                    .filter((key) => key.startsWith('generico-') && key !== GENERICO_CACHE_VERSION)
                     .map((key) => caches.delete(key))
             ))
             .then(() => self.clients.claim())
@@ -54,7 +55,7 @@ self.addEventListener('fetch', (event) => {
             fetch(request)
                 .then((response) => {
                     const copia = response.clone();
-                    caches.open(CURURU_CACHE_VERSION).then((cache) => cache.put('/index.html', copia));
+                    caches.open(GENERICO_CACHE_VERSION).then((cache) => cache.put('/index.html', copia));
                     return response;
                 })
                 .catch(() => caches.match('/index.html'))
@@ -67,7 +68,7 @@ self.addEventListener('fetch', (event) => {
             .then((cached) => cached || fetch(request).then((response) => {
                 if (!response || response.status !== 200) return response;
                 const copia = response.clone();
-                caches.open(CURURU_CACHE_VERSION).then((cache) => cache.put(request, copia));
+                caches.open(GENERICO_CACHE_VERSION).then((cache) => cache.put(request, copia));
                 return response;
             }))
     );

@@ -62,7 +62,7 @@ function actualizarNombreUsuarioNav(partes = ['Invitado'], rol = appState.rolUsu
     actualizarNombreHeaderSesion(nombrePila);
     userName.classList.toggle('nav-user-name-hidden', !esSocio && nombrePila !== 'Invitado');
     const visibles = nombrePila && nombrePila !== 'Invitado'
-        ? [esSocio ? `Carrito de ${nombrePila}` : nombrePila]
+        ? [nombrePila]
         : ['Invitado'];
     userName.textContent = '';
     visibles.forEach((parte) => {
@@ -74,7 +74,9 @@ function actualizarNombreUsuarioNav(partes = ['Invitado'], rol = appState.rolUsu
     userName.title = visibles[0];
     userName.setAttribute('role', nombrePila && nombrePila !== 'Invitado' ? 'button' : 'status');
     userName.setAttribute('tabindex', nombrePila && nombrePila !== 'Invitado' ? '0' : '-1');
-    userName.setAttribute('aria-label', nombrePila && nombrePila !== 'Invitado' ? `Abrir carrito de ${nombrePila}` : 'Usuario invitado');
+    userName.setAttribute('aria-label', nombrePila && nombrePila !== 'Invitado' ? `Abrir menu de usuario de ${nombrePila}` : 'Usuario invitado');
+    userName.setAttribute('aria-haspopup', nombrePila && nombrePila !== 'Invitado' ? 'menu' : 'false');
+    userName.setAttribute('aria-expanded', 'false');
 }
 
 async function actualizarUIporRol() {
@@ -100,8 +102,8 @@ async function actualizarUIporRol() {
             actualizarNombreUsuarioNav([socio.data.nombre], appState.rolUsuario);
         } else {
             const email = String(usuario.email || '').trim().toLowerCase();
-            const adminEmails = Array.isArray(window.CURURU_ADMIN_EMAILS)
-                ? window.CURURU_ADMIN_EMAILS.map((item) => String(item || '').trim().toLowerCase())
+            const adminEmails = Array.isArray(window.GENERICO_ADMIN_EMAILS)
+                ? window.GENERICO_ADMIN_EMAILS.map((item) => String(item || '').trim().toLowerCase())
                 : [];
             const esAdminFallback = email && adminEmails.includes(email);
 
@@ -168,8 +170,8 @@ async function cerrarSesionHandler() {
         mostrarMensaje('No se pudo cerrar sesión', false);
         return;
     }
-    localStorage.setItem('cururu_seccion_activa', 'inicio');
-    localStorage.removeItem('cururu_post_login_section');
+    localStorage.setItem('generico_seccion_activa', 'inicio');
+    localStorage.removeItem('generico_post_login_section');
     await verificarSesion();
     mostrarMensaje('Sesión cerrada', true);
     if (typeof mostrarSeccion === 'function') mostrarSeccion('inicio');

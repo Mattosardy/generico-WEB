@@ -1,9 +1,11 @@
-const mainSections = ['inicio', 'productos', 'actividades', 'admin', 'maestro', 'login'];
+const mainSections = ['inicio', 'productos', 'carrito', 'actividades', 'admin', 'maestro', 'menu', 'login'];
 const restrictedSections = {
     productos: ['socio', 'admin', 'maestro'],
+    carrito: ['socio', 'admin', 'maestro'],
     actividades: ['socio', 'admin', 'maestro'],
     admin: ['admin'],
-    maestro: ['maestro']
+    maestro: ['maestro'],
+    menu: ['socio', 'admin', 'maestro']
 };
 
 function registrarServiceWorkerPwa() {
@@ -17,7 +19,7 @@ function registrarServiceWorkerPwa() {
     });
 }
 
-let cururuInstallPrompt = null;
+let genericoInstallPrompt = null;
 
 function obtenerInstruccionesInstalacion() {
     const esIos = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
@@ -28,26 +30,26 @@ function obtenerInstruccionesInstalacion() {
 function inicializarInstalacionPwa() {
     window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
-        cururuInstallPrompt = event;
+        genericoInstallPrompt = event;
     });
 
     window.addEventListener('appinstalled', () => {
-        cururuInstallPrompt = null;
+        genericoInstallPrompt = null;
         if (typeof mostrarMensaje === 'function') mostrarMensaje('App instalada correctamente.', true);
     });
 
     document.querySelectorAll('[data-install-app]').forEach((boton) => {
         boton.addEventListener('click', async () => {
-            if (!cururuInstallPrompt) {
+            if (!genericoInstallPrompt) {
                 const mensaje = obtenerInstruccionesInstalacion();
                 if (typeof mostrarMensaje === 'function') mostrarMensaje(mensaje, true);
                 else alert(mensaje);
                 return;
             }
 
-            cururuInstallPrompt.prompt();
-            await cururuInstallPrompt.userChoice;
-            cururuInstallPrompt = null;
+            genericoInstallPrompt.prompt();
+            await genericoInstallPrompt.userChoice;
+            genericoInstallPrompt = null;
         });
     });
 }
@@ -58,8 +60,8 @@ function actualizarBotonAudio() {
     if (!audio || !boton) return;
     const icono = boton.querySelector('i');
     const silenciado = audio.muted;
-    boton.setAttribute('aria-label', silenciado ? 'Activar música' : 'Silenciar música');
-    boton.setAttribute('title', silenciado ? 'Activar música' : 'Silenciar música');
+    boton.setAttribute('aria-label', silenciado ? 'Activar música' : 'Pausar música');
+    boton.setAttribute('title', silenciado ? 'Activar música' : 'Pausar música');
     if (icono) {
         icono.className = silenciado ? 'fas fa-volume-xmark' : 'fas fa-volume-high';
     }
@@ -80,14 +82,14 @@ function inicializarAudioFondo() {
     const boton = document.getElementById('btnAudioToggle');
     if (!audio || !boton) return;
 
-    const silenciadoGuardado = localStorage.getItem('cururu_audio_muted');
-    audio.volume = 0.35;
+    const silenciadoGuardado = localStorage.getItem('generico_audio_muted');
+    audio.volume = 0.5;
     audio.muted = silenciadoGuardado === null ? false : silenciadoGuardado === 'true';
     actualizarBotonAudio();
 
     boton.addEventListener('click', async () => {
         audio.muted = !audio.muted;
-        localStorage.setItem('cururu_audio_muted', String(audio.muted));
+        localStorage.setItem('generico_audio_muted', String(audio.muted));
         actualizarBotonAudio();
         if (!audio.muted) await intentarReproducirAudio();
     });
@@ -110,19 +112,19 @@ function obtenerSeccionVisibleActual() {
         const el = document.getElementById(id);
         return el && el.style.display !== 'none';
     });
-    return visible || localStorage.getItem('cururu_seccion_activa') || 'inicio';
+    return visible || localStorage.getItem('generico_seccion_activa') || 'inicio';
 }
 
 function guardarDestinoPostLogin(seccionId) {
     const destino = mainSections.includes(seccionId) ? seccionId : '';
     if (destino && destino !== 'inicio' && destino !== 'login') {
-        localStorage.setItem('cururu_post_login_section', destino);
+        localStorage.setItem('generico_post_login_section', destino);
     }
 }
 
 function obtenerDestinoPostLogin() {
-    const destinoGuardado = localStorage.getItem('cururu_post_login_section') || localStorage.getItem('cururu_seccion_activa');
-    localStorage.removeItem('cururu_post_login_section');
+    const destinoGuardado = localStorage.getItem('generico_post_login_section') || localStorage.getItem('generico_seccion_activa');
+    localStorage.removeItem('generico_post_login_section');
     if (destinoGuardado && destinoGuardado !== 'inicio' && destinoGuardado !== 'login' && usuarioPuedeVerSeccion(destinoGuardado)) {
         return destinoGuardado;
     }
@@ -131,10 +133,69 @@ function obtenerDestinoPostLogin() {
     return 'productos';
 }
 
+function obtenerSeccionActividadesPrincipal() {
+    if (appState.rolUsuario === 'maestro') return 'maestro';
+    if (appState.rolUsuario === 'admin') return 'admin';
+    return 'actividades';
+}
+
+function actualizarChromeApp(destino) {
+    const esInicio = destino === 'inicio';
+    document.body.classList.toggle('app-home', esInicio);
+    document.body.classList.toggle('app-internal', !esInicio);
+    const smartLabel = document.querySelector('[data-smart-section="actividades"] span');
+    if (smartLabel) smartLabel.textContent = appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro'
+        ? 'HERRAMIENTAS'
+        : 'ACTIVIDADES';
+}
+
+function moverBloqueAcordeon(origenTipo, destinoTipo, slotId) {
+    const slot = document.getElementById(slotId);
+    const toggle = document.querySelector(`.productos-toggle[data-tipo-cultivo="${origenTipo}"]`);
+    const panel = document.querySelector(`.productos-panel[data-tipo-cultivo="${origenTipo}"]`);
+    const columna = toggle?.closest('.productos-columna');
+    if (!slot || !toggle || !panel || !columna || slot.contains(columna)) return;
+    toggle.dataset.tipoCultivo = destinoTipo;
+    panel.dataset.tipoCultivo = destinoTipo;
+    slot.appendChild(columna);
+    slot.appendChild(panel);
+}
+
+function prepararMenuSocio() {
+    moverBloqueAcordeon('actividades-manual', 'menu-manual', 'menuManualSlot');
+    moverBloqueAcordeon('actividades-cuenta', 'menu-cuenta', 'menuCuentaSlot');
+}
+
+function cerrarMenuUsuario() {
+    const menu = document.getElementById('userMenuDropdown');
+    const boton = document.getElementById('userName');
+    if (!menu || !boton) return;
+    menu.hidden = true;
+    menu.classList.remove('is-open');
+    boton.setAttribute('aria-expanded', 'false');
+}
+
+function alternarMenuUsuario() {
+    const menu = document.getElementById('userMenuDropdown');
+    const boton = document.getElementById('userName');
+    if (!menu || !boton || boton.getAttribute('role') !== 'button') return;
+    const abierto = menu.hidden;
+    menu.hidden = !abierto;
+    menu.classList.toggle('is-open', abierto);
+    boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+}
+
+async function abrirCuentaDesdeMenuUsuario(panelDestino = 'menu-cuenta') {
+    cerrarMenuUsuario();
+    await mostrarSeccion('menu');
+    const toggle = document.querySelector(`.productos-toggle[data-tipo-cultivo="${panelDestino}"]`);
+    if (toggle && toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
+}
+
 function validarCambioPassword(actual, nueva, repetir) {
     if (!actual || !nueva || !repetir) return 'Completá todos los campos.';
     if (nueva.length < 8) return 'La nueva contraseña debe tener al menos 8 caracteres.';
-    if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(nueva) || !/\d/.test(nueva)) {
+    if (!/[A-Za-z\u00c1\u00c9\u00cd\u00d3\u00da\u00e1\u00e9\u00ed\u00f3\u00fa\u00d1\u00f1]/.test(nueva) || !/\d/.test(nueva)) {
         return 'La nueva contraseña debe incluir letras y números.';
     }
     if (nueva !== repetir) return 'La confirmación no coincide.';
@@ -145,7 +206,7 @@ function validarCambioPassword(actual, nueva, repetir) {
 function validarNuevaPassword(nueva, repetir) {
     if (!nueva || !repetir) return 'Completá todos los campos.';
     if (nueva.length < 8) return 'La nueva contraseña debe tener al menos 8 caracteres.';
-    if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(nueva) || !/\d/.test(nueva)) {
+    if (!/[A-Za-z\u00c1\u00c9\u00cd\u00d3\u00da\u00e1\u00e9\u00ed\u00f3\u00fa\u00d1\u00f1]/.test(nueva) || !/\d/.test(nueva)) {
         return 'La nueva contraseña debe incluir letras y números.';
     }
     if (nueva !== repetir) return 'La confirmación no coincide.';
@@ -181,25 +242,33 @@ async function mostrarSeccion(seccionId) {
     if (destino === 'maestro' && appState.rolUsuario === 'maestro' && typeof cargarMaestroDataCompleta === 'function') {
         await ejecutarCargaSegura('cargarMaestroDataCompleta', cargarMaestroDataCompleta);
     }
+    if (destino === 'carrito' && typeof abrirCarritoPantalla === 'function') {
+        await ejecutarCargaSegura('abrirCarritoPantalla', abrirCarritoPantalla);
+    }
+    if (destino === 'menu') {
+        prepararMenuSocio();
+        if (typeof renderTelegramLinkPanel === 'function') renderTelegramLinkPanel();
+    }
     mainSections.forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
     const sectionEl = document.getElementById(destino);
     if (sectionEl) sectionEl.style.display = 'block';
-    if (destino !== 'login' && accesoPermitido) localStorage.setItem('cururu_seccion_activa', destino);
+    if (destino !== 'login' && accesoPermitido) localStorage.setItem('generico_seccion_activa', destino);
     document.querySelectorAll('.nav-btn[data-section]').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.section === destino);
     });
     document.querySelectorAll('.dock-btn[data-section]').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.section === destino);
     });
+    actualizarChromeApp(destino);
     if (destino === 'actividades' && typeof marcarActividadesVistas === 'function') {
         marcarActividadesVistas();
     }
-    if (window.cururuTour && (destino === 'productos' || destino === 'admin' || destino === 'actividades')) {
-        window.cururuTour.refresh();
-        window.cururuTour.maybeShow();
+    if (window.genericoTour && (destino === 'productos' || destino === 'admin' || destino === 'actividades')) {
+        window.genericoTour.refresh();
+        window.genericoTour.maybeShow();
     }
 }
 
@@ -298,18 +367,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarPlaceholders();
     inicializarAudioFondo();
     inicializarInstalacionPwa();
+    prepararMenuSocio();
     if (typeof actualizarBotonesSesion === 'function') actualizarBotonesSesion(false);
 
     document.getElementById('btnLogin')?.addEventListener('click', iniciarSesion);
     document.getElementById('btnLogout')?.addEventListener('click', cerrarSesionHandler);
     document.getElementById('dockBtnLogin')?.addEventListener('click', iniciarSesion);
-    document.getElementById('userName')?.addEventListener('click', async () => {
-        if (typeof abrirCarritoSocio === 'function') await abrirCarritoSocio();
+    document.getElementById('userName')?.addEventListener('click', () => {
+        alternarMenuUsuario();
     });
-    document.getElementById('userName')?.addEventListener('keydown', async (event) => {
+    document.getElementById('userName')?.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
-        if (typeof abrirCarritoSocio === 'function') await abrirCarritoSocio();
+        alternarMenuUsuario();
+    });
+    document.querySelectorAll('[data-user-menu-section]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            await abrirCuentaDesdeMenuUsuario(btn.dataset.userMenuSection);
+        });
+    });
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.app-session-actions')) return;
+        cerrarMenuUsuario();
+    });
+    document.querySelector('.app-home-button')?.addEventListener('click', async (event) => {
+        if (event.target.closest('button')) return;
+        await mostrarSeccion('inicio');
+    });
+    document.querySelector('.app-home-button')?.addEventListener('keydown', async (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        await mostrarSeccion('inicio');
     });
 
     document.querySelectorAll('.nav-btn[data-section]').forEach((btn) => {
@@ -318,6 +406,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (btn.dataset.scrollTarget) {
                 document.getElementById(btn.dataset.scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+        });
+    });
+    document.querySelectorAll('[data-smart-section="actividades"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            await mostrarSeccion(obtenerSeccionActividadesPrincipal());
         });
     });
     document.querySelectorAll('.mobile-hidden-dock .dock-btn[data-section]').forEach((btn) => {
@@ -491,9 +584,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await verificarSesion();
     await mostrarSeccion(typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword()
         ? 'actividades'
-        : (localStorage.getItem('cururu_seccion_activa') || 'inicio'));
-    if (window.cururuTour) {
-        window.cururuTour.refresh();
-        window.cururuTour.maybeShow();
+        : (localStorage.getItem('generico_seccion_activa') || 'inicio'));
+    if (window.genericoTour) {
+        window.genericoTour.refresh();
+        window.genericoTour.maybeShow();
     }
 });

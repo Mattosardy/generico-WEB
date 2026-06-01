@@ -1,9 +1,9 @@
-const CURURU_TOUR_KEYS = {
-    socio: 'cururu_tour_socio_done',
-    admin: 'cururu_tour_admin_done'
+﻿const GENERICO_TOUR_KEYS = {
+    socio: 'generico_tour_socio_done',
+    admin: 'generico_tour_admin_done'
 };
 
-const CURURU_TOUR_STEPS = {
+const GENERICO_TOUR_STEPS = {
     socio: [
         {
             selector: '#telegramLinkPanel',
@@ -96,7 +96,7 @@ const CURURU_TOUR_STEPS = {
     ]
 };
 
-const cururuTourState = {
+const genericoTourState = {
     role: null,
     stepIndex: 0,
     steps: [],
@@ -105,32 +105,32 @@ const cururuTourState = {
     renderToken: 0
 };
 
-function cururuTourDelay(ms = 80) {
+function genericoTourDelay(ms = 80) {
     return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-function cururuTourRole() {
+function genericoTourRole() {
     const rol = String(window.appState?.rolUsuario || '').toLowerCase();
     if (rol === 'admin') return 'admin';
     if (rol === 'socio') return 'socio';
     return '';
 }
 
-function cururuTourKey(role) {
-    return CURURU_TOUR_KEYS[role] || '';
+function genericoTourKey(role) {
+    return GENERICO_TOUR_KEYS[role] || '';
 }
 
-function cururuTourVisibleSteps(role) {
-    const steps = CURURU_TOUR_STEPS[role] || [];
+function genericoTourVisibleSteps(role) {
+    const steps = GENERICO_TOUR_STEPS[role] || [];
     if (role !== 'admin') return steps;
-    const plusActivo = Boolean(window.CURURU_PLAN?.plusActivo);
+    const plusActivo = Boolean(window.GENERICO_PLAN?.plusActivo);
     return plusActivo ? steps : steps.filter((step) => !step.title.toLowerCase().includes('articulos'));
 }
 
-function cururuTourEnsureElements() {
-    if (!document.getElementById('cururuTourRoot')) {
+function genericoTourEnsureElements() {
+    if (!document.getElementById('genericoTourRoot')) {
         document.body.insertAdjacentHTML('beforeend', `
-            <div id="cururuTourRoot" class="tour-root" hidden>
+            <div id="genericoTourRoot" class="tour-root" hidden>
                 <div class="tour-scrim" data-tour-close></div>
                 <section class="tour-popover" role="dialog" aria-live="polite" aria-modal="false" aria-labelledby="tourTitle">
                     <button type="button" class="tour-close" data-tour-close aria-label="Cerrar guia">&times;</button>
@@ -146,29 +146,29 @@ function cururuTourEnsureElements() {
             </div>
         `);
 
-        document.getElementById('tourPrev')?.addEventListener('click', cururuTourPrev);
-        document.getElementById('tourNext')?.addEventListener('click', cururuTourNext);
-        document.getElementById('tourSkip')?.addEventListener('click', cururuTourDismissForever);
+        document.getElementById('tourPrev')?.addEventListener('click', genericoTourPrev);
+        document.getElementById('tourNext')?.addEventListener('click', genericoTourNext);
+        document.getElementById('tourSkip')?.addEventListener('click', genericoTourDismissForever);
         document.querySelectorAll('[data-tour-close]').forEach((el) => {
-            el.addEventListener('click', cururuTourClose);
+            el.addEventListener('click', genericoTourClose);
         });
         document.addEventListener('keydown', (event) => {
-            if (!cururuTourState.active) return;
-            if (event.key === 'Escape') cururuTourClose();
-            if (event.key === 'ArrowRight') cururuTourNext();
-            if (event.key === 'ArrowLeft') cururuTourPrev();
+            if (!genericoTourState.active) return;
+            if (event.key === 'Escape') genericoTourClose();
+            if (event.key === 'ArrowRight') genericoTourNext();
+            if (event.key === 'ArrowLeft') genericoTourPrev();
         });
     }
 }
 
-function cururuTourTargetForStep(step) {
+function genericoTourTargetForStep(step) {
     if (!step?.selector) return null;
     const target = document.querySelector(step.selector);
     if (!target || target.offsetParent === null) return null;
     return target;
 }
 
-async function cururuTourPrepareStep(step) {
+async function genericoTourPrepareStep(step) {
     if (!step) return;
     try {
         if (step.section && typeof mostrarSeccion === 'function') {
@@ -176,7 +176,7 @@ async function cururuTourPrepareStep(step) {
         }
 
         if (step.adminSection) {
-            await cururuTourDelay(80);
+            await genericoTourDelay(80);
             const button = document.querySelector(`[data-admin-section="${step.adminSection}"]`);
             const panel = document.getElementById(`admin-${step.adminSection}`);
             const panelVisible = panel && panel.style.display !== 'none';
@@ -190,14 +190,14 @@ async function cururuTourPrepareStep(step) {
         console.warn('No se pudo preparar el paso de la guia:', error);
     }
 
-    await cururuTourDelay(120);
+    await genericoTourDelay(120);
 }
 
-function cururuTourClearHighlight() {
+function genericoTourClearHighlight() {
     document.querySelectorAll('.tour-highlight').forEach((el) => el.classList.remove('tour-highlight'));
 }
 
-function cururuTourPlacePopover(target) {
+function genericoTourPlacePopover(target) {
     const popover = document.querySelector('.tour-popover');
     if (!popover) return;
     popover.classList.remove('tour-popover-top', 'tour-popover-bottom', 'tour-popover-mobile', 'tour-popover-centered');
@@ -270,11 +270,11 @@ function cururuTourPlacePopover(target) {
     popover.style.setProperty('--tour-transform', 'none');
 }
 
-async function cururuTourRender() {
-    cururuTourEnsureElements();
+async function genericoTourRender() {
+    genericoTourEnsureElements();
     const token = Date.now();
-    cururuTourState.renderToken = token;
-    const root = document.getElementById('cururuTourRoot');
+    genericoTourState.renderToken = token;
+    const root = document.getElementById('genericoTourRoot');
     const title = document.getElementById('tourTitle');
     const text = document.getElementById('tourText');
     const label = document.getElementById('tourStepLabel');
@@ -282,86 +282,86 @@ async function cururuTourRender() {
     const next = document.getElementById('tourNext');
     if (!root || !title || !text || !label || !prev || !next) return;
 
-    const total = cururuTourState.steps.length;
-    const step = cururuTourState.steps[cururuTourState.stepIndex];
+    const total = genericoTourState.steps.length;
+    const step = genericoTourState.steps[genericoTourState.stepIndex];
     if (!step) {
-        cururuTourClose();
+        genericoTourClose();
         return;
     }
 
-    await cururuTourPrepareStep(step);
-    if (cururuTourState.renderToken !== token) return;
+    await genericoTourPrepareStep(step);
+    if (genericoTourState.renderToken !== token) return;
 
-    cururuTourClearHighlight();
-    const target = cururuTourTargetForStep(step);
+    genericoTourClearHighlight();
+    const target = genericoTourTargetForStep(step);
     if (target) {
         target.classList.add('tour-highlight');
         target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
     }
 
-    label.textContent = `Paso ${cururuTourState.stepIndex + 1} de ${total}`;
+    label.textContent = `Paso ${genericoTourState.stepIndex + 1} de ${total}`;
     title.textContent = step.title;
     text.textContent = step.text;
-    prev.disabled = cururuTourState.stepIndex === 0;
-    next.textContent = cururuTourState.stepIndex === total - 1 ? 'Finalizar' : 'Siguiente';
+    prev.disabled = genericoTourState.stepIndex === 0;
+    next.textContent = genericoTourState.stepIndex === total - 1 ? 'Finalizar' : 'Siguiente';
     root.hidden = false;
-    cururuTourState.active = true;
+    genericoTourState.active = true;
 
-    window.setTimeout(() => cururuTourPlacePopover(target), 180);
+    window.setTimeout(() => genericoTourPlacePopover(target), 180);
 }
 
-function cururuTourOpen(role = cururuTourRole(), options = {}) {
-    if (!role || !CURURU_TOUR_KEYS[role]) return;
-    const steps = cururuTourVisibleSteps(role);
+function genericoTourOpen(role = genericoTourRole(), options = {}) {
+    if (!role || !GENERICO_TOUR_KEYS[role]) return;
+    const steps = genericoTourVisibleSteps(role);
     if (!steps.length) return;
-    sessionStorage.setItem(`cururu_tour_${role}_prompted_session`, 'true');
-    cururuTourState.role = role;
-    cururuTourState.steps = steps;
-    cururuTourState.stepIndex = 0;
-    cururuTourState.manual = Boolean(options.manual);
-    cururuTourState.active = true;
-    void cururuTourRender();
+    sessionStorage.setItem(`generico_tour_${role}_prompted_session`, 'true');
+    genericoTourState.role = role;
+    genericoTourState.steps = steps;
+    genericoTourState.stepIndex = 0;
+    genericoTourState.manual = Boolean(options.manual);
+    genericoTourState.active = true;
+    void genericoTourRender();
 }
 
-function cururuTourClose() {
-    const root = document.getElementById('cururuTourRoot');
+function genericoTourClose() {
+    const root = document.getElementById('genericoTourRoot');
     if (root) root.hidden = true;
-    cururuTourState.active = false;
-    cururuTourClearHighlight();
+    genericoTourState.active = false;
+    genericoTourClearHighlight();
 }
 
-function cururuTourPrev() {
-    if (cururuTourState.stepIndex <= 0) return;
-    cururuTourState.stepIndex -= 1;
-    void cururuTourRender();
+function genericoTourPrev() {
+    if (genericoTourState.stepIndex <= 0) return;
+    genericoTourState.stepIndex -= 1;
+    void genericoTourRender();
 }
 
-function cururuTourNext() {
-    if (cururuTourState.stepIndex >= cururuTourState.steps.length - 1) {
-        cururuTourClose();
+function genericoTourNext() {
+    if (genericoTourState.stepIndex >= genericoTourState.steps.length - 1) {
+        genericoTourClose();
         return;
     }
-    cururuTourState.stepIndex += 1;
-    void cururuTourRender();
+    genericoTourState.stepIndex += 1;
+    void genericoTourRender();
 }
 
-function cururuTourDismissForever() {
-    const key = cururuTourKey(cururuTourState.role);
+function genericoTourDismissForever() {
+    const key = genericoTourKey(genericoTourState.role);
     if (key) localStorage.setItem(key, 'true');
-    cururuTourClose();
+    genericoTourClose();
 }
 
-function cururuTourMaybeShow(role = cururuTourRole()) {
-    if (!role || !CURURU_TOUR_KEYS[role]) return;
-    if (cururuTourState.active) return;
-    if (localStorage.getItem(cururuTourKey(role)) === 'true') return;
-    const promptedKey = `cururu_tour_${role}_prompted_session`;
+function genericoTourMaybeShow(role = genericoTourRole()) {
+    if (!role || !GENERICO_TOUR_KEYS[role]) return;
+    if (genericoTourState.active) return;
+    if (localStorage.getItem(genericoTourKey(role)) === 'true') return;
+    const promptedKey = `generico_tour_${role}_prompted_session`;
     if (sessionStorage.getItem(promptedKey) === 'true') return;
     sessionStorage.setItem(promptedKey, 'true');
-    window.setTimeout(() => cururuTourOpen(role), 500);
+    window.setTimeout(() => genericoTourOpen(role), 500);
 }
 
-function cururuTourEnsureButtons() {
+function genericoTourEnsureButtons() {
     const socioDashboard = document.getElementById('socioDashboard');
     if (socioDashboard && !socioDashboard.querySelector('[data-tour-open="socio"]')) {
         socioDashboard.insertAdjacentHTML('afterbegin', `
@@ -387,17 +387,17 @@ function cururuTourEnsureButtons() {
 
     document.querySelectorAll('[data-tour-open]:not([data-tour-bound])').forEach((button) => {
         button.dataset.tourBound = 'true';
-        button.addEventListener('click', () => cururuTourOpen(button.dataset.tourOpen, { manual: true }));
+        button.addEventListener('click', () => genericoTourOpen(button.dataset.tourOpen, { manual: true }));
     });
 }
 
-function cururuTourRefresh() {
-    cururuTourEnsureButtons();
+function genericoTourRefresh() {
+    genericoTourEnsureButtons();
 }
 
-window.cururuTour = {
-    refresh: cururuTourRefresh,
-    maybeShow: cururuTourMaybeShow,
-    open: cururuTourOpen,
-    close: cururuTourClose
+window.genericoTour = {
+    refresh: genericoTourRefresh,
+    maybeShow: genericoTourMaybeShow,
+    open: genericoTourOpen,
+    close: genericoTourClose
 };

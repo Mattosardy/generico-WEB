@@ -1,6 +1,7 @@
-﻿{
-    "name":  "cururu-club-web",
+{
+    "name":  "generico-web",
     "compatibility_date":  "2026-05-12",
+    "workers_dev":  true,
     "main":  "worker.js",
     "assets":  {
                    "directory":  ".",
@@ -8,7 +9,7 @@
                    "run_worker_first":  true
                },
     "vars":  {
-                 "SUPABASE_URL":  "https://tgxjxqyuyaeycgihjbfz.supabase.co",
-                 "SUPABASE_ANON_KEY":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRneGp4cXl1eWFleWNnaWhqYmZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMzI4MjIsImV4cCI6MjA5NDcwODgyMn0.706l1_j4Ku2HA82vsV-5TP1qn8FrZHvgYuT8M1jBOb0"
+                 "SUPABASE_URL":  "https://bszxuffixynbpcvjbzfa.supabase.co",
+                 "SUPABASE_ANON_KEY":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzenh1ZmZpeHluYnBjdmpiemZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDAyMzAsImV4cCI6MjA5NTMxNjIzMH0.pt7Wqk3jsmr9e0pQPTYmApfl9oktXM4Jd_YASz0te9E"
              }
 }

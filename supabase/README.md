@@ -1,4 +1,4 @@
-# Supabase local para notificaciones
+﻿# Supabase local para notificaciones
 
 ## Telegram como canal principal
 
@@ -12,12 +12,12 @@ La migracion `migrations/20260513_telegram_notifications.sql` agrega:
 - `socios.telegram_linked_at`
 - indices para cola de `notificaciones_programadas` con `canal = 'telegram'`
 
-El token del bot no va en el frontend. El worker separado `workers/cururu-telegram-bot` usa:
+El token del bot no va en el frontend. El worker separado `workers/telegram-bot` usa:
 
 - `TELEGRAM_BOT_TOKEN`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `X_CURURU_ADMIN_SECRET`
+- `X_GENERICO_ADMIN_SECRET`
 - `TELEGRAM_WEBHOOK_SECRET`
 - `NOTIFICATION_WORKER_SECRET`
 
@@ -30,7 +30,7 @@ https://<worker-url>/webhook/telegram
 Si se usa el dominio por defecto de Cloudflare Workers, normalmente sera:
 
 ```text
-https://cururu-telegram-bot.<tu-subdominio>.workers.dev/webhook/telegram
+https://telegram-bot.<tu-subdominio>.workers.dev/webhook/telegram
 ```
 
 Configurar el nombre publico del bot en `js/config.js`:
@@ -76,7 +76,7 @@ La tabla tiene RLS activado y no se escribe desde el frontend. El Worker necesit
 Luego responde automaticamente:
 
 ```text
-Cururu Club
+Nombre del Club
 Recibimos tu mensaje. Un administrador lo revisara a la brevedad.
 ```
 
@@ -107,7 +107,7 @@ npx serve .
 Worker Telegram:
 
 ```bash
-cd workers/cururu-telegram-bot
+cd workers/telegram-bot
 npx wrangler dev
 ```
 
@@ -137,7 +137,7 @@ curl -X POST "http://127.0.0.1:8787/webhook/telegram" \
       "date": 1778860800,
       "chat": { "id": 123456789, "type": "private", "username": "socio_test", "first_name": "Socio" },
       "from": { "id": 123456789, "is_bot": false, "username": "socio_test", "first_name": "Socio" },
-      "text": "Hola Cururu"
+      "text": "Hola Nombre del Club"
     }
   }'
 ```
@@ -164,7 +164,7 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 2. Revisar logs del worker:
 
 ```bash
-npx wrangler tail cururu-telegram-bot
+npx wrangler tail telegram-bot
 ```
 
 3. Confirmar en Supabase:
@@ -208,8 +208,8 @@ drop table if exists public.telegram_mensajes_entrantes;
 ```bash
 curl -X POST "https://<worker-url>/telegram/send-test" \
   -H "Content-Type: application/json" \
-  -H "X-CURURU-ADMIN-SECRET: <X_CURURU_ADMIN_SECRET>" \
-  -d '{"chat_id":"<telegram_chat_id>","text":"Mensaje de prueba Cururu Club"}'
+  -H "X-GENERICO-ADMIN-SECRET: <X_GENERICO_ADMIN_SECRET>" \
+  -d '{"chat_id":"<telegram_chat_id>","text":"Mensaje de prueba Nombre del Club"}'
 ```
 
 ## WhatsApp legacy / futuro

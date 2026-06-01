@@ -1,16 +1,16 @@
 const TELEGRAM_BOT_USERNAME = window.TELEGRAM_BOT_USERNAME || 'NOMBRE_DEL_BOT';
 const TELEGRAM_LINK_CODE_TTL_MINUTES = 15;
-const TELEGRAM_SECURITY_DEVICE_STORAGE_KEY = 'cururu_telegram_security_device_id_v1';
+const TELEGRAM_SECURITY_DEVICE_STORAGE_KEY = 'generico_telegram_security_device_id_v1';
 const notificationTemplates = {
     reserva_creada: ({ variety = 'Entrega mensual', grams = '-', estado = 'pendiente de confirmacion' } = {}) =>
-        `Cururu Club\nTu pedido mensual fue recibido.\nVariedad: ${variety}\nCantidad: ${grams}g\nEstado: ${estado}.`,
+        `Nombre del Club\nTu pedido mensual fue recibido.\nVariedad: ${variety}\nCantidad: ${grams}g\nEstado: ${estado}.`,
     reserva_confirmada: ({ variety = 'Entrega mensual', grams = '-', retiro = '' } = {}) =>
-        `Cururu Club\nTu pedido mensual fue confirmado.\nVariedad: ${variety}\nCantidad: ${grams}g${retiro ? `\nRetiro: ${retiro}` : ''}`,
+        `Nombre del Club\nTu pedido mensual fue confirmado.\nVariedad: ${variety}\nCantidad: ${grams}g${retiro ? `\nRetiro: ${retiro}` : ''}`,
     reserva_rechazada: ({ variety = 'Entrega mensual', grams = '-', motivo = 'Te vamos a contactar para coordinar.' } = {}) =>
-        `Cururu Club\nTu pedido mensual no pudo ser confirmado.\nVariedad: ${variety}\nCantidad: ${grams}g\nMotivo: ${motivo}`,
+        `Nombre del Club\nTu pedido mensual no pudo ser confirmado.\nVariedad: ${variety}\nCantidad: ${grams}g\nMotivo: ${motivo}`,
     retiro_disponible: ({ variety = 'Entrega mensual', grams = '-', retiro = '' } = {}) =>
-        `Cururu Club\nTu retiro ya esta disponible.\nVariedad: ${variety}\nCantidad: ${grams}g${retiro ? `\nRetiro: ${retiro}` : ''}`,
-    aviso_general: ({ message = '' } = {}) => `Cururu Club\n${message}`,
+        `Nombre del Club\nTu retiro ya esta disponible.\nVariedad: ${variety}\nCantidad: ${grams}g${retiro ? `\nRetiro: ${retiro}` : ''}`,
+    aviso_general: ({ message = '' } = {}) => `Nombre del Club\n${message}`,
 };
 
 function generarTelegramLinkCode() {
@@ -341,7 +341,7 @@ function renderTelegramLinkPanel() {
             <div class="telegram-security-card" role="region" aria-live="polite">
                 <div class="telegram-security-copy">
                     <span class="metric-label">Seguridad</span>
-                    <strong>🔒 Verificación Telegram requerida</strong>
+                    <strong><i class="fas fa-lock" aria-hidden="true"></i> Verificación Telegram requerida</strong>
                     <small>Para proteger tu cuenta, ingresá el código enviado a tu Telegram. El código es válido por 24 horas.</small>
                     ${expiresAt ? `<em>Código vigente hasta ${escapeHtml(expiresAt)}</em>` : ''}
                     <small class="telegram-delay-note"><i class="fas fa-info-circle" aria-hidden="true"></i> Los mensajes y notificaciones por Telegram pueden demorar hasta 4 minutos.</small>

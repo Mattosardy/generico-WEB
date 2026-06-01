@@ -1,4 +1,4 @@
-// Global shared state for the front-end app.
+﻿// Global shared state for the front-end app.
 window.configSistema = {
     horasLimitePrimer: 48,
     horasLimiteUltimo: 48,
@@ -6,18 +6,19 @@ window.configSistema = {
     fechaEntregaUltimo: ''
 };
 
-window.defaultHistoriaVideoUrl = `${window.SUPABASE_URL}/storage/v1/object/public/noticias/historia_video_1776899904368_g07gbj3gkwn.mp4`;
-window.TELEGRAM_BOT_USERNAME = 'Cururuclub_bot';
+window.defaultHistoriaVideoUrl = '';
+window.defaultHistoriaImagenUrl = 'assets/images/home_inst.png';
+window.TELEGRAM_BOT_USERNAME = 'GenericoWeb_bot';
 window.GOOGLE_CALENDAR_EMBED_URL = '';
 
 // Feature flags comerciales controlados por el proveedor/deploy, no por Supabase del club.
-window.CURURU_PLAN = {
+window.GENERICO_PLAN = {
     plusActivo: true,
-    planPlusTitulo: 'Artículos destacados'
+    planPlusTitulo: 'Articulos destacados'
 };
 
-window.CURURU_ADMIN_EMAILS = [
-    'admin@cururu.com'
+window.GENERICO_ADMIN_EMAILS = [
+    'admin@generico.local'
 ];
 
 window.appState = {

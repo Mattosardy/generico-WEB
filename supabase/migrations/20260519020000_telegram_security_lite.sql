@@ -1,4 +1,4 @@
-create extension if not exists pgcrypto;
+﻿create extension if not exists pgcrypto;
 
 alter table public.socios
   add column if not exists telegram_login_verified boolean not null default false,
@@ -139,7 +139,7 @@ begin
 
   v_code := public.generate_telegram_security_code();
   v_expires_at := timezone('utc'::text, now()) + interval '24 hours';
-  v_message := 'Codigo de seguridad Cururu Club: ' || v_code ||
+  v_message := 'Codigo de seguridad generico_WEB: ' || v_code ||
                E'\n\nValido por 24 horas.\nNo compartas este codigo.';
 
   perform set_config('app.telegram_security_rpc', 'on', true);

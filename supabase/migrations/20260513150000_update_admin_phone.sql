@@ -1,6 +1,6 @@
-update public.socios
+﻿update public.socios
 set telefono = '099957102'
-where lower(email) = 'admin@cururu.com';
+where lower(email) = 'admin@nombre-del-club.local';
 
 update auth.users as u
 set
@@ -9,7 +9,7 @@ set
     updated_at = timezone('utc'::text, now())
 from public.socios as s
 where s.auth_user_id = u.id
-  and lower(s.email) = 'admin@cururu.com'
+  and lower(s.email) = 'admin@nombre-del-club.local'
   and not exists (
       select 1
       from auth.users as other
