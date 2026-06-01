@@ -1,1262 +1,520 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#6f3118">
+    <meta name="theme-color" content="#f8fff9">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>GEENERICO - Club privado con identidad clara</title>
+    <meta name="apple-mobile-web-app-title" content="generico_WEB">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="description" content="Plantilla generico_WEB para clubes: area privada de socios, pedidos mensuales, entregas y novedades.">
+    <title>'GENERICO' WEB | Area de socios</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512.png">
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/style.css?v=20260525-pedidos-head-negro">
+    <link rel="stylesheet" href="css/theme-generico.css?v=20260527-cart-delete-modal-bg">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-    <style>
-        :root {
-            --surface-strong: rgba(55, 58, 63, 0.4);
-            --surface-soft: rgba(199, 122, 61, 0.16);
-            --surface-muted: rgba(171, 92, 52, 0.22);
-            --surface-accent: rgba(214, 154, 96, 0.26);
-            --border-soft: rgba(220, 198, 182, 0.24);
-            --text-strong: #f4e8de;
-            --text-main: #ead6c7;
-            --text-muted: #cdb8aa;
-            --accent: #c97a3d;
-            --accent-strong: #9f4f27;
-            --accent-soft: #e2a56d;
-            --accent-deep: #6f3118;
-            --header-bg: rgba(95, 58, 36, 0.72);
-            --header-border: rgba(236, 208, 186, 0.22);
-            --header-text: #f5e7db;
-            --header-pill: rgba(58, 42, 34, 0.42);
-            --header-pill-border: rgba(236, 208, 186, 0.16);
-            --header-accent: #f0bc95;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Open Sans', sans-serif;
-            min-height: 100vh;
-            background: url('assets/images/fondo-home.png') no-repeat fixed center center;
-            background-size: cover;
-            position: relative;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(circle at top left, rgba(201, 122, 61, 0.18), transparent 34%),
-                radial-gradient(circle at bottom right, rgba(111, 49, 24, 0.18), transparent 30%),
-                linear-gradient(180deg, rgba(255, 244, 235, 0.14), rgba(255, 244, 235, 0.06));
-            z-index: 0;
-            pointer-events: none;
-        }
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: calc(20px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom)) 20px;
-        }
-        .header {
-            position: relative;
-            top: auto;
-            left: auto;
-            transform: none;
-            z-index: 1;
-            width: 100%;
-            background: var(--header-bg);
-            backdrop-filter: blur(15px);
-            border-radius: 24px;
-            padding: 14px 22px;
-            border: 1px solid var(--header-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 18px;
-            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18);
-        }
-        .header-left, .header-right { display: flex; align-items: center; gap: 18px; }
-        .header-left { min-width: 0; }
-        .logo h1 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.75rem;
-            color: var(--header-text);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
-        }
-        .logo-mark {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            border-radius: 10px;
-            flex-shrink: 0;
-        }
-        .user-info {
-            background: var(--header-pill);
-            padding: 8px 14px;
-            border-radius: 50px;
-            color: var(--header-text);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid var(--header-pill-border);
-            white-space: nowrap;
-        }
-        .user-info span { color: var(--header-accent); font-weight: bold; }
-        .header-nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .btn-inicio, .btn-cerrar {
-            background: var(--header-pill);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 50px;
-            color: var(--header-text);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            font-size: 0.9rem;
-            border: 1px solid var(--header-pill-border);
-        }
-        .btn-inicio:hover, .btn-cerrar:hover { background: #7ca35a; color: #0f190c; transform: translateY(-2px); }
-        .btn-cerrar { background: rgba(155, 106, 108, 0.8); }
-        .btn-cerrar:hover { background: #9B6A6C; color: white; }
-        .nav-btn {
-            background: var(--surface-soft);
-            border: 1px solid var(--header-pill-border);
-            padding: 8px 16px;
-            border-radius: 50px;
-            color: var(--header-text);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.88rem;
-            white-space: nowrap;
-        }
-        .nav-btn i { font-size: 0.95rem; }
-        .nav-btn:hover, .nav-btn.active { background: #7ca35a; color: #0f190c; border-color: #7ca35a; transform: translateY(-2px); }
-        @media (min-width: 769px) {
-            .header-nav .nav-session-btn {
-                display: none !important;
-            }
-        }
-        .section {
-            background: var(--surface-strong);
-            backdrop-filter: blur(12px);
-            border-radius: 24px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid var(--border-soft);
-        }
-        .section-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.8rem;
-            color: var(--accent-strong);
-            margin-bottom: 25px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(112, 148, 91, 0.24);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .section-lead {
-            color: var(--text-main);
-            max-width: 70ch;
-            line-height: 1.7;
-            margin: -8px 0 22px;
-            font-size: 0.98rem;
-        }
-        .section-lead strong {
-            color: var(--accent-strong);
-        }
-        .historia-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 24px;
-            width: 100%;
-        }
-        .historia-texto { flex: 2; color: var(--text-main); line-height: 1.6; width: 100%; text-align: center; }
-        .historia-texto p { margin-bottom: 15px; color: var(--text-main); max-width: 75ch; margin-left: auto; margin-right: auto; text-align: center; }
-        .historia-texto strong { color: var(--accent-strong); }
-        .historia-imagen {
-            flex: none;
-            text-align: center;
-            background: var(--surface-soft);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid var(--border-soft);
-            width: min(100%, 720px);
-            margin: 0 auto;
-        }
-        .historia-galeria {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 12px;
-            margin-top: 0;
-            width: min(100%, 720px);
-        }
-        .historia-texto-principal {
-            flex: none;
-            width: 100%;
-            text-align: center;
-        }
-        .historia-toggle {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .historia-galeria-item {
-            border: 1px solid rgba(112, 148, 91, 0.24);
-            border-radius: 14px;
-            padding: 0;
-            overflow: hidden;
-            background: var(--surface-soft);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .historia-galeria-item img {
-            width: 100%;
-            height: 96px;
-            object-fit: cover;
-            display: block;
-        }
-        .historia-galeria-item.activa,
-        .historia-galeria-item:hover {
-            border-color: #7ca35a;
-            transform: translateY(-2px);
-        }
-        .historia-imagen i { font-size: 5rem; color: #7ca35a; animation: bounce 3s infinite; }
-        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        .historia-cifras { display: flex; gap: 30px; margin-top: 25px; flex-wrap: wrap; }
-        .beneficios-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin: 26px 0 8px;
-        }
-        .beneficio-card {
-            background: var(--surface-soft);
-            border: 1px solid var(--border-soft);
-            border-radius: 18px;
-            padding: 18px;
-            text-align: left;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
-        }
-        .beneficio-card h3 {
-            color: var(--accent-strong);
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            margin-bottom: 8px;
-        }
-        .beneficio-card p {
-            color: var(--text-main);
-            font-size: 0.92rem;
-            line-height: 1.6;
-        }
-        .cifra {
-            text-align: center;
-            background: var(--surface-muted);
-            padding: 15px;
-            border-radius: 16px;
-            flex: 1;
-            min-width: 100px;
-            border: 1px solid var(--border-soft);
-        }
-        .cifra-numero { display: block; font-size: 1.8rem; font-weight: bold; color: var(--accent-strong); font-family: 'Poppins', sans-serif; }
-        .cifra-texto { font-size: 0.8rem; color: var(--text-muted); }
-        .noticias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .noticia-card {
-            background: var(--surface-soft);
-            border-radius: 16px;
-            border: 1px solid var(--border-soft);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .noticia-card:hover {
-            transform: translateY(-8px);
-            border-color: #7ca35a;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        .noticia-miniatura {
-            width: 100%;
-            height: 160px;
-            overflow: hidden;
-            background: var(--surface-accent);
-        }
-        .noticia-miniatura img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        .noticia-card:hover .noticia-miniatura img { transform: scale(1.05); }
-        .noticia-body {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 16px;
-            height: 100%;
-        }
-        .noticia-titulo { font-family: 'Poppins', sans-serif; font-size: 1.05rem; color: var(--text-strong); line-height: 1.35; }
-        .noticia-fecha { font-size: 0.75rem; color: var(--accent-strong); text-transform: capitalize; letter-spacing: 0.04em; }
-        .noticia-contenido { color: var(--text-muted); line-height: 1.55; font-size: 0.9rem; flex: 1; }
-        .noticia-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--accent-strong);
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .noticia-modal-meta {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            color: var(--accent-strong);
-            font-size: 0.85rem;
-        }
-        .noticia-modal-contenido {
-            color: var(--text-main);
-            margin-top: 18px;
-            line-height: 1.7;
-            text-align: left;
-            white-space: pre-line;
-        }
-        .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .producto-card {
-            background: var(--surface-soft);
-            border-radius: 16px;
-            text-align: center;
-            padding: 0 !important;
-            border: 1px solid var(--border-soft);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .producto-card:hover { transform: translateY(-8px); border-color: #7ca35a; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .producto-miniatura {
-            width: 100%;
-            height: 160px;
-            overflow: hidden;
-            border-radius: 12px 12px 0 0;
-        }
-        .producto-miniatura img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        .producto-card:hover .producto-miniatura img { transform: scale(1.05); }
-        .producto-detalle { padding: 15px; text-align: left; }
-        .producto-icono { font-size: 3rem; color: #7ca35a; margin-bottom: 15px; }
-        .producto-nombre { font-family: 'Poppins', sans-serif; font-size: 1.1rem !important; color: #1f1713; }
-        .producto-cepa { font-size: 0.8rem; color: var(--accent-strong); margin-top: 5px; }
-        .producto-descripcion { font-size: 0.85rem; color: #2f241d; margin-top: 10px; }
-        .thc-badge { display: inline-block; background: rgba(100, 80, 70, 0.8); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin-top: 12px; color: #e0ecd0; }
-        .btn-mas-info:hover { background: #496535 !important; border-color: #496535 !important; color: #f4f8ef !important; }
-                /* Estilos para calificación con estrellas */
-        .producto-estrellas {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 3px;
-            margin: 8px 0;
-        }
-        .producto-estrellas i {
-            color: #FFD700;
-            font-size: 14px;
-        }
-        .producto-estrellas span {
-            color: #111111;
-            font-size: 12px;
-            margin-left: 5px;
-        }
-        .modal-calificacion-btn {
-            background: transparent;
-            border: 1px solid #7ca35a;
-            color: #111111;
-            padding: 5px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-left: 10px;
-            transition: all 0.2s;
-        }
-        .modal-calificacion-btn:hover {
-            background: #7ca35a;
-            color: #0f190c;
-        }
-        .calificacion-panel {
-            margin-top: 15px;
-            padding: 15px;
-            background: var(--surface-muted);
-            border-radius: 12px;
-            border: 1px solid #7ca35a;
-        }
-        .calificacion-estrellas-interactivas {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .calificacion-estrella {
-            font-size: 30px;
-            color: #555;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .calificacion-estrella:hover,
-        .calificacion-estrella.activa {
-            color: #FFD700;
-            transform: scale(1.1);
-        }
-        .calificacion-promedio-modal {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            margin-left: 10px;
-        }
-        .calificacion-promedio-modal i {
-            color: #FFD700;
-            font-size: 14px;
-        }
-        .btn-reservar-producto:hover { background: #496535 !important; transform: scale(1.02); }
-        .btn-reservar-producto:disabled { opacity: 0.5; cursor: not-allowed; background: #5a7a3a !important; }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            inset: 0;
-            width: 100%;
-            height: 100dvh;
-            padding: 16px;
-            background-color: rgba(0, 0, 0, 0.88);
-            backdrop-filter: blur(5px);
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .modal-content {
-            position: relative;
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            width: min(720px, 100%);
-            max-width: 720px;
-            max-height: calc(100dvh - 32px);
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            text-align: center;
-            padding: 20px;
-            border: 2px solid #7ca35a;
-            box-shadow: 0 20px 50px rgba(44, 62, 47, 0.18);
-        }
-        .modal-imagen { width: 100%; max-height: min(42dvh, 400px); object-fit: cover; border-radius: 16px; margin-bottom: 20px; }
-        .modal-galeria { position: relative; width: 100%; margin-bottom: 20px; }
-        .modal-galeria.horizontal { display: flex; flex-direction: column; gap: 14px; }
-        .modal-galeria.producto-simple { margin-bottom: 20px; }
-        .modal-galeria-frame { position: relative; }
-        .galeria-strip {
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-            padding: 4px 2px 8px;
-            scroll-snap-type: x proximity;
-            scrollbar-width: thin;
-            scrollbar-color: #7ca35a rgba(220, 232, 216, 0.9);
-        }
-        .galeria-strip::-webkit-scrollbar { height: 8px; }
-        .galeria-strip::-webkit-scrollbar-track { background: rgba(220, 232, 216, 0.9); border-radius: 999px; }
-        .galeria-strip::-webkit-scrollbar-thumb { background: #7ca35a; border-radius: 999px; }
-        .galeria-thumb {
-            min-width: 92px;
-            width: 92px;
-            height: 72px;
-            padding: 0;
-            border-radius: 14px;
-            border: 2px solid rgba(124, 163, 90, 0.35);
-            overflow: hidden;
-            background: var(--surface-soft);
-            cursor: pointer;
-            flex-shrink: 0;
-            scroll-snap-align: start;
-            transition: all 0.2s ease;
-        }
-        .galeria-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .galeria-thumb.activa,
-        .galeria-thumb:hover {
-            border-color: #7ca35a;
-            transform: translateY(-2px);
-        }
-        .galeria-flecha {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 1px solid rgba(228, 207, 191, 0.26);
-            background: rgba(32, 34, 38, 0.62);
-            color: #f4e8de;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 2;
-            backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
-        }
-        .galeria-flecha:hover {
-            background: rgba(201, 122, 61, 0.9);
-            color: #22140d;
-            border-color: rgba(201, 122, 61, 0.9);
-        }
-        .galeria-flecha:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-        }
-        .galeria-flecha.izquierda { left: 12px; }
-        .galeria-flecha.derecha { right: 12px; }
-        .placeholder-media {
-            width: 100%;
-            min-height: 160px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(120, 168, 90, 0.26), rgba(92, 140, 70, 0.22));
-            color: var(--text-main);
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-        .galeria-btn {
-            position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.5);
-            color: white; border: none; border-radius: 50%; width: 40px; height: 40px;
-            cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center;
-            transition: background 0.3s; z-index: 10;
-        }
-        .galeria-btn:hover { background: rgba(124, 163, 90, 0.8); }
-        .galeria-prev { left: 10px; }
-        .galeria-next { right: 10px; }
-        .galeria-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
-        .galeria-dot { width: 10px; height: 10px; border-radius: 50%; cursor: pointer; transition: background 0.3s; }
-        .galeria-dot:hover { background: #7ca35a !important; }
-        .modal-titulo { font-family: 'Poppins', sans-serif; font-size: 1.5rem; color: #1f1713; }
-        .modal-thc { display: inline-block; background: #7ca35a; color: #0f190c; padding: 5px 15px; border-radius: 20px; margin-top: 10px; }
-        .cerrar-modal {
-            position: sticky; top: 0; margin-left: auto; display: block; width: fit-content; right: 0;
-            color: var(--text-main); font-size: 35px; cursor: pointer; z-index: 5;
-            background: rgba(255, 255, 255, 0.78); border-radius: 999px; padding: 0 10px;
-        }
-        .cerrar-modal:hover { color: #7ca35a; transform: rotate(90deg); }
-        .actividades-grid { display: flex; flex-direction: column; gap: 15px; }
-        .actividad-item {
-            background: var(--surface-soft); border-radius: 12px; padding: 15px 20px;
-            display: flex; align-items: center; gap: 20px; flex-wrap: wrap; border-right: 3px solid #7ca35a;
-        }
-        .actividad-fecha { background: #7ca35a; color: #0f190c; padding: 8px 16px; border-radius: 12px; font-weight: bold; text-align: center; min-width: 100px; }
-        .actividad-titulo { color: var(--text-strong); font-weight: bold; }
-        .actividad-descripcion { color: var(--text-muted); font-size: 0.85rem; }
-        .form-membresia { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group.full-width { grid-column: span 2; }
-        .form-group label { color: var(--text-main); margin-bottom: 5px; font-size: 0.85rem; }
-        .form-group input, .form-group textarea, .form-group select {
-            background: rgba(44, 47, 52, 0.78); border: 1px solid rgba(228, 207, 191, 0.18);
-            border-radius: 12px; padding: 12px; color: #f4e8de; caret-color: #f4e8de;
-        }
-        .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(244, 232, 222, 0.58); }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(201, 122, 61, 0.18);
-        }
-        .calendario-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .productos-subsection { margin-top: 30px; }
-        .entrega-card {
-            background: var(--surface-soft); border-radius: 16px; padding: 20px;
-            text-align: center; border: 1px solid var(--border-soft);
-        }
-        .entrega-fecha { font-size: 1.5rem; color: var(--text-strong); font-weight: bold; margin: 10px 0; }
-        .estado-reserva { margin-top: 15px; padding: 8px; border-radius: 12px; }
-        .estado-pendiente { background: rgba(155, 106, 108, 0.3); color: #e0b8a0; }
-        .estado-confirmado { background: rgba(100, 140, 75, 0.3); color: #8fb86a; }
-        .opciones-gramos { display: flex; gap: 15px; justify-content: center; margin-top: 15px; }
-        .opcion-gramo {
-            background: rgba(8, 15, 6, 0.8); border: 2px solid #7ca35a; padding: 10px 20px;
-            border-radius: 12px; cursor: pointer; color: #e0ecd0; font-weight: bold;
-        }
-        .opcion-gramo:hover { background: #7ca35a; color: #0f190c; transform: scale(1.05); }
-        .historial-table { width: 100%; border-collapse: collapse; }
-        .historial-table th, .historial-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(112, 148, 91, 0.2); color: var(--text-main); }
-        .historial-table th { color: #7ca35a; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .admin-charts-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .admin-chart-card { background: var(--surface-soft); border-radius: 16px; padding: 14px 16px; min-height: 220px; }
-        .admin-chart-canvas { width: 100%; height: 160px !important; }
-        .manual-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-top: 16px; }
-        .manual-card {
-            background: var(--surface-soft);
-            border: 1px solid var(--border-soft);
-            border-radius: 18px;
-            padding: 18px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-        .manual-card h3 { color: var(--accent-strong); font-family: 'Poppins', sans-serif; font-size: 1.05rem; margin-bottom: 10px; }
-        .manual-card p { color: var(--text-main); line-height: 1.6; margin-bottom: 10px; }
-        .manual-card ul { margin: 0; padding-left: 18px; color: var(--text-main); line-height: 1.65; }
-        .manual-destacado {
-            margin-top: 18px;
-            padding: 16px 18px;
-            border-radius: 16px;
-            background: var(--surface-accent);
-            border: 1px solid var(--border-soft);
-            color: var(--text-main);
-        }
-        .card { background: var(--surface-soft); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid var(--border-soft); }
-        .card-number { font-size: 2.5rem; font-weight: bold; color: var(--accent-strong); }
-        .card-label { color: var(--text-main); font-size: 0.9rem; margin-top: 8px; }
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .tabla-datos { width: 100%; border-collapse: collapse; }
-        .tabla-datos th, .tabla-datos td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(112, 148, 91, 0.2); color: var(--text-main); }
-        .tabla-datos th { color: #7ca35a; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
-        .badge-activo { background: #7ca35a; color: #0f190c; }
-        .badge-peligro { background: #9B6A6C; color: white; }
-        .btn-submit {
-            background: #7ca35a; color: #0f190c; border: none; padding: 10px 20px;
-            border-radius: 50px; cursor: pointer; font-weight: bold;
-        }
-        .btn-submit:hover { background: #8fb86a; transform: scale(1.02); }
-        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
-        .actividad-info { flex: 1; min-width: 220px; }
-        .modal-cepa, .modal-descripcion { color: #2f241d; margin-top: 10px; line-height: 1.5; }
-        .modal-pedido-box {
-            margin-top: 20px; background: var(--surface-muted); border: 1px solid var(--border-soft);
-            border-radius: 16px; padding: 16px; text-align: left;
-        }
-        .modal-pedido-titulo { color: var(--accent-strong); font-family: 'Poppins', sans-serif; font-size: 1rem; margin-bottom: 12px; }
-        .modal-pedido-info { color: var(--text-main); font-size: 0.9rem; margin-bottom: 10px; }
-        .modal-pedido-restante { color: var(--text-strong); font-size: 0.9rem; margin-bottom: 14px; }
-        .opciones-pedido { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-        .opcion-pedido {
-            background: var(--surface-soft); border: 2px solid rgba(124, 163, 90, 0.5);
-            color: var(--text-strong); padding: 10px 14px; border-radius: 12px; cursor: pointer;
-            font-weight: bold; transition: all 0.2s ease;
-        }
-        .opcion-pedido:hover { border-color: #7ca35a; transform: translateY(-2px); }
-        .opcion-pedido.activa { background: #7ca35a; color: #0f190c; border-color: #7ca35a; }
-        .btn-pedido-modal {
-            width: 100%; background: #7ca35a; color: #0f190c; border: none; padding: 12px 18px;
-            border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: all 0.2s ease;
-        }
-        .btn-pedido-modal:hover { background: #8fb86a; transform: scale(1.02); }
-        .btn-pedido-modal:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-        .modal-pedido-alerta { margin-top: 10px; font-size: 0.85rem; color: #e0b8a0; }
-        .logo p { color: var(--text-main); margin-top: 4px; }
-        .section p { max-width: 75ch; }
-        .btn-editar, .btn-eliminar, .btn-aprobar, .btn-rechazar {
-            padding: 5px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 0.8rem; margin: 0 3px;
-        }
-        .btn-aprobar { background: #7ca35a; color: #0f190c; }
-        .btn-rechazar { background: #9B6A6C; color: white; }
-        .btn-eliminar { background: #9B6A6C; color: white; }
-        .btn-editar { background: #5E4B3C; color: #e0ecd0; }
-        .loading { text-align: center; color: var(--text-main); padding: 40px; }
-        .mensaje-flotante {
-            position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 12px;
-            background: rgba(255, 255, 255, 0.82); color: var(--text-strong); z-index: 1000; animation: slideIn 0.3s ease;
-        }
-        .mensaje-exito { border-left: 4px solid #7ca35a; }
-        .mensaje-error { border-left: 4px solid #9B6A6C; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .footer { text-align: center; padding: 20px; color: var(--accent-strong); font-size: 0.8rem; }
-        .mensajes-container {
-            max-height: 400px; overflow-y: auto; margin-bottom: 20px;
-            border: 1px solid var(--border-soft); border-radius: 16px; padding: 15px;
-        }
-        .mensaje-item {
-            background: var(--surface-muted); border-radius: 12px; padding: 12px; margin-bottom: 10px;
-            border-left: 3px solid #7ca35a;
-        }
-        .mensaje-fecha { font-size: 0.7rem; color: #7ca35a; margin-bottom: 5px; }
-        .mensaje-destino { font-size: 0.75rem; color: var(--accent-strong); margin-bottom: 5px; }
-        .mensaje-texto { color: var(--text-main); }
-        .nav-admin-bar, .nav-maestro-bar {
-            background: var(--surface-soft); backdrop-filter: blur(12px); border-radius: 60px;
-            padding: 12px 20px; margin-bottom: 30px; display: flex; gap: 12px; flex-wrap: wrap;
-            justify-content: center; border: 1px solid var(--border-soft); box-shadow: 0 4px 15px rgba(47, 64, 50, 0.08);
-        }
-        .nav-admin-btn, .nav-maestro-btn {
-            background: var(--surface-soft); border: none; padding: 12px 28px; border-radius: 50px;
-            color: var(--text-strong); cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 1rem; font-weight: 500; display: inline-flex; align-items: center; gap: 10px;
-            backdrop-filter: blur(4px); border: 1px solid var(--border-soft); box-shadow: 0 2px 5px rgba(47, 64, 50, 0.08);
-        }
-        .nav-admin-btn i, .nav-maestro-btn i { font-size: 1.2rem; transition: transform 0.2s ease; }
-        .nav-admin-btn:hover, .nav-maestro-btn:hover {
-            background: #7ca35a; color: #0f190c; transform: translateY(-3px);
-            border-color: #8fb86a; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-        }
-        .nav-admin-btn:hover i, .nav-maestro-btn:hover i { transform: scale(1.1); }
-        .nav-admin-btn.active, .nav-maestro-btn.active {
-            background: #7ca35a; color: #0f190c; border-color: #8fb86a; box-shadow: 0 4px 12px rgba(124, 163, 90, 0.4);
-        }
-        .edit-modal {
-            display: none; position: fixed; z-index: 2100; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center;
-        }
-        .edit-modal-content {
-            background: rgba(255, 255, 255, 0.72); border-radius: 24px; max-width: 600px; width: 90%;
-            padding: 25px; border: 2px solid #7ca35a;
-        }
-        @media (max-width: 768px) {
-            body { background-attachment: scroll; }
-            .container {
-                padding:
-                    calc(18px + env(safe-area-inset-top))
-                    14px
-                    28px
-                    14px;
-            }
-            .header {
-                position: relative;
-                top: auto;
-                left: auto;
-                transform: none;
-                width: calc(100% - 4px);
-                padding: 12px 14px;
-                flex-direction: column;
-                align-items: stretch;
-                margin: 0 auto 16px;
-                border-radius: 26px;
-                background: rgba(83, 51, 34, 0.86);
-                box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
-            }
-            .header-left, .header-right {
-                width: 100%;
-                justify-content: space-between;
-                flex-wrap: wrap;
-                gap: 12px;
-            }
-            .header-nav {
-                position: static;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-                padding: 10px;
-                border-radius: 28px;
-                background: rgba(44, 28, 21, 0.9);
-                border: 1px solid rgba(236, 208, 186, 0.14);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-                backdrop-filter: blur(18px);
-            }
-            .header-nav .nav-btn {
-                flex: 1 1 calc(25% - 8px);
-                text-align: center;
-                padding: 12px 8px;
-                min-height: 92px;
-                border-radius: 18px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 10px;
-                white-space: normal;
-                line-height: 1.05;
-                font-size: 0.84rem;
-                font-weight: 700;
-                border: 2px solid #000000;
-                background: rgba(255, 255, 255, 0.06);
-                box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
-            }
-            .header-nav .nav-btn i {
-                font-size: 1.9rem;
-                line-height: 1;
-            }
-            .header-nav .nav-btn span {
-                display: block;
-                width: 100%;
-            }
-            .nav-session-btn {
-                flex: 1 1 100% !important;
-                min-height: 56px;
-                border-radius: 18px;
-                flex-direction: row;
-                gap: 8px;
-                font-size: 0.82rem;
-                padding: 10px 14px;
-            }
-            .logo h1 { font-size: 1.45rem; }
-            .logo-mark { width: 34px; height: 34px; }
-            .logo p {
-                font-size: 0.78rem;
-                color: var(--text-muted);
-                line-height: 1.35;
-                max-width: 24ch;
-            }
-            .header-right {
-                display: none;
-            }
-            .user-info {
-                width: auto;
-                min-width: 0;
-                justify-content: flex-end;
-                padding: 8px 10px;
-                gap: 8px;
-                border-radius: 18px;
-            }
-            .user-info span {
-                max-width: 84px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-            .btn-inicio, .btn-cerrar {
-                width: auto;
-                min-width: 44px;
-                padding: 10px 12px;
-                border-radius: 14px;
-            }
-            .btn-inicio { font-size: 0; }
-            .btn-cerrar { font-size: 0; }
-            .btn-inicio i, .btn-cerrar i {
-                margin: 0;
-                font-size: 1rem;
-            }
-            .section {
-                padding: 22px 18px;
-                border-radius: 26px;
-                min-height: calc(100dvh - 210px);
-            }
-            .section-title { font-size: 1.45rem; margin-bottom: 18px; }
-            .productos-subsection { margin-top: 22px; }
-            .calendario-grid { grid-template-columns: 1fr; gap: 14px; }
-            .entrega-card { padding: 16px; border-radius: 14px; }
-            .entrega-fecha { font-size: 1.2rem; margin: 8px 0; }
-            .estado-reserva { margin-top: 12px; padding: 7px 10px; font-size: 0.9rem; }
-            .opciones-gramos { gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-            .opcion-gramo { padding: 9px 14px; font-size: 0.92rem; }
-            .historial-table { font-size: 0.9rem; }
-            .historial-table th, .historial-table td { padding: 10px 8px; }
-            #historialContainer { overflow-x: auto; }
-            .historial-table { min-width: 420px; }
-            .modal {
-                padding: 0;
-                align-items: flex-end;
-            }
-            .modal-content {
-                width: 100%;
-                max-width: 100%;
-                max-height: 88dvh;
-                margin-top: auto;
-                border-radius: 26px 26px 0 0;
-                padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
-            }
-            .modal-imagen { max-height: 32dvh; border-radius: 14px; }
-            .modal-titulo { font-size: 1.25rem; }
-            .opciones-pedido { gap: 8px; }
-            .opcion-pedido { flex: 1 1 calc(50% - 8px); min-width: 120px; }
-            .nav-admin-bar, .nav-maestro-bar { border-radius: 28px; padding: 10px 15px; }
-            .nav-admin-btn, .nav-maestro-btn { padding: 8px 18px; font-size: 0.85rem; }
-            .admin-charts-row { grid-template-columns: 1fr; }
-            .admin-chart-card { min-height: 200px; }
-        }
-        @media (max-width: 520px) {
-            .section { padding: 18px 14px; border-radius: 20px; }
-            .section-title { font-size: 1.2rem; gap: 8px; }
-            .header { padding: 10px 12px; border-radius: 22px; }
-            .header-nav { gap: 8px; }
-            .header-nav .nav-btn {
-                flex-basis: calc(25% - 6px);
-            }
-            .nav-btn {
-                padding: 10px 6px;
-                font-size: 0.76rem;
-                min-height: 86px;
-                gap: 8px;
-            }
-            .nav-btn i {
-                font-size: 1.75rem;
-            }
-            .nav-session-btn {
-                flex-basis: 100% !important;
-                min-height: 48px;
-                font-size: 0.78rem;
-                padding: 10px 12px;
-            }
-            .user-info {
-                padding: 8px 10px;
-                gap: 8px;
-            }
-            .productos-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-            .producto-miniatura { height: 132px; }
-            .producto-detalle { padding: 11px 10px 10px; }
-            .producto-nombre { font-size: 0.95rem !important; line-height: 1.2; }
-            .producto-estrellas { margin: 6px 0 2px; }
-            .producto-estrellas i { font-size: 12px; }
-            .producto-estrellas span { font-size: 11px; }
-            .btn-mas-info, .btn-reservar-producto { font-size: 0.82rem !important; }
-            .btn-mas-info { padding: 7px 10px !important; margin-bottom: 8px !important; }
-            .btn-reservar-producto { padding: 8px 10px !important; }
-            .productos-subsection { margin-top: 18px; }
-            .entrega-card { padding: 13px; border-radius: 12px; }
-            .entrega-titulo { font-size: 0.92rem; }
-            .entrega-fecha { font-size: 1rem; line-height: 1.25; }
-            .estado-reserva { font-size: 0.82rem; padding: 7px 8px; }
-            .opciones-gramos { gap: 8px; }
-            .opcion-gramo { padding: 8px 12px; font-size: 0.85rem; border-radius: 10px; }
-            .historial-table { min-width: 360px; font-size: 0.82rem; }
-            .historial-table th, .historial-table td { padding: 8px 6px; }
-            .nav-btn i { font-size: 1rem; }
-            .btn-submit { width: 100%; }
-        }
-        @media (max-width: 640px) {
-            .galeria-flecha {
-                width: 38px;
-                height: 38px;
-            }
-            .galeria-flecha.izquierda { left: 8px; }
-            .galeria-flecha.derecha { right: 8px; }
-        }
-
-        /* GEENERICO palette overrides */
-        .btn-inicio:hover, .btn-cerrar:hover,
-        .nav-btn:hover, .nav-btn.active,
-        .historia-galeria-item.activa, .historia-galeria-item:hover,
-        .noticia-card:hover,
-        .producto-card:hover,
-        .galeria-dot:hover,
-        .opcion-gramo:hover,
-        .opcion-pedido.activa,
-        .opcion-pedido:hover,
-        .btn-aprobar,
-        .badge-activo,
-        .btn-submit,
-        .btn-pedido-modal,
-        .modal-thc,
-        .actividad-fecha,
-        .nav-admin-btn.active, .nav-maestro-btn.active,
-        .nav-admin-btn:hover, .nav-maestro-btn:hover {
-            background: var(--accent) !important;
-            border-color: var(--accent) !important;
-            color: #22140d !important;
-        }
-        .btn-submit:hover,
-        .btn-pedido-modal:hover,
-        .nav-admin-btn.active, .nav-maestro-btn.active,
-        .nav-admin-btn:hover, .nav-maestro-btn:hover {
-            background: var(--accent-soft) !important;
-            border-color: var(--accent-soft) !important;
-        }
-        .section-title,
-        .logo h1,
-        .historia-texto strong,
-        .cifra-numero,
-        .noticia-fecha,
-        .noticia-cta,
-        .producto-icono,
-        .historial-table th,
-        .tabla-datos th,
-        .mensaje-fecha,
-        .user-info span,
-        .cerrar-modal:hover,
-        .historia-imagen i {
-            color: var(--accent-strong) !important;
-        }
-        .section-title,
-        .historial-table th, .historial-table td,
-        .tabla-datos th, .tabla-datos td,
-        .historia-galeria-item,
-        .nav-admin-bar, .nav-maestro-bar,
-        .calificacion-panel,
-        .galeria-strip::-webkit-scrollbar-thumb {
-            border-color: var(--accent) !important;
-        }
-        .section-title,
-        .historial-table th, .historial-table td,
-        .tabla-datos th, .tabla-datos td {
-            border-bottom-color: rgba(159, 79, 39, 0.22) !important;
-        }
-        .btn-mas-info,
-        .btn-reservar-producto {
-            background: var(--accent-deep) !important;
-            border-color: var(--accent-deep) !important;
-            color: #fff7f0 !important;
-        }
-        .btn-mas-info:hover,
-        .btn-reservar-producto:hover {
-            background: var(--accent-strong) !important;
-            border-color: var(--accent-strong) !important;
-        }
-        .modal-calificacion-btn,
-        .producto-estrellas span,
-        #forgotPasswordLink,
-        #backToLoginFromForgot {
-            color: var(--accent-strong) !important;
-        }
-        .estado-confirmado,
-        #registerMessage,
-        #forgotMessage {
-            background: rgba(201, 122, 61, 0.16) !important;
-            color: var(--accent-strong) !important;
-        }
-        #tabRegister {
-            background: rgba(159, 79, 39, 0.18) !important;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <div class="header-left">
+        <div class="header-main app-home-button" data-section="inicio" role="button" tabindex="0" aria-label="Volver al inicio">
+            <span id="headerSessionName" class="header-session-name" aria-live="polite"></span>
             <div class="logo">
-                <h1><img src="assets/images/logo.png" alt="Logo GEENERICO" class="logo-mark" onerror="this.style.display='none'"> GEENERICO</h1>
-                <p>Club cannábico privado · Selección curada · Experiencia cuidada</p>
+                <h1><img src="assets/images/logo.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'"> Generic WEB</h1>
+                <p>Area privada de socios · Pedidos · Entregas</p>
             </div>
-            <div class="header-nav" id="navContainer">
-                <button class="nav-btn active" data-section="inicio"><i class="fas fa-house"></i><span>Inicio</span></button>
-                <button class="nav-btn" data-section="productos"><i class="fas fa-leaf"></i><span>Variedades</span></button>
-                <button class="nav-btn admin-only" data-section="admin" style="display: none;"><i class="fas fa-sliders"></i><span>Admin</span></button>
-                <button class="nav-btn maestro-only" data-section="maestro" style="display: none;"><i class="fas fa-crown"></i><span>Maestro</span></button>
-                <button id="mobileBtnLogin" class="nav-btn nav-session-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i><span>Iniciar Sesión</span></button>
-                <button id="mobileBtnLogout" class="nav-btn nav-session-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i><span>Cerrar Sesión</span></button>
+            <div class="app-session-actions">
+                <button id="btnLogin" class="btn-inicio nav-session-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesion</button>
+                <button id="userName" class="nav-user-name">Invitado</button>
+                <div id="userMenuDropdown" class="user-menu-dropdown" hidden>
+                    <button id="btnLogout" class="btn-cerrar nav-session-btn user-menu-item" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</button>
+                    <button class="nav-btn nav-audio-btn user-menu-item" id="btnAudioToggle" type="button" aria-label="Silenciar musica" title="Silenciar musica">
+                        <i class="fas fa-volume-high"></i>
+                        <span>Sonido</span>
+                    </button>
+                </div>
+            </div>
+            <div class="mobile-hidden-dock" aria-hidden="true">
+                <button class="dock-btn" data-section="inicio" id="dockBtnInicio"><i class="fas fa-house"></i><span>Inicio</span></button>
+                <button class="dock-btn" data-section="productos" id="dockBtnProductos"><i class="fas fa-leaf"></i><span>Productos</span></button>
+                <button class="dock-btn auth-only" data-section="actividades" id="dockBtnActividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
+                <button class="dock-btn admin-only" data-section="admin" id="dockBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
+                <button class="dock-btn maestro-only" data-section="maestro" id="dockBtnMaestro" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
+                <button id="dockBtnLogin" class="dock-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i><span>Ingresar</span></button>
             </div>
         </div>
-        <div class="header-right">
-            <div class="user-info" id="userInfo">
-                <i class="fas fa-user" id="userIcon"></i> <span id="userName">Invitado</span>
-                <button id="btnLogin" class="btn-inicio" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-                <button id="btnLogout" class="btn-cerrar" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-            </div>
+        <div class="header-nav" id="navContainer">
+            <button class="nav-btn app-main-btn" data-section="productos"><i class="fas fa-leaf"></i><span>CATALOGO</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-section="carrito" style="display: none;"><i class="fas fa-cart-shopping"></i><span>CARRITO</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-smart-section="actividades" style="display: none;"><i class="fas fa-bell"></i><span>ACTIVIDADES</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-section="menu" style="display: none;"><i class="fas fa-bars"></i><span>MENU</span></button>
         </div>
     </div>
+
+    <audio id="backgroundAudio" loop preload="auto">
+        <source src="assets/sound/cortina.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- INICIO -->
     <div id="inicio" class="section">
         <div class="historia-container">
             <h2 class="section-title">
-                <i class="fas fa-book-open"></i> Nuestro Club
+                <i class="fas fa-book-open"></i> Nuestra Historia
             </h2>
+            <div class="club-intro-panel" id="portadaInstitucional">
+                <span class="dashboard-eyebrow" id="portadaTitulo">Club privado para socios</span>
+                <h2 id="portadaSubtitulo">Pedidos mensuales, entregas claras y novedades en un solo lugar.</h2>
+                <p id="portadaDescripcion">Nombre del Club centraliza la informacion institucional, las actividades, los pedidos y la comunicacion interna para que cada socio tenga una experiencia simple y ordenada.</p>
+                <div class="club-intro-badges" aria-label="Resumen del servicio">
+                    <span><i class="fas fa-leaf"></i> Catalogo configurable</span>
+                    <span><i class="fas fa-calendar-check"></i> Pedidos y entregas configurables</span>
+                    <span><i class="fas fa-bell"></i> Avisos y entregas organizadas</span>
+                    <span><i class="fas fa-pen-to-square"></i> Posibilidad de modificar o eliminar pedidos según disponibilidad y estado</span>
+                    <button type="button" class="club-intro-badge-action" data-install-app><i class="fas fa-mobile-screen-button"></i> Instalar generico_WEB en el dispositivo</button>
+                </div>
+            </div>
             <div class="historia-content">
-                <!-- VIDEO CENTRADO ARRIBA -->
+                <!-- IMAGEN CENTRADA ARRIBA -->
                 <div class="historia-imagen" id="historiaMediaPrincipal">
-                    <div class="placeholder-media" style="min-height: 300px; border-radius: 16px;">Sitio en construcción</div>
+                    <img src="assets/images/home_inst.png" alt="generico_WEB" class="historia-media-principal">
                 </div>
                 <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
                 
                 <!-- TEXTO DEBAJO -->
-                <div class="historia-texto historia-texto-principal">
-                    <p style="text-align: center;"><strong>GEENERICO</strong> nace con una premisa clara: ofrecer una experiencia de club más ordenada, clara y confiable. Cada sección fue pensada para comunicar mejor, dar tranquilidad en el acceso y sostener una identidad cuidada en cada punto de contacto.</p>
-                    
-                    <div id="historia-adicional" style="display: none;">
-    <p style="text-align: center;">El foco está puesto en una selección curada, una presentación prolija y una comunicación simple para socios. Buscamos que la experiencia se entienda rápido: catálogo legible, novedades útiles y una operación diaria con menos fricción.</p>
-    <p style="text-align: center;">GEENERICO está pensado como un club moderno: más claro para quien ingresa, más consistente para quien administra y más sólido para quien evalúa la propuesta como marca o proyecto comercial.</p>
-</div>
-                    
+                <div class="historia-texto historia-texto-principal" data-institutional-block="standby" hidden aria-hidden="true">
+                    <div id="historiaTituloPrincipal" class="modal-titulo" style="margin-bottom: 14px;">Nombre del Club</div>
+                    <div id="historiaTextoPrincipal" class="historia-texto-contenido">Contenido institucional del club.</div>
+                    <div id="historiaTextoAdicional" class="historia-texto-contenido" hidden>Espacio preparado para cargar la historia, los servicios y la informacion publica del club.</div>
                     <div class="historia-toggle">
-                        <button id="btnLeerMasHistoria" onclick="
-                            var h = document.getElementById('historia-adicional');
-                            var b = this;
-                            if (h.style.display === 'none') {
-                                h.style.display = 'block';
-                                b.innerHTML = '<i class=\'fas fa-chevron-up\' style=\'margin-right: 8px;\'></i> Leer menos';
-                            } else {
-                                h.style.display = 'none';
-                                b.innerHTML = '<i class=\'fas fa-chevron-down\' style=\'margin-right: 8px;\'></i> Leer más';
-                            }
-                        " style="
-                            display: inline-block;
-                            background: transparent;
-                            border: 2px solid #7ca35a;
-                            color: #7ca35a;
-                            padding: 10px 30px;
-                            border-radius: 50px;
-                            cursor: pointer;
-                            font-size: 1rem;
-                            font-weight: 600;
-                            transition: all 0.3s ease;
-                            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-                        " onmouseover="
-                            this.style.background = '#7ca35a';
-                            this.style.color = '#0f190c';
-                            this.style.transform = 'translateY(-2px)';
-                        " onmouseout="
-                            this.style.background = 'transparent';
-                            this.style.color = '#7ca35a';
-                            this.style.transform = 'translateY(0)';
-                        ">
-                            <i class="fas fa-chevron-down" style="margin-right: 8px;"></i> Leer más
+                        <button type="button" id="btnLeerMasHistoria" class="btn-leer-mas">
+                            <i class="fas fa-chevron-down"></i> Mostrar más
                         </button>
                     </div>
                     
-                    <div class="historia-cifras">
-                        <div class="cifra"><span class="cifra-numero" id="cifra-socios">+250</span><span class="cifra-texto">Socios con acceso</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-cepas">6</span><span class="cifra-texto">Selecciones activas</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-anios">4</span><span class="cifra-texto">Etapas de evolución</span></div>
+                <div class="historia-cifras">
+                        <div class="cifra"><span class="cifra-numero" id="cifra-socios">0</span><span class="cifra-texto">Socios activos</span></div>
+                        <div class="cifra"><span class="cifra-numero" id="cifra-cepas">0</span><span class="cifra-texto">Items de catalogo</span></div>
+                        <div class="cifra"><span class="cifra-numero" id="cifra-anios">0</span><span class="cifra-texto">Anios de actividad</span></div>
                     </div>
                 </div>
+                <div id="socioDashboard" class="socio-dashboard auth-only" style="display: none;"></div>
             </div>
         </div>
-        <div class="beneficios-grid">
-            <article class="beneficio-card">
-                <h3>Catálogo Enfocado</h3>
-                <p>Una selección breve y bien presentada para que cada variedad tenga lugar, contexto y mejor percepción de valor.</p>
-            </article>
-            <article class="beneficio-card">
-                <h3>Experiencia Clara</h3>
-                <p>Desde el acceso hasta cada ficha, todo busca transmitir orden, confianza y una navegación fácil de entender.</p>
-            </article>
-            <article class="beneficio-card">
-                <h3>Gestión Comercial</h3>
-                <p>El sistema acompaña al club para publicar contenido, mantener el catálogo al día y comunicar novedades sin depender de terceros.</p>
-            </article>
-        </div>
-        <h2 class="section-title" style="margin-top: 30px;">
-            <i class="fas fa-newspaper"></i> Novedades
-        </h2>
-        <p class="section-lead">Comunicados, lanzamientos y actualizaciones pensadas para mantener al club activo, visible y con una comunicación más ordenada.</p>
-        <div id="noticias-container" class="noticias-grid">
-            <div class="loading">Cargando noticias...</div>
-        </div>
-        <h2 class="section-title" style="margin-top: 30px;">
-            <i class="fas fa-calendar-alt"></i> Actividades
-        </h2>
-        <p class="section-lead">Espacios para anunciar encuentros, acciones especiales, sorteos y movimientos del club con una lectura rápida y directa.</p>
-        <div id="actividades-container" class="actividades-grid">
-            <div class="loading">Cargando actividades...</div>
+    </div>
+
+    <!-- ACTIVIDADES -->
+    <div id="actividades" class="section" style="display: none;">
+        <div id="genericoNews" class="generico-news-section">
+            <h2 class="section-title">
+                <i class="fas fa-bell"></i> Agenda y pedidos
+            </h2>
+            <div class="productos-acordeon actividades-acordeon">
+                <div class="productos-columna auth-only" style="display: none;">
+                    <h3 class="productos-columna-titulo">
+                        <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-calendario" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-calendar-check"></i> Calendario de entregas</span>
+                            <span class="productos-toggle-descripcion">Próximas fechas de retiro</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div class="productos-panel auth-only" data-tipo-cultivo="actividades-calendario" style="display: none;" hidden>
+                    <div id="reservasActividadCalendar" class="reservas-activity-calendar">
+                        <div class="loading">Cargando calendario...</div>
+                    </div>
+                </div>
+
+                <div class="productos-columna">
+                    <h3 class="productos-columna-titulo">
+                        <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-novedades" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-newspaper"></i> Novedades</span>
+                            <span class="productos-toggle-descripcion">Comunicados recientes del club</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div class="productos-panel" data-tipo-cultivo="actividades-novedades" hidden>
+                    <div id="noticias-container" class="noticias-grid">
+                        <div class="loading">Cargando noticias...</div>
+                    </div>
+                </div>
+
+                <div class="productos-columna auth-only" style="display: none;">
+                    <h3 class="productos-columna-titulo">
+                        <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-cuenta" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-user-lock"></i> Mi cuenta</span>
+                            <span class="productos-toggle-descripcion">Cambiar contraseña</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div class="productos-panel auth-only" data-tipo-cultivo="actividades-cuenta" style="display: none;" hidden>
+                    <div id="miCuentaPanel" class="socio-dashboard">
+                        <h3><i class="fas fa-user-lock"></i> Mi cuenta</h3>
+                        <p style="color: var(--text-muted); margin: 6px 0 16px; line-height: 1.5;">Actualizá tu contraseña usando tu clave actual para confirmar la operación.</p>
+                        <form id="formCambiarPassword" style="max-width: 420px;">
+                            <div class="form-group">
+                                <label>Contraseña actual *</label>
+                                <input type="password" id="passwordActual" autocomplete="current-password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nueva contraseña *</label>
+                                <input type="password" id="passwordNueva" autocomplete="new-password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Repetir nueva contraseña *</label>
+                                <input type="password" id="passwordNuevaConfirmar" autocomplete="new-password" required>
+                            </div>
+                            <button type="submit" id="btnCambiarPassword" class="btn-submit"><i class="fas fa-key"></i> Actualizar contraseña</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="productos-columna auth-only" style="display: none;">
+                    <h3 class="productos-columna-titulo">
+                        <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-manual" aria-expanded="false">
+                            <span class="productos-toggle-titulo"><i class="fas fa-circle-question"></i> Manual</span>
+                            <span class="productos-toggle-descripcion">Guía rápida para socios</span>
+                            <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div class="productos-panel auth-only" data-tipo-cultivo="actividades-manual" style="display: none;" hidden>
+                    <div class="manual-grid">
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-mobile-screen-button"></i> Instalar en dispositivo</h3>
+                            <p>Android: abrí la web en Chrome y tocá Instalar app. iPhone/iPad: abrí Safari, tocá Compartir y elegí Agregar a pantalla de inicio.</p>
+                            <p><button type="button" class="manual-install-link" data-install-app>Instalar</button></p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-leaf"></i> Pedir variedades</h3>
+                            <p>Entrá a Variedades, abrí la ficha, elegí 20g o 40g y confirmá el pedido. El cupo mensual aplica solo a variedades.</p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-box"></i> Pedir artículos</h3>
+                            <p>Los artículos se piden por unidad y se entregan junto a la mensu. No descuentan cupo mensual de variedades.</p>
+                        </article>
+                        <article class="manual-bloque">
+                            <h3><i class="fas fa-cart-shopping"></i> Carrito y entregas</h3>
+                            <p>Tocá tu nombre de usuario para ver el carrito. En Actividades podés revisar el calendario y el estado de tus pedidos.</p>
+                        </article>
+                    </div>
+                </div>
+                <div id="passwordTemporalGate" class="password-temporal-card auth-only" hidden>
+                    <div class="password-temporal-copy">
+                        <span class="metric-label">Seguridad de acceso</span>
+                        <strong>Debés cambiar tu contraseña temporal para continuar.</strong>
+                        <small>Elegí una contraseña propia. El correo no forma parte del flujo del socio.</small>
+                    </div>
+                    <form id="formPasswordTemporal" class="password-temporal-form">
+                        <div class="form-group">
+                            <label>Nueva contraseña *</label>
+                            <input type="password" id="passwordTemporalNueva" autocomplete="new-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Repetir nueva contraseña *</label>
+                            <input type="password" id="passwordTemporalConfirmar" autocomplete="new-password" required>
+                        </div>
+                        <button type="submit" id="btnPasswordTemporal" class="btn-submit"><i class="fas fa-key"></i> Cambiar contraseña</button>
+                    </form>
+                </div>
+            </div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-listado" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-calendar-alt"></i> Actividades</span>
+                        <span class="productos-toggle-descripcion">Encuentros, regalos y eventos</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="actividades-listado" hidden>
+                <div id="actividades-container" class="actividades-grid">
+                    <div class="loading">Cargando actividades...</div>
+                </div>
+            </div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-sorteos" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-trophy"></i> Sorteos</span>
+                        <span class="productos-toggle-descripcion">Sorteos y regalos publicados</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="actividades-sorteos" hidden>
+                <div class="empty-state"><i class="fas fa-trophy"></i><strong>Sorteos</strong><span>Los sorteos cargados por administracion aparecen junto a las actividades vigentes.</span></div>
+            </div>
         </div>
     </div>
 
     <!-- PRODUCTOS -->
     <div id="productos" class="section" style="display: none;">
-        <h2 class="section-title"><i class="fas fa-leaf"></i> Catálogo</h2>
-        <p class="section-lead"><strong>Una selección breve, visual y bien explicada.</strong> La idea no es mostrar de más, sino presentar mejor cada variedad y facilitar la consulta para socios.</p>
+        <h2 class="section-title"><i class="fas fa-leaf"></i> Catalogo</h2>
         <div id="productos-container" class="productos-grid"><div class="loading">Cargando productos...</div></div>
-        <div id="productosProximasEntregas" class="productos-subsection">
-            <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Próximos Retiros</h2>
-            <p class="section-lead">Fechas visibles y ordenadas para que cada socio entienda rápido cuándo puede confirmar o retirar.</p>
-            <div id="calendarioProductos" class="calendario-grid"><div class="loading">Cargando fechas...</div></div>
-        </div>
-        <div id="productosMisReservas" class="productos-subsection" style="display: none;">
-            <h2 class="section-title"><i class="fas fa-calendar-check"></i> Mis Reservas</h2>
-            <div id="calendarioContainer" class="calendario-grid"><div class="loading">Cargando fechas...</div></div>
-            <h2 class="section-title" style="margin-top: 30px;"><i class="fas fa-history"></i> Historial de Retiros</h2>
-            <div id="historialContainer"><div class="loading">Cargando historial...</div></div>
+    </div>
+
+    <!-- CARRITO -->
+    <div id="carrito" class="section auth-only" style="display: none;">
+        <div id="carritoPantallaBody"><div class="loading">Cargando carrito...</div></div>
+    </div>
+
+    <!-- MENU -->
+    <div id="menu" class="section auth-only" style="display: none;">
+        <h2 class="section-title"><i class="fas fa-bars"></i> Menu</h2>
+        <div class="productos-acordeon actividades-acordeon menu-acordeon">
+            <div id="menuManualSlot"></div>
+            <div id="menuCuentaSlot"></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="menu-telegram" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fab fa-telegram"></i> Activar Telegram</span>
+                        <span class="productos-toggle-descripcion">Avisos y verificacion de seguridad</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="menu-telegram" hidden>
+                <div id="telegramLinkPanel" class="telegram-link-panel"></div>
+            </div>
         </div>
     </div>
     
     <!-- LOGIN -->
     <div id="login" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-lock"></i> Acceso Socios</h2>
-        <p class="section-lead">Acceso simple para socios registrados, administradores y responsables del club. Todo el circuito está pensado para resolver ingreso, recuperación y gestión desde un mismo lugar.</p>
         <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(100,140,75,0.3); padding-bottom: 10px;">
-            <button id="tabLogin" class="btn-submit" style="background: #7ca35a;">🔐 Iniciar Sesión</button>
-            <button id="tabRegister" class="btn-submit" style="background: rgba(100,140,75,0.3);">📝 Registrarse</button>
+            <button id="tabLogin" class="btn-submit" style="background: #7ca35a;"><i class="fas fa-lock"></i> Iniciar Sesión</button>
+            <button id="tabRegister" class="btn-submit" style="background: rgba(100,140,75,0.3);" hidden aria-hidden="true"><i class="fas fa-user-plus"></i> Registrarse</button>
         </div>
         <div id="panelLogin">
-            <p style="color: #c8d8b5; margin-bottom: 20px;">Ingresá con tu email y contraseña para acceder a tu espacio, revisar el catálogo y gestionar tus retiros.</p>
+            <p style="color: var(--text-main); margin-bottom: 20px;">Ingresá con tu teléfono y contraseña.</p>
             <form id="formLoginPassword" style="max-width: 400px;">
-                <div class="form-group"><label>Email *</label><input type="email" id="loginEmailPassword" required></div>
+                <div class="form-group"><label>Teléfono *</label><input type="tel" id="loginTelefonoPassword" placeholder="092456838" autocomplete="tel" required></div>
                 <div class="form-group"><label>Contraseña *</label><input type="password" id="loginPassword" required></div>
+                <label class="password-toggle">
+                    <input type="checkbox" id="mostrarLoginPassword">
+                    <span>Mostrar contraseña</span>
+                </label>
                 <button type="submit" class="btn-submit"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-                <p style="margin-top: 15px; font-size: 0.85rem;"><a href="#" id="forgotPasswordLink" style="color: #7ca35a;">¿Olvidaste tu contraseña?</a></p>
+                <p class="login-admin-help">¿Necesitás una nueva clave? Solicitá una nueva clave temporal al administrador del club.</p>
             </form>
         </div>
-        <div id="panelRegister" style="display: none;">
-            <p style="color: #c8d8b5; margin-bottom: 20px;">Si ya formás parte del club, ingresá tu email para activar tu acceso y definir tu contraseña.</p>
+        <div id="panelRegister" style="display: none;" hidden aria-hidden="true">
+            <p style="color: var(--text-main); margin-bottom: 20px;">Completá tus datos y verificá Telegram para recibir avisos del club.</p>
             <form id="formRegisterMagic" style="max-width: 400px;">
-                <div class="form-group"><label>Email *</label><input type="email" id="registerEmail" required></div>
-                <button type="submit" class="btn-submit"><i class="fas fa-envelope"></i> Enviar enlace para crear contraseña</button>
+                <div class="form-group"><label>Nombre *</label><input type="text" id="registerNombre" autocomplete="given-name" required></div>
+                <div class="form-group"><label>Apellido *</label><input type="text" id="registerApellido" autocomplete="family-name" required></div>
+                <div class="form-group"><label>Cédula *</label><input type="text" id="registerCedula" inputmode="numeric" required></div>
+                <div class="form-group"><label>Teléfono *</label><input type="tel" id="registerTelefono" placeholder="092456838" autocomplete="tel" required></div>
+                <div class="form-group"><label>Email técnico opcional</label><input type="email" id="registerEmail" autocomplete="email"></div>
+                <div class="form-group"><label>Mensaje</label><textarea id="registerMensaje" rows="3" placeholder="Contanos cualquier dato importante"></textarea></div>
+                <button type="submit" class="btn-submit"><i class="fab fa-telegram"></i> Enviar solicitud y verificar Telegram</button>
             </form>
             <div id="registerMessage" style="display: none; margin-top: 20px; padding: 15px; background: rgba(100,140,75,0.2); border-radius: 12px;">
-                <p style="color: #e0ecd0;">📧 Se ha enviado un enlace a <strong id="registerEmailSent"></strong></p>
-                <p style="color: #a0b890; font-size: 0.85rem;">Hacé clic en el enlace para crear tu contraseña.</p>
+                <p style="color: var(--text-strong);">Solicitud creada.</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Se abrió Telegram. Tocá Start para completar la verificación.</p>
             </div>
         </div>
-        <div id="panelForgot" style="display: none;">
-            <p style="color: #c8d8b5; margin-bottom: 20px;">Ingresá tu email y te enviaremos un enlace para recuperar el acceso de forma segura.</p>
-            <form id="formForgotMagic" style="max-width: 400px;">
-                <div class="form-group"><label>Email *</label><input type="email" id="forgotEmail" required></div>
-                <button type="submit" class="btn-submit"><i class="fas fa-envelope"></i> Enviar enlace de restablecimiento</button>
-            </form>
-            <div id="forgotMessage" style="display: none; margin-top: 20px; padding: 15px; background: rgba(100,140,75,0.2); border-radius: 12px;">
-                <p style="color: #e0ecd0;">📧 Se ha enviado un enlace a <strong id="forgotEmailSent"></strong></p>
-                <p style="color: #a0b890; font-size: 0.85rem;">Hacé clic en el enlace para restablecer tu contraseña.</p>
-            </div>
-            <p style="margin-top: 15px; font-size: 0.85rem;"><a href="#" id="backToLoginFromForgot" style="color: #7ca35a;">← Volver a iniciar sesión</a></p>
+        <div id="panelForgot" style="display: none;" hidden aria-hidden="true">
+            <p style="color: var(--text-main); margin-bottom: 20px;">Solicitá una nueva clave temporal al administrador del club.</p>
         </div>
     </div>
     
         <!-- ADMIN -->
     <div id="admin" class="section" style="display: none;">
-        <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de Administración</h2>
-        <div class="dashboard-grid" id="adminCards"><div class="loading">Cargando estadísticas...</div></div>
-        <div class="nav-admin-bar">
-            <button class="nav-admin-btn active" data-admin-section="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
-            <button class="nav-admin-btn" data-admin-section="productos"><i class="fas fa-leaf"></i> Productos</button>
-            <button class="nav-admin-btn" data-admin-section="actividades"><i class="fas fa-calendar-alt"></i> Actividades</button>
-            <button class="nav-admin-btn" data-admin-section="solicitudes"><i class="fas fa-user-plus"></i> Solicitudes</button>
-            <button class="nav-admin-btn" data-admin-section="socios"><i class="fas fa-users"></i> Socios</button>
-            <button class="nav-admin-btn" data-admin-section="reservasAdmin"><i class="fas fa-box"></i> Reservas</button>
-            <button class="nav-admin-btn" data-admin-section="mensajes"><i class="fas fa-envelope"></i> Mensajes</button>
-            <button class="nav-admin-btn" data-admin-section="manual"><i class="fas fa-book"></i> Manual</button>
+        <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de Administración <span class="admin-section-title-subtitle">Resumen, guía y accesos rápidos</span></h2>
+        <div id="admin-empty" class="admin-empty-state">
+            <i class="fas fa-sliders"></i>
+            <strong>Panel de administración</strong>
+            <span>Elegí una sección del menú para empezar.</span>
         </div>
-        <div id="admin-noticias"><div class="loading">Cargando...</div></div>
-        <div id="admin-productos" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-actividades" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-solicitudes" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-socios" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-reservasAdmin" style="display: none;"><div class="loading">Cargando...</div></div>
-        <div id="admin-mensajes" style="display: none;">
-            <div class="section" style="background: rgba(8, 15, 6, 0.35); margin-top: 10px;">
-                <h3 style="color:#e0ecd0; margin-bottom: 18px;">📨 Enviar mensaje a socios</h3>
-                <div class="form-grid">
-                    <div class="form-group full-width"><label>Destinatario</label><select id="mensajeDestinatario"><option value="todos">📢 Todos los socios</option></select></div>
-                    <div class="form-group full-width"><label>Asunto</label><input type="text" id="mensajeAsunto" placeholder="Asunto del mensaje"></div>
-                    <div class="form-group full-width"><label>Mensaje</label><textarea id="mensajeTexto" rows="5" placeholder="Escribí el mensaje para los socios..."></textarea></div>
-                    <div class="form-group full-width"><button id="enviarMensajeBtn" type="button" class="btn-submit">Enviar mensaje</button></div>
+        <div class="productos-acordeon admin-main-acordeon">
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="historia" data-tipo-cultivo="admin-historia" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-book-open"></i> Historia</span>
+                        <span class="productos-toggle-descripcion">Contenido institucional</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-historia" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-historia" style="display: none;"><div class="loading">Cargando...</div></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="manual" data-tipo-cultivo="admin-manual" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-circle-question"></i> Manual</span>
+                        <span class="productos-toggle-descripcion">Guías rápidas de uso</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-manual" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-manual" style="display: none;">
+                <div class="manual-grid">
+                    <article class="manual-bloque">
+                        <h3><i class="fas fa-mobile-screen-button"></i> Instalar en dispositivo</h3>
+                        <p>Android: abrí la web en Chrome y tocá Instalar app. iPhone/iPad: abrí Safari, tocá Compartir y elegí Agregar a pantalla de inicio.</p>
+                        <p><button type="button" class="manual-install-link" data-install-app>Instalar</button></p>
+                    </article>
+                    <article class="manual-bloque">
+                        <h3><i class="fas fa-plus-circle"></i> Agregar contenido</h3>
+                        <p>Usá las secciones Historia, Productos, Actividades y Entregas para mantener la información visible y actualizada.</p>
+                    </article>
+                    <article class="manual-bloque">
+                        <h3><i class="fas fa-leaf"></i> Productos, actividades y variedades</h3>
+                        <p>Revisá nombre, descripción, imágenes, disponibilidad y precios antes de guardar. En productos, verificá que cada variedad tenga datos completos.</p>
+                    </article>
+                    <article class="manual-bloque">
+                        <h3><i class="fas fa-envelope"></i> Mensajes</h3>
+                        <p>En Mensajes podés leer la bandeja de Telegram y enviar avisos a un socio puntual o a todos los socios vinculados.</p>
+                    </article>
+                    <article class="manual-bloque">
+                        <h3><i class="fas fa-box"></i> Pedidos y reservas</h3>
+                        <p>Entrá a Pedidos para revisar solicitudes, confirmar recepción, confirmar entrega y controlar que los estados estén al día.</p>
+                    </article>
+                    <article class="manual-bloque">
+                        <h3><i class="fas fa-check-circle"></i> Recomendaciones</h3>
+                        <p>Antes de cerrar sesión, revisá solicitudes pendientes, mensajes recientes y entregas del calendario. Evitá borrar datos salvo que sea necesario.</p>
+                    </article>
+                    <article class="manual-bloque">
+                        <h3><i class="fas fa-user-plus"></i> Cómo crear un socio nuevo</h3>
+                        <p>Ir al panel admin, abrir Crear socio, cargar nombre y teléfono, crear socio y copiar la contraseña temporal generada una sola vez.</p>
+                        <p>Enviar al socio el link de la web, teléfono y contraseña temporal. El socio inicia sesión, cambia la contraseña temporal, vincula Telegram, valida el dispositivo y queda listo para reservar.</p>
+                        <p>El correo no forma parte del flujo del socio. Si el sistema necesita un correo técnico interno, se genera automáticamente y no debe ser usado por el socio.</p>
+                    </article>
                 </div>
-                <h3 style="color:#e0ecd0; margin: 22px 0 12px;">Historial reciente</h3>
-                <div id="mensajesHistorial" class="mensajes-container"><div class="loading">Cargando historial...</div></div>
+            </div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="productos" data-tipo-cultivo="admin-productos" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-leaf"></i> Productos</span>
+                        <span class="productos-toggle-descripcion">Variedades y catálogo</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-productos" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-productos" style="display: none;"><div class="loading">Cargando...</div></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="actividades" data-tipo-cultivo="admin-actividades" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-calendar-alt"></i> Actividades</span>
+                        <span class="productos-toggle-descripcion">Agenda y eventos</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-actividades" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-actividades" style="display: none;"><div class="loading">Cargando...</div></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="entregas" data-tipo-cultivo="admin-entregas" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-truck"></i> Entregas</span>
+                        <span class="productos-toggle-descripcion">Fechas y lugares</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-entregas" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-entregas" style="display: none;"><div class="loading">Cargando...</div></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="solicitudes" data-tipo-cultivo="admin-solicitudes" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-user-plus"></i> Solicitudes</span>
+                        <span class="productos-toggle-descripcion">Altas pendientes</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-solicitudes" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-solicitudes" style="display: none;"><div class="loading">Cargando...</div></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="socios" data-tipo-cultivo="admin-socios" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-users"></i> Socios</span>
+                        <span class="productos-toggle-descripcion">Gestión de usuarios</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-socios" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-socios" style="display: none;"><div class="loading">Cargando...</div></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="reservasAdmin" data-tipo-cultivo="admin-reservasAdmin" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-box"></i> Pedidos</span>
+                        <span class="productos-toggle-descripcion">Reservas y estados</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-reservasAdmin" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-reservasAdmin" style="display: none;"><div class="loading">Cargando...</div></div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-admin-section="mensajes" data-tipo-cultivo="admin-mensajes" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-envelope"></i> Mensajes</span>
+                        <span class="productos-toggle-descripcion">Telegram y avisos</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div id="admin-mensajes" class="productos-panel admin-section-panel" data-tipo-cultivo="admin-mensajes" style="display: none;">
+                <div class="productos-acordeon admin-mensajes-acordeon">
+                    <div class="productos-controles">
+                        <div class="productos-columna activa">
+                            <h3 class="productos-columna-titulo">
+                                <button type="button" class="productos-toggle" data-tipo-cultivo="bandeja-entrada" aria-expanded="true">
+                                    <span class="productos-toggle-titulo"><i class="fas fa-inbox"></i> Bandeja de entrada</span>
+                                    <span class="productos-toggle-descripcion">Mensajes recibidos desde Telegram</span>
+                                    <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                                </button>
+                            </h3>
+                        </div>
+                        <div class="productos-columna">
+                            <h3 class="productos-columna-titulo">
+                                <button type="button" class="productos-toggle" data-tipo-cultivo="nuevo-mensaje" aria-expanded="false">
+                                    <span class="productos-toggle-titulo"><i class="fas fa-paper-plane"></i> Nuevo mensaje</span>
+                                    <span class="productos-toggle-descripcion">Enviar avisos por Telegram</span>
+                                    <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                                </button>
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="productos-panel" data-tipo-cultivo="bandeja-entrada">
+                        <div id="telegramInboxMensajes" class="mensajes-container"><div class="loading">Cargando mensajes recibidos...</div></div>
+                    </div>
+                    <div class="productos-panel" data-tipo-cultivo="nuevo-mensaje" hidden>
+                        <p style="color:var(--text-muted); margin: 0 0 18px; line-height: 1.5;">Elegí el destinatario, agregá un asunto claro y escribí el mensaje final antes de enviarlo. El historial de abajo muestra los envíos recientes para referencia.</p>
+                        <div class="form-grid">
+                            <div class="form-group full-width"><label>Destinatario</label><select id="mensajeDestinatario"><option value="todos">Todos los socios</option></select></div>
+                            <div class="form-group full-width"><label>Asunto</label><input type="text" id="mensajeAsunto" placeholder="Asunto del mensaje"></div>
+                            <div class="form-group full-width"><label>Mensaje</label><textarea id="mensajeTexto" rows="5" placeholder="Escribí el mensaje para los socios..."></textarea></div>
+                            <div class="form-group full-width"><button id="enviarMensajeBtn" type="button" class="btn-submit">Enviar mensaje</button></div>
+                        </div>
+                        <h3 style="color:var(--text-strong); margin: 22px 0 12px;">Historial reciente</h3>
+                        <div id="mensajesHistorial" class="mensajes-container"><div class="loading">Cargando historial...</div></div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div id="admin-manual" style="display: none;"><div class="loading">Cargando manual...</div></div>
     </div>
     
     <!-- MAESTRO -->
-    <div id="maestro" class="section" style="display: none;">
+        <div id="maestro" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-crown"></i> Panel Maestro - Control Total</h2>
         <div class="dashboard-grid" id="maestroCards"><div class="loading">Cargando estadísticas...</div></div>
         <div class="nav-maestro-bar">
             <button class="nav-maestro-btn active" data-maestro-section="historia"><i class="fas fa-book-open"></i> Historia</button>
-            <button class="nav-maestro-btn" data-maestro-section="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
             <button class="nav-maestro-btn" data-maestro-section="productos"><i class="fas fa-leaf"></i> Productos</button>
             <button class="nav-maestro-btn" data-maestro-section="actividades"><i class="fas fa-calendar-alt"></i> Actividades</button>
             <button class="nav-maestro-btn" data-maestro-section="socios"><i class="fas fa-users"></i> Socios</button>
-            <button class="nav-maestro-btn" data-maestro-section="reservas"><i class="fas fa-box"></i> Reservas</button>
+            <button class="nav-maestro-btn" data-maestro-section="reservas"><i class="fas fa-box"></i> Pedidos</button>
             <button class="nav-maestro-btn" data-maestro-section="solicitudes"><i class="fas fa-user-plus"></i> Solicitudes</button>
             <button class="nav-maestro-btn" data-maestro-section="admins"><i class="fas fa-user-shield"></i> Admins</button>
             <button class="nav-maestro-btn" data-maestro-section="logs"><i class="fas fa-history"></i> Logs</button>
@@ -1266,7 +524,6 @@
             <button class="nav-maestro-btn" data-maestro-section="sorteos"><i class="fas fa-trophy"></i> Sorteos</button>
         </div>
         <div id="maestro-historia"><div class="loading">Cargando historia...</div></div>
-        <div id="maestro-noticias" style="display: none;"><div class="loading">Cargando noticias...</div></div>
         <div id="maestro-productos" style="display: none;"><div class="loading">Cargando productos...</div></div>
         <div id="maestro-actividades" style="display: none;"><div class="loading">Cargando actividades...</div></div>
         <div id="maestro-socios" style="display: none;"><div class="loading">Cargando socios...</div></div>
@@ -1281,8 +538,10 @@
     </div>
     
     <div class="footer">
-        <p>GEENERICO · Plataforma de club privado con identidad clara, catálogo ordenado y gestión profesional.</p>
-        <p style="font-size: 0.7rem;">Proyecto demostrativo preparado para presentar marca, operación y experiencia de socios en un solo entorno.</p>
+        <p>🌿 Nombre del Club · Cultura · Comunidad 🌿</p>
+        <p style="font-size: 0.7rem;">© 2025 - Todos los derechos reservados</p>
+        <p class="footer-legal">Plataforma privada para socios. La informacion y los pedidos se gestionan dentro del marco interno del club.</p>
+        <p class="footer-cameo"><a href="https://mattosardy.github.io/telecomt3-card/" class="footer-cameo-link" target="_blank" rel="noopener noreferrer">Conectividad y soporte digital · <strong>Telecom T3</strong></a></p>
     </div>
 </div>
 
@@ -1291,7 +550,7 @@
     <div class="modal-content">
         <span class="cerrar-modal">&times;</span>
         <div id="modalMedia">
-            <img id="modalImagen" class="modal-imagen" src="" alt="">
+            <img id="modalImagen" class="modal-imagen" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="">
         </div>
         <h2 id="modalTitulo" class="modal-titulo"></h2>
         <div id="modalCepa" class="modal-cepa"></div>
@@ -1319,7 +578,7 @@
                 </button>
                 <div id="calificacionMensaje" style="margin-top: 8px; font-size: 0.85rem;"></div>
             </div>
-            <div class="modal-pedido-info">Seleccioná una cantidad:</div>
+            <div class="modal-pedido-info">Elegí la cantidad para este pedido mensual:</div>
             <div id="opcionesPedido" class="opciones-pedido"></div>
             <div id="pedidoRestante" class="modal-pedido-restante"></div>
             <button id="btnRealizarPedido" type="button" class="btn-pedido-modal" disabled>Realizar pedido</button>
@@ -1346,35 +605,48 @@
 <div id="editProductoModal" class="edit-modal">
     <div class="edit-modal-content">
         <span class="cerrar-modal" style="position: absolute; top: 10px; right: 20px; cursor: pointer;" onclick="cerrarEditProducto()">&times;</span>
-        <h3 style="color: #7ca35a; margin-bottom: 20px;">✏️ Editar Producto</h3>
+        <h3 style="color: var(--accent-strong); margin-bottom: 20px;">✏️ Editar Producto</h3>
         <form id="formEditProducto">
             <div class="form-grid">
                 <div class="form-group full-width"><label>Nombre</label><input type="text" id="editNombre" required></div>
                 <div class="form-group"><label>Cepa</label><input type="text" id="editCepa"></div>
                 <div class="form-group"><label>THC %</label><input type="number" step="0.1" id="editThc"></div>
                 <div class="form-group"><label>CBD %</label><input type="number" step="0.1" id="editCbd"></div>
-                <div class="form-group"><label>Precio 10g ($)</label><input type="number" step="0.01" id="editPrecio" value="1600"></div>
+                <div class="form-group"><label>Indica %</label><input type="number" step="10" min="0" max="100" id="editIndicaPorcentaje" placeholder="50"></div>
+                <div class="form-group"><label>Sativa %</label><input type="number" step="10" min="0" max="100" id="editSativaPorcentaje" placeholder="50"></div>
+                <div class="form-group"><label>Tipo</label><select id="editTipoCultivo"><option value="invernaculo">PREMIUM</option><option value="exterior">STANDARD</option><option value="dispositivos_pipas">Dispositivos y pipas</option><option value="parafernalia_accesorios">Parafernalia y Accesorios</option></select></div>
+                <div class="form-group"><label>Precio base ($)</label><input type="number" step="0.01" id="editPrecio" value="1600"></div>
                 <div class="form-group full-width"><label>Descripción</label><textarea id="editDescripcion" rows="3"></textarea></div>
                 <div class="form-group full-width"><label>URL Imagen principal</label><input type="text" id="editImagenUrl" placeholder="https://ejemplo.com/imagen.jpg"></div>
+                <div class="form-group full-width"><label>O subir imagen desde tu dispositivo</label><input type="file" id="editImagenFile" accept="image/*" style="background:rgba(255,255,255,0.82);border:1px solid var(--border-soft);border-radius:12px;padding:12px;color:var(--text-strong);"><small class="privacy-upload-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> Las imagenes son limpiadas automaticamente para proteger privacidad y ubicacion.</small></div>
+                <div class="form-group full-width"><div id="editImagenPreview" style="margin-top: 4px;"></div></div>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" class="btn-submit" onclick="cerrarEditProducto()">Cancelar</button>
-                <button type="submit" class="btn-submit">Guardar Cambios</button>
+            <div class="edit-product-actions">
+                <button type="button" class="btn-submit btn-edit-cancel" onclick="cerrarEditProducto()">Cancelar</button>
+                <button type="submit" class="btn-submit btn-edit-save">Guardar Cambios</button>
             </div>
         </form>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-client.js"></script>
+<script>
+window.__SUPABASE_ENV__ = {
+    url: "https://bszxuffixynbpcvjbzfa.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzenh1ZmZpeHluYnBjdmpiemZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDAyMzAsImV4cCI6MjA5NTMxNjIzMH0.pt7Wqk3jsmr9e0pQPTYmApfl9oktXM4Jd_YASz0te9E"
+};
+</script>
+<script src="js/supabase-client.js?v=20260527-cart-delete"></script>
 
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/public.js"></script>
-<script src="js/socio.js"></script>
-<script src="js/modals.js"></script>
-<script src="js/admin.js"></script>
-<script src="js/maestro.js"></script>
-<script src="js/main.js"></script>
+<script src="js/config.js?v=20260526-restore-functional"></script>
+<script src="js/utils.js?v=20260526-restore-functional"></script>
+<script src="js/notifications.js?v=20260521-env-cleanup"></script>
+<script src="js/auth.js?v=20260526-restore-functional"></script>
+<script src="js/public.js?v=20260526-restore-functional"></script>
+<script src="js/socio.js?v=20260527-cart-delete"></script>
+<script src="js/modals.js?v=20260527-cart-delete"></script>
+<script src="js/admin.js?v=20260525-pedidos-head-negro"></script>
+<script src="js/maestro.js?v=20260521-env-cleanup"></script>
+<script src="js/tour.js?v=20260521-env-cleanup"></script>
+<script src="js/main.js?v=20260526-menu-audio-polish"></script>
 </body>
 </html>

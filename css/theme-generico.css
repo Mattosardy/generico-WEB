@@ -1,0 +1,1156 @@
+/* generico_WEB visual layer. Functional structure stays in css/style.css. */
+:root {
+    --generico-bg: #f8fff9;
+    --generico-panel: #ffffff;
+    --generico-text: #050505;
+    --generico-muted: #1f3d2f;
+    --generico-green: #6b8e23;
+    --generico-green-soft: #dff7cf;
+    --generico-border: linear-gradient(90deg, #ff1b1b 0%, #ffeb00 46%, #005bff 78%, #ff1b1b 100%);
+    --surface-dark: #ffffff;
+    --surface-strong: #ffffff;
+    --surface: #ffffff;
+    --surface-soft: #ffffff;
+    --surface-muted: #f8fff9;
+    --text-strong: var(--generico-text);
+    --text-main: var(--generico-text);
+    --text-muted: var(--generico-muted);
+    --accent: var(--generico-green);
+    --accent-strong: #4f6f1a;
+    --apple-border: #9bd55b;
+    --border-soft: rgba(107, 142, 35, 0.24);
+    --border-strong: rgba(107, 142, 35, 0.46);
+}
+
+.logo-mark {
+    width: 76px !important;
+    height: 76px !important;
+    max-width: 76px !important;
+    max-height: 76px !important;
+    object-fit: contain;
+}
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    background: var(--generico-bg) !important;
+    color: var(--generico-text) !important;
+}
+
+body {
+    background:
+        url("../assets/images/fondo-home.png") center top / cover fixed no-repeat,
+        var(--generico-bg) !important;
+}
+
+.header,
+.header-nav,
+.mobile-hidden-dock,
+.bottom-dock,
+.section,
+.club-intro-panel,
+.historia-imagen,
+.historia-texto-principal,
+.productos-toggle,
+.productos-panel,
+.producto-card,
+.noticia-card,
+.actividad-item,
+.reserva-card,
+.dashboard-card,
+.admin-panel,
+.admin-section-panel,
+.modal-content,
+.edit-modal-content,
+.nav-btn,
+.dock-btn,
+.nav-session-btn,
+.nav-user-name,
+.nav-audio-btn,
+.nav-admin-btn,
+.nav-maestro-btn,
+.btn-submit,
+.btn-primary,
+.btn-secondary,
+.btn-mas-info,
+.btn-editar,
+.btn-eliminar,
+.tab-btn,
+button[type="submit"] {
+    background:
+        linear-gradient(var(--generico-panel), var(--generico-panel)) padding-box,
+        var(--generico-border) border-box;
+    border: 2px solid transparent;
+    color: var(--generico-text);
+    box-shadow: 0 10px 24px rgba(5, 5, 5, 0.08);
+}
+
+.nav-btn *,
+.dock-btn *,
+.nav-session-btn *,
+.nav-user-name *,
+.nav-audio-btn *,
+.btn-submit *,
+button[type="submit"] * {
+    color: inherit;
+}
+
+.nav-btn,
+.nav-btn *,
+.dock-btn,
+.dock-btn *,
+.nav-session-btn,
+.nav-session-btn *,
+.nav-user-name,
+.nav-user-name *,
+.nav-audio-btn,
+.nav-audio-btn *,
+.btn-submit,
+.btn-submit *,
+.btn-pedido-modal,
+.btn-pedido-modal *,
+.opcion-pedido,
+.opcion-pedido *,
+.productos-toggle,
+.productos-toggle *,
+.modal-content,
+.modal-content *,
+.edit-modal-content,
+.edit-modal-content *,
+.producto-overlay,
+.producto-overlay * {
+    color: var(--generico-text) !important;
+    text-shadow: none !important;
+}
+
+.nav-session-btn,
+#btnLogout.nav-session-btn,
+#btnLogin.nav-session-btn {
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 8px !important;
+}
+
+#btnLogin.nav-session-btn[style*="display: none"],
+#btnLogout.nav-session-btn[style*="display: none"] {
+    display: none !important;
+}
+
+#btnLogout.nav-session-btn {
+    justify-self: stretch;
+}
+
+body * {
+    color: var(--generico-text) !important;
+    text-shadow: none !important;
+}
+
+.section-title i,
+.nav-btn i,
+.dock-btn i,
+.nav-session-btn i,
+.nav-audio-btn i,
+.productos-toggle-icono,
+.calificacion-estrella.activa,
+.producto-estrellas i {
+    color: var(--accent-strong) !important;
+}
+
+.nav-btn.active,
+.dock-btn.active,
+.nav-session-btn.active,
+.productos-columna.activa .productos-toggle,
+.tab-btn.active {
+    background:
+        linear-gradient(var(--generico-green-soft), var(--generico-green-soft)) padding-box,
+        var(--generico-border) border-box;
+    color: var(--generico-text);
+}
+
+.productos-toggle[aria-expanded="false"],
+.admin-main-acordeon .productos-toggle[aria-expanded="false"],
+.admin-mensajes-acordeon .productos-toggle[aria-expanded="false"],
+.admin-manual-acordeon .productos-toggle[aria-expanded="false"],
+.actividades-acordeon .productos-toggle[aria-expanded="false"] {
+    border: 1px solid var(--apple-border) !important;
+}
+
+.productos-toggle[aria-expanded="true"],
+.productos-columna.activa .productos-toggle {
+    border-color: transparent !important;
+}
+
+#productos .productos-controles,
+#productos .productos-columna,
+#productos .productos-columna-titulo {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+#productos .productos-toggle,
+#productos .productos-toggle[aria-expanded="false"],
+#productos .productos-toggle[aria-expanded="true"],
+#productos .productos-columna.activa .productos-toggle {
+    background: transparent !important;
+    border: 1px solid var(--apple-border) !important;
+    box-shadow: none !important;
+}
+
+.btn-submit,
+.btn-primary,
+.btn-pedido-modal,
+.opcion-pedido.activa {
+    background: var(--generico-green-soft);
+    color: var(--generico-text);
+}
+
+.carrito-modal-item {
+    grid-template-columns: 1fr !important;
+    cursor: default !important;
+}
+
+.carrito-modal-item-main {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.carrito-modal-item-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.carrito-modal-action {
+    min-height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(79, 111, 26, 0.24);
+    background: rgba(223, 247, 207, 0.72);
+    color: var(--generico-text);
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.carrito-modal-delete {
+    background: rgba(255, 238, 238, 0.86);
+    border-color: rgba(155, 106, 108, 0.34);
+}
+
+#productoModal .modal-content {
+    background:
+        linear-gradient(rgba(222, 242, 214, 0.92), rgba(205, 232, 194, 0.9)) padding-box,
+        linear-gradient(120deg, rgba(107, 142, 35, 0.42), rgba(79, 111, 26, 0.2)) border-box !important;
+    border: 1px solid rgba(79, 111, 26, 0.28) !important;
+}
+
+#productoModal .modal-pedido-box,
+#productoModal .modal-galeria-frame,
+#productoModal .calificacion-panel {
+    background: rgba(247, 252, 244, 0.76) !important;
+}
+
+input,
+select,
+textarea,
+.form-input,
+.form-select {
+    background: #ffffff;
+    color: var(--generico-text);
+    border: 1px solid rgba(107, 142, 35, 0.28);
+}
+
+.footer {
+    color: var(--generico-text);
+    text-shadow: none;
+}
+
+@media (max-width: 720px) {
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+    }
+
+    .header-nav {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .header-nav > .nav-btn,
+    .header-nav > .nav-session-btn,
+    .header-nav > .nav-user-name {
+        width: 100%;
+        min-width: 0;
+        padding: 8px 5px;
+        font-size: clamp(0.64rem, 2.8vw, 0.8rem);
+        white-space: nowrap;
+    }
+
+    .logo-mark {
+        width: 68px !important;
+        height: 68px !important;
+        max-width: 68px !important;
+        max-height: 68px !important;
+    }
+
+    .header-nav span,
+    .nav-user-token {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .modal-content,
+    .edit-modal-content {
+        width: calc(100% - 16px);
+        max-width: calc(100% - 16px);
+        max-height: calc(100svh - 16px);
+    }
+
+    .carrito-modal-item-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* App shell mobile-first. Editable club skin variables. */
+:root {
+    --club-primary-color: rgba(169, 218, 111, 0.72);
+    --club-primary-color-hover: rgba(188, 235, 134, 0.9);
+    --club-bg-image: url("../assets/images/fondo-home.png");
+    --club-text-color: #11140f;
+    --club-card-bg: rgba(238, 255, 194, 0.62);
+}
+
+html,
+body {
+    min-height: 100%;
+    background: var(--club-bg-image) center top / cover fixed no-repeat, #f8fff9 !important;
+    color: var(--club-text-color) !important;
+}
+
+.container {
+    width: min(100%, 430px);
+    max-width: 430px !important;
+    min-height: 100svh;
+    margin: 0 auto !important;
+    padding: max(10px, env(safe-area-inset-top)) 10px max(16px, env(safe-area-inset-bottom)) !important;
+}
+
+.header {
+    display: grid !important;
+    gap: 14px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.header-main {
+    min-height: 84px;
+    display: grid !important;
+    grid-template-columns: 72px minmax(0, 1fr) 72px;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px !important;
+    border-radius: 28px !important;
+    background: var(--club-card-bg) !important;
+    border: 1px solid rgba(53, 82, 34, 0.34) !important;
+    box-shadow: 0 12px 26px rgba(20, 42, 16, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    backdrop-filter: blur(8px);
+}
+
+.header-main:hover {
+    background: var(--club-primary-color-hover) !important;
+    transform: translateY(-1px);
+}
+
+.header-main:active {
+    transform: translateY(1px) scale(0.99);
+    box-shadow: 0 7px 18px rgba(20, 42, 16, 0.18) !important;
+}
+
+.logo {
+    display: contents !important;
+}
+
+.logo h1 {
+    grid-column: 1 / 4;
+    display: grid !important;
+    grid-template-columns: 72px minmax(0, 1fr) 72px;
+    align-items: center;
+    gap: 10px !important;
+    width: 100%;
+    color: var(--club-text-color) !important;
+    font-size: clamp(1.55rem, 7vw, 2.1rem) !important;
+    line-height: 0.95 !important;
+    text-align: center;
+    white-space: normal !important;
+}
+
+.logo h1::after {
+    content: "";
+    width: 62px;
+    height: 62px;
+    justify-self: center;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.34);
+    border: 1px solid rgba(35, 55, 25, 0.42);
+    box-shadow: inset 0 1px 12px rgba(255, 255, 255, 0.5);
+}
+
+.logo-mark {
+    width: 62px !important;
+    height: 62px !important;
+    max-width: 62px !important;
+    max-height: 62px !important;
+    justify-self: center;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, 0.34) !important;
+    border: 1px solid rgba(35, 55, 25, 0.42) !important;
+    padding: 4px;
+}
+
+.logo p,
+.header-session-name,
+.mobile-hidden-dock {
+    display: none !important;
+}
+
+.header-nav {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.app-main-btn {
+    width: 100% !important;
+    min-height: 88px !important;
+    border-radius: 30px !important;
+    background: var(--club-primary-color) !important;
+    color: var(--club-text-color) !important;
+    border: 1px solid rgba(53, 82, 34, 0.32) !important;
+    box-shadow: 0 14px 26px rgba(20, 42, 16, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.46) !important;
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(1.45rem, 8vw, 2rem) !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+}
+
+.app-main-btn i {
+    display: none !important;
+}
+
+.app-main-btn:hover,
+.app-main-btn:focus-visible {
+    background: var(--club-primary-color-hover) !important;
+    color: var(--club-text-color) !important;
+    transform: translateY(-2px) !important;
+}
+
+.app-main-btn:active {
+    transform: translateY(2px) scale(0.985) !important;
+    box-shadow: 0 8px 18px rgba(20, 42, 16, 0.18) !important;
+}
+
+.app-internal .app-main-btn {
+    display: none !important;
+}
+
+.app-internal .header-nav {
+    grid-template-columns: repeat(3, minmax(0, auto)) !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+.section {
+    margin: 14px 0 0 !important;
+    padding: 16px 12px !important;
+    border-radius: 24px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(53, 82, 34, 0.18) !important;
+    box-shadow: 0 12px 28px rgba(20, 42, 16, 0.16) !important;
+    animation: appPanelIn 0.22s ease both;
+}
+
+.app-home #inicio {
+    display: none !important;
+}
+
+.productos-panel {
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.productos-panel:not([hidden]) {
+    animation: appPanelIn 0.22s ease both;
+}
+
+@keyframes appPanelIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (min-width: 760px) {
+    body {
+        display: grid;
+        justify-items: center;
+    }
+
+    .container {
+        min-height: min(920px, calc(100svh - 28px));
+        margin-top: 14px !important;
+        margin-bottom: 14px !important;
+        border-radius: 34px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(13, 25, 11, 0.25);
+    }
+}
+
+/* Correccion inmediata: home como 5 bloques del mismo ancho. */
+.header,
+.header > .header-main,
+.header > #navContainer.header-nav {
+    inline-size: 100% !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+}
+
+.header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: clamp(14px, 3.8vw, 22px) !important;
+}
+
+.header > .header-main {
+    position: relative !important;
+    z-index: 30 !important;
+    flex: 0 0 auto !important;
+    align-self: stretch !important;
+    margin: 0 !important;
+    border-radius: 30px !important;
+    box-shadow: 0 14px 26px rgba(20, 42, 16, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.46) !important;
+}
+
+.header > #navContainer.header-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    justify-items: stretch !important;
+    gap: clamp(14px, 3.8vw, 22px) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: visible !important;
+}
+
+#navContainer.header-nav > .app-main-btn,
+#navContainer.header-nav > .app-main-btn.nav-btn {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    align-self: stretch !important;
+    inline-size: 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: clamp(76px, 20vw, 104px) !important;
+    height: clamp(76px, 20vw, 104px) !important;
+    margin: 0 !important;
+    padding: 0 clamp(18px, 6vw, 34px) !important;
+    border-radius: 30px !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    background: var(--club-primary-color) !important;
+    color: var(--club-text-color) !important;
+    border: 1px solid rgba(53, 82, 34, 0.32) !important;
+    box-shadow: 0 14px 26px rgba(20, 42, 16, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.46) !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+#navContainer.header-nav > .app-main-btn span {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+
+@media (min-width: 760px) {
+    #navContainer.header-nav > .app-main-btn,
+    #navContainer.header-nav > .app-main-btn.nav-btn {
+        height: 96px !important;
+        min-height: 96px !important;
+    }
+}
+
+/* Navegacion por pantallas: los accesos principales solo viven en HOME. */
+body.app-internal #navContainer.header-nav {
+    display: none !important;
+}
+
+body.app-internal #navContainer.header-nav > .app-main-btn,
+body.app-internal #navContainer.header-nav > .app-main-btn.nav-btn {
+    display: none !important;
+}
+
+body.app-home #navContainer.header-nav {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Header user menu: el carrito vive solo en el boton principal CARRITO. */
+.app-session-actions {
+    position: relative !important;
+}
+
+.app-session-actions .nav-user-name[role="button"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+}
+
+.app-session-actions .nav-user-name[role="button"]::after {
+    content: "▼";
+    display: inline-block;
+    font-size: 0.58em;
+    line-height: 1;
+}
+
+.user-menu-dropdown[hidden] {
+    display: none !important;
+}
+
+.user-menu-dropdown.is-open {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    display: grid !important;
+    gap: 6px !important;
+    width: min(190px, 58vw) !important;
+    padding: 8px !important;
+    border-radius: 16px !important;
+    background: rgba(248, 255, 239, 0.96) !important;
+    border: 1px solid rgba(53, 82, 34, 0.22) !important;
+    box-shadow: 0 16px 34px rgba(20, 42, 16, 0.24) !important;
+    backdrop-filter: blur(10px);
+}
+
+.user-menu-dropdown .user-menu-item,
+.user-menu-dropdown #btnLogout.user-menu-item {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 36px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 10px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: var(--club-primary-color) !important;
+    color: var(--club-text-color) !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    cursor: pointer !important;
+}
+
+.user-menu-dropdown #btnLogout.user-menu-item {
+    background: rgba(142, 62, 62, 0.86) !important;
+    color: #ffffff !important;
+}
+
+/* Header symmetry: logo block and user block share the same visual box. */
+.app-session-actions {
+    width: clamp(54px, 15vw, 70px) !important;
+    height: clamp(54px, 15vw, 70px) !important;
+    justify-self: center !important;
+    align-self: center !important;
+}
+
+.app-session-actions .nav-user-name[role="button"],
+.app-session-actions #btnLogin.nav-session-btn {
+    width: clamp(54px, 15vw, 70px) !important;
+    height: clamp(54px, 15vw, 70px) !important;
+    min-height: clamp(54px, 15vw, 70px) !important;
+    padding: 4px !important;
+    border-radius: 22px !important;
+    border: 1px solid rgba(35, 55, 25, 0.42) !important;
+    background: rgba(255, 255, 255, 0.34) !important;
+    box-shadow: inset 0 1px 12px rgba(255, 255, 255, 0.5) !important;
+    color: var(--club-text-color) !important;
+    display: grid !important;
+    place-items: center !important;
+    gap: 2px !important;
+    text-align: center !important;
+    font-size: clamp(0.54rem, 2.2vw, 0.76rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.02 !important;
+    overflow: hidden !important;
+    transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease !important;
+}
+
+.app-session-actions .nav-user-name[role="button"]:hover,
+.app-session-actions .nav-user-name[role="button"]:focus-visible,
+.app-session-actions #btnLogin.nav-session-btn:hover,
+.app-session-actions #btnLogin.nav-session-btn:focus-visible {
+    background: rgba(255, 255, 255, 0.48) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: inset 0 1px 12px rgba(255, 255, 255, 0.58), 0 8px 16px rgba(20, 42, 16, 0.12) !important;
+}
+
+.app-session-actions .nav-user-name[role="button"]:active,
+.app-session-actions #btnLogin.nav-session-btn:active {
+    transform: translateY(1px) scale(0.98) !important;
+}
+
+.app-session-actions .nav-user-token {
+    display: block !important;
+    width: 100% !important;
+    max-height: 2.05em !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+}
+
+.app-session-actions .nav-user-name[role="button"]::after {
+    font-size: 0.6rem !important;
+    margin: 0 !important;
+}
+
+/* Respeta el estado real de sesion que escribe JS en el atributo style. */
+.app-session-actions #btnLogin[style*="display: none"],
+.app-session-actions #userName[role="status"] {
+    display: none !important;
+}
+
+@media (max-width: 430px) {
+    .header-main {
+        grid-template-columns: 54px minmax(0, 1fr) 54px !important;
+        gap: 7px !important;
+        padding-inline: 7px !important;
+    }
+
+    .logo h1 {
+        grid-template-columns: 54px minmax(0, 1fr) !important;
+        gap: 7px !important;
+        font-size: clamp(1.32rem, 7.2vw, 1.72rem) !important;
+    }
+
+    .logo-mark,
+    .app-session-actions,
+    .app-session-actions .nav-user-name[role="button"],
+    .app-session-actions #btnLogin.nav-session-btn {
+        width: 54px !important;
+        height: 54px !important;
+        max-width: 54px !important;
+        max-height: 54px !important;
+        min-height: 54px !important;
+    }
+}
+
+/* Home layout polish: one app column, equal-width blocks, auth integrated in header. */
+.container {
+    width: min(calc(100vw - 20px), 520px) !important;
+    max-width: 520px !important;
+    padding-inline: clamp(10px, 3vw, 18px) !important;
+}
+
+.header {
+    width: 100% !important;
+    gap: clamp(12px, 3vw, 18px) !important;
+}
+
+.header-main {
+    width: 100% !important;
+    min-height: clamp(78px, 19vw, 104px) !important;
+    grid-template-columns: clamp(62px, 17vw, 82px) minmax(0, 1fr) clamp(62px, 17vw, 82px) !important;
+    gap: clamp(8px, 2.5vw, 14px) !important;
+    padding: clamp(7px, 2vw, 10px) !important;
+}
+
+.logo {
+    grid-column: 1 / 3 !important;
+    display: grid !important;
+    min-width: 0 !important;
+}
+
+.logo h1 {
+    grid-column: auto !important;
+    display: grid !important;
+    grid-template-columns: clamp(62px, 17vw, 82px) minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: clamp(8px, 2.5vw, 14px) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: clamp(1.35rem, 7vw, 2.15rem) !important;
+    line-height: 1 !important;
+    overflow-wrap: anywhere !important;
+}
+
+.logo h1::after {
+    content: none !important;
+    display: none !important;
+}
+
+.logo-mark {
+    width: clamp(54px, 15vw, 70px) !important;
+    height: clamp(54px, 15vw, 70px) !important;
+    max-width: clamp(54px, 15vw, 70px) !important;
+    max-height: clamp(54px, 15vw, 70px) !important;
+}
+
+.app-session-actions {
+    grid-column: 3 !important;
+    display: grid !important;
+    align-items: center !important;
+    justify-items: stretch !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+.app-session-actions .nav-session-btn,
+.app-session-actions .nav-user-name {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: clamp(28px, 7vw, 36px) !important;
+    padding: 4px 5px !important;
+    border-radius: 16px !important;
+    font-size: clamp(0.56rem, 2.2vw, 0.72rem) !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+}
+
+.app-session-actions .nav-user-token {
+    display: block !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+
+.app-session-actions .nav-user-name.nav-user-name-hidden {
+    display: inline-flex !important;
+}
+
+.app-session-actions .nav-user-name:not([role="button"]) {
+    display: none !important;
+}
+
+.app-session-actions .btn-cerrar {
+    background: rgba(142, 62, 62, 0.78) !important;
+    color: #ffffff !important;
+}
+
+.header-nav {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
+    gap: clamp(14px, 4vw, 22px) !important;
+}
+
+.header-nav > .nav-session-btn,
+.header-nav > .nav-user-name,
+.app-home .header-nav > .nav-audio-btn {
+    display: none !important;
+}
+
+.app-main-btn {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    min-height: clamp(76px, 20vw, 104px) !important;
+    padding: 0 clamp(18px, 6vw, 34px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex: none !important;
+    font-size: clamp(1.45rem, 7.5vw, 2.15rem) !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+.app-main-btn span {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+
+.app-internal .header-nav {
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+@media (min-width: 760px) {
+    .container {
+        width: min(100vw - 48px, 520px) !important;
+        max-width: 520px !important;
+        padding-inline: 18px !important;
+    }
+
+    .header-main {
+        grid-template-columns: 82px minmax(0, 1fr) 82px !important;
+    }
+
+    .logo h1 {
+        grid-template-columns: 82px minmax(0, 1fr) !important;
+        font-size: 2.05rem !important;
+    }
+
+    .app-main-btn {
+        min-height: 96px !important;
+        font-size: 2rem !important;
+    }
+}
+
+/* Pulido fisico/futurista de botones principales y header, sin cambiar layout. */
+.header-main,
+.app-main-btn {
+    background:
+        linear-gradient(145deg, rgba(238, 255, 216, 0.96) 0%, rgba(198, 232, 151, 0.9) 48%, rgba(163, 206, 111, 0.84) 100%) !important;
+    border-color: rgba(87, 128, 57, 0.48) !important;
+    box-shadow:
+        0 18px 34px rgba(22, 45, 16, 0.26),
+        0 5px 0 rgba(78, 119, 48, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        inset 0 -18px 30px rgba(93, 142, 58, 0.12) !important;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.header-main::before,
+.app-main-btn::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px auto 1px;
+    height: 42%;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    z-index: -1;
+}
+
+.app-main-btn span,
+.logo h1 {
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.header-main:hover,
+.app-main-btn:hover,
+.app-main-btn:focus-visible {
+    background:
+        linear-gradient(145deg, rgba(245, 255, 226, 0.98) 0%, rgba(209, 240, 166, 0.94) 50%, rgba(172, 214, 116, 0.9) 100%) !important;
+    box-shadow:
+        0 22px 42px rgba(22, 45, 16, 0.3),
+        0 6px 0 rgba(78, 119, 48, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78),
+        inset 0 -18px 30px rgba(93, 142, 58, 0.14) !important;
+}
+
+.header-main:active,
+.app-main-btn:active {
+    transform: translateY(2px) scale(0.99) !important;
+    box-shadow:
+        0 9px 20px rgba(22, 45, 16, 0.22),
+        0 2px 0 rgba(78, 119, 48, 0.28),
+        inset 0 3px 10px rgba(57, 92, 37, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.46) !important;
+}
+
+/* Correccion puntual: usuario legible y dropdown por encima del menu principal. */
+.header,
+.header-main,
+.app-session-actions {
+    overflow: visible !important;
+}
+
+.header {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+.header-main {
+    z-index: 1100 !important;
+}
+
+.app-session-actions {
+    width: clamp(54px, 15vw, 70px) !important;
+    height: clamp(54px, 15vw, 70px) !important;
+    justify-self: center !important;
+    align-self: center !important;
+    position: relative !important;
+    z-index: 1200 !important;
+}
+
+.app-session-actions .nav-user-name[role="button"],
+.app-session-actions #btnLogin.nav-session-btn {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    padding: 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border-radius: 22px !important;
+    font-size: clamp(0.56rem, 2.05vw, 0.72rem) !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+.app-session-actions .nav-user-token {
+    max-height: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+}
+
+.app-session-actions .nav-user-name[role="button"]::after {
+    content: "▼" !important;
+    display: block !important;
+    margin: 1px 0 0 !important;
+    line-height: 1 !important;
+}
+
+.user-menu-dropdown.is-open {
+    z-index: 99999 !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+}
+
+.user-menu-dropdown .nav-audio-btn.user-menu-item {
+    display: flex !important;
+    gap: 7px !important;
+}
+
+.app-main-btn {
+    z-index: 1 !important;
+}
+
+/* Fix final: texto de usuario visible y menu por encima de los accesos principales. */
+.container,
+.header,
+.header-main,
+.app-session-actions {
+    overflow: visible !important;
+}
+
+.header {
+    position: relative !important;
+    z-index: 10000 !important;
+}
+
+.header-main {
+    position: relative !important;
+    z-index: 10010 !important;
+}
+
+.app-session-actions {
+    width: clamp(54px, 15vw, 70px) !important;
+    height: clamp(54px, 15vw, 70px) !important;
+    position: relative !important;
+    z-index: 10020 !important;
+    display: grid !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
+}
+
+.app-session-actions .nav-user-name[role="button"],
+.app-session-actions #btnLogin.nav-session-btn {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    text-indent: 0 !important;
+    text-overflow: clip !important;
+}
+
+.app-session-actions #btnLogin.nav-session-btn[style*="display: none"],
+.app-session-actions .nav-user-name[role="status"] {
+    display: none !important;
+}
+
+.app-session-actions .nav-user-token {
+    overflow: visible !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+}
+
+.app-session-actions .nav-user-name[role="button"]::after {
+    content: "\25BE" !important;
+    display: block !important;
+    width: 100% !important;
+    margin-top: 1px !important;
+    font-size: 0.78em !important;
+    line-height: 1 !important;
+    text-align: center !important;
+}
+
+.user-menu-dropdown.is-open {
+    position: absolute !important;
+    z-index: 100000 !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+}
+
+.header-nav,
+.app-main-btn {
+    z-index: 1 !important;
+}
