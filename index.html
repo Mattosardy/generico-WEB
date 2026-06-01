@@ -1032,13 +1032,21 @@
             --club-primary-color-hover: rgba(205, 238, 166, 0.95);
             --club-card-bg: rgba(239, 255, 214, 0.86);
             --club-text-color: #11140f;
+            --club-header-action-size: 46px;
+            --club-header-action-offset: 8px;
+        }
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden;
         }
         .container {
-            width: auto !important;
-            max-width: none !important;
+            width: calc(100vw - 56px) !important;
+            max-width: calc(100vw - 56px) !important;
             min-height: 100svh;
             padding: max(12px, env(safe-area-inset-top)) clamp(10px, 3vw, 18px) max(16px, env(safe-area-inset-bottom)) !important;
-            margin: 0 12px !important;
+            margin: 0 28px !important;
+            overflow-x: hidden;
         }
         .header {
             display: flex !important;
@@ -1054,7 +1062,8 @@
         .header-main {
             width: 100% !important;
             min-height: 84px;
-            display: flex !important;
+            display: grid !important;
+            grid-template-columns: var(--club-header-action-size) minmax(0, 1fr) var(--club-header-action-size);
             align-items: center !important;
             justify-content: center !important;
             gap: 7px !important;
@@ -1069,12 +1078,18 @@
             z-index: 30;
         }
         .logo {
-            width: 100%;
+            grid-column: 1;
+            width: var(--club-header-action-size);
+            height: var(--club-header-action-size);
             min-width: 0;
-            padding: 0 58px;
+            padding: 0;
+            display: grid;
+            place-items: center;
         }
-        .logo h1 {
+        .club-title {
+            grid-column: 2;
             min-width: 0 !important;
+            margin: 0;
             color: var(--club-text-color) !important;
             font-size: clamp(1.28rem, 6.4vw, 1.72rem) !important;
             line-height: 1 !important;
@@ -1090,30 +1105,26 @@
         .app-session-actions,
         .app-session-actions .nav-user-name,
         .app-session-actions #btnLogin {
-            width: 46px !important;
-            height: 46px !important;
-            max-width: 46px !important;
-            max-height: 46px !important;
-            min-height: 46px !important;
+            width: var(--club-header-action-size) !important;
+            height: var(--club-header-action-size) !important;
+            max-width: var(--club-header-action-size) !important;
+            max-height: var(--club-header-action-size) !important;
+            min-height: var(--club-header-action-size) !important;
             border-radius: 18px !important;
             border: 1px solid rgba(35, 55, 25, 0.58) !important;
             background: rgba(255, 255, 255, 0.62) !important;
             box-shadow: inset 0 1px 12px rgba(255, 255, 255, 0.5) !important;
         }
         .logo-mark {
-            position: absolute;
-            left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
             object-fit: contain;
             padding: 4px;
         }
         .app-session-actions {
-            position: absolute;
-            right: 76px;
-            top: 50%;
-            transform: translateY(-50%);
+            grid-column: 3;
+            justify-self: center;
+            position: relative;
             z-index: 5;
+            transform: translateX(-48px);
             display: grid !important;
             place-items: center !important;
         }
@@ -1245,17 +1256,15 @@
             .header-main {
                 min-height: 96px;
             }
-            .logo h1 {
+            :root {
+                --club-header-action-size: 62px;
+                --club-header-action-offset: 12px;
+            }
+            .club-title {
                 font-size: 2rem !important;
             }
-            .logo {
-                padding: 0 86px;
-            }
-            .logo-mark {
-                left: 12px;
-            }
             .app-session-actions {
-                right: 12px;
+                transform: none;
             }
             .logo-mark,
             .app-session-actions,
@@ -1282,9 +1291,9 @@
         <div class="header-main app-home-button" data-section="inicio" role="button" tabindex="0" aria-label="Volver al inicio">
             <div class="logo">
                 <img src="assets/images/logo.png" alt="Logo Generic WEB" class="logo-mark" onerror="this.style.display='none'">
-                <h1>Generic WEB</h1>
                 <p>Club cannábico privado · Selección curada · Experiencia cuidada</p>
             </div>
+            <h1 class="club-title">Generic WEB</h1>
             <div class="app-session-actions" id="userInfo">
                 <button id="btnLogin" class="btn-inicio"><i class="fas fa-sign-in-alt"></i> Iniciar Sesion</button>
                 <button id="userName" class="nav-user-name" type="button" style="display: none;">Invitado</button>
