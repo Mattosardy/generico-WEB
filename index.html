@@ -627,6 +627,38 @@
         .manual-card h3 { color: var(--accent-strong); font-family: 'Poppins', sans-serif; font-size: 1.05rem; margin-bottom: 10px; }
         .manual-card p { color: var(--text-main); line-height: 1.6; margin-bottom: 10px; }
         .manual-card ul { margin: 0; padding-left: 18px; color: var(--text-main); line-height: 1.65; }
+        .club-accordion {
+            background: var(--surface-soft);
+            border: 1px solid var(--border-soft);
+            border-radius: 18px;
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+        .club-accordion summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 16px 18px;
+            cursor: pointer;
+            color: var(--accent-strong);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            list-style: none;
+        }
+        .club-accordion summary::-webkit-details-marker { display: none; }
+        .club-accordion summary::after {
+            content: "\f078";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            transition: transform 0.2s ease;
+        }
+        .club-accordion[open] summary::after {
+            transform: rotate(180deg);
+        }
+        .club-accordion-body {
+            padding: 0 18px 18px;
+        }
         .manual-destacado {
             margin-top: 18px;
             padding: 16px 18px;
@@ -1298,6 +1330,7 @@
                 <button id="btnLogin" class="btn-inicio"><i class="fas fa-sign-in-alt"></i> Iniciar Sesion</button>
                 <button id="userName" class="nav-user-name" type="button" style="display: none;">Invitado</button>
                 <div id="userMenuDropdown" class="user-menu-dropdown" hidden>
+                    <button id="btnToggleMute" class="btn-cerrar user-menu-item" type="button"><i class="fas fa-volume-mute"></i> Silenciar</button>
                     <button id="btnLogout" class="btn-cerrar user-menu-item" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesion</button>
                 </div>
             </div>
@@ -1314,88 +1347,88 @@
 
     <!-- INICIO -->
     <div id="inicio" class="section app-home-content">
-        <div class="historia-container">
-            <h2 class="section-title">
-                <i class="fas fa-book-open"></i> Nuestro Club
-            </h2>
-            <div class="historia-content">
-                <!-- VIDEO CENTRADO ARRIBA -->
-                <div class="historia-imagen" id="historiaMediaPrincipal">
-                    <div class="placeholder-media" style="min-height: 300px; border-radius: 16px;">Sitio en construcción</div>
-                </div>
-                <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
-                
-                <!-- TEXTO DEBAJO -->
-                <div class="historia-texto historia-texto-principal">
-                    <p style="text-align: center;"><strong>GEENERICO</strong> nace con una premisa clara: ofrecer una experiencia de club más ordenada, clara y confiable. Cada sección fue pensada para comunicar mejor, dar tranquilidad en el acceso y sostener una identidad cuidada en cada punto de contacto.</p>
-                    
-                    <div id="historia-adicional" style="display: none;">
-    <p style="text-align: center;">El foco está puesto en una selección curada, una presentación prolija y una comunicación simple para socios. Buscamos que la experiencia se entienda rápido: catálogo legible, novedades útiles y una operación diaria con menos fricción.</p>
-    <p style="text-align: center;">GEENERICO está pensado como un club moderno: más claro para quien ingresa, más consistente para quien administra y más sólido para quien evalúa la propuesta como marca o proyecto comercial.</p>
-</div>
-                    
-                    <div class="historia-toggle">
-                        <button id="btnLeerMasHistoria" onclick="
-                            var h = document.getElementById('historia-adicional');
-                            var b = this;
-                            if (h.style.display === 'none') {
-                                h.style.display = 'block';
-                                b.innerHTML = '<i class=\'fas fa-chevron-up\' style=\'margin-right: 8px;\'></i> Leer menos';
-                            } else {
-                                h.style.display = 'none';
-                                b.innerHTML = '<i class=\'fas fa-chevron-down\' style=\'margin-right: 8px;\'></i> Leer más';
-                            }
-                        " style="
-                            display: inline-block;
-                            background: transparent;
-                            border: 2px solid #7ca35a;
-                            color: #7ca35a;
-                            padding: 10px 30px;
-                            border-radius: 50px;
-                            cursor: pointer;
-                            font-size: 1rem;
-                            font-weight: 600;
-                            transition: all 0.3s ease;
-                            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-                        " onmouseover="
-                            this.style.background = '#7ca35a';
-                            this.style.color = '#0f190c';
-                            this.style.transform = 'translateY(-2px)';
-                        " onmouseout="
-                            this.style.background = 'transparent';
-                            this.style.color = '#7ca35a';
-                            this.style.transform = 'translateY(0)';
-                        ">
-                            <i class="fas fa-chevron-down" style="margin-right: 8px;"></i> Leer más
-                        </button>
-                    </div>
-                    
-                    <div class="historia-cifras">
-                        <div class="cifra"><span class="cifra-numero" id="cifra-socios">+250</span><span class="cifra-texto">Socios con acceso</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-cepas">6</span><span class="cifra-texto">Selecciones activas</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-anios">4</span><span class="cifra-texto">Etapas de evolución</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="beneficios-grid">
-            <article class="beneficio-card">
-                <h3>Catálogo Enfocado</h3>
-                <p>Una selección breve y bien presentada para que cada variedad tenga lugar, contexto y mejor percepción de valor.</p>
-            </article>
-            <article class="beneficio-card">
-                <h3>Experiencia Clara</h3>
-                <p>Desde el acceso hasta cada ficha, todo busca transmitir orden, confianza y una navegación fácil de entender.</p>
-            </article>
-            <article class="beneficio-card">
-                <h3>Gestión Comercial</h3>
-                <p>El sistema acompaña al club para publicar contenido, mantener el catálogo al día y comunicar novedades sin depender de terceros.</p>
-            </article>
-        </div>
     </div>
 
     <!-- ACTIVIDADES -->
     <div id="actividades" class="section" style="display: none;">
+        <details class="club-accordion">
+            <summary><span><i class="fas fa-book-open"></i> Nuestra historia</span></summary>
+            <div class="club-accordion-body">
+                <div class="historia-container">
+                    <div class="historia-content">
+                        <div class="historia-imagen" id="historiaMediaPrincipal">
+                            <div class="placeholder-media" style="min-height: 300px; border-radius: 16px;">Sitio en construcción</div>
+                        </div>
+                        <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
+
+                        <div class="historia-texto historia-texto-principal">
+                            <p style="text-align: center;"><strong>GEENERICO</strong> nace con una premisa clara: ofrecer una experiencia de club más ordenada, clara y confiable. Cada sección fue pensada para comunicar mejor, dar tranquilidad en el acceso y sostener una identidad cuidada en cada punto de contacto.</p>
+
+                            <div id="historia-adicional" style="display: none;">
+                                <p style="text-align: center;">El foco está puesto en una selección curada, una presentación prolija y una comunicación simple para socios. Buscamos que la experiencia se entienda rápido: catálogo legible, novedades útiles y una operación diaria con menos fricción.</p>
+                                <p style="text-align: center;">GEENERICO está pensado como un club moderno: más claro para quien ingresa, más consistente para quien administra y más sólido para quien evalúa la propuesta como marca o proyecto comercial.</p>
+                            </div>
+
+                            <div class="historia-toggle">
+                                <button id="btnLeerMasHistoria" onclick="
+                                    var h = document.getElementById('historia-adicional');
+                                    var b = this;
+                                    if (h.style.display === 'none') {
+                                        h.style.display = 'block';
+                                        b.innerHTML = '<i class=\'fas fa-chevron-up\' style=\'margin-right: 8px;\'></i> Leer menos';
+                                    } else {
+                                        h.style.display = 'none';
+                                        b.innerHTML = '<i class=\'fas fa-chevron-down\' style=\'margin-right: 8px;\'></i> Leer más';
+                                    }
+                                " style="
+                                    display: inline-block;
+                                    background: transparent;
+                                    border: 2px solid #7ca35a;
+                                    color: #7ca35a;
+                                    padding: 10px 30px;
+                                    border-radius: 50px;
+                                    cursor: pointer;
+                                    font-size: 1rem;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+                                " onmouseover="
+                                    this.style.background = '#7ca35a';
+                                    this.style.color = '#0f190c';
+                                    this.style.transform = 'translateY(-2px)';
+                                " onmouseout="
+                                    this.style.background = 'transparent';
+                                    this.style.color = '#7ca35a';
+                                    this.style.transform = 'translateY(0)';
+                                ">
+                                    <i class="fas fa-chevron-down" style="margin-right: 8px;"></i> Leer más
+                                </button>
+                            </div>
+
+                            <div class="historia-cifras">
+                                <div class="cifra"><span class="cifra-numero" id="cifra-socios">+250</span><span class="cifra-texto">Socios con acceso</span></div>
+                                <div class="cifra"><span class="cifra-numero" id="cifra-cepas">6</span><span class="cifra-texto">Selecciones activas</span></div>
+                                <div class="cifra"><span class="cifra-numero" id="cifra-anios">4</span><span class="cifra-texto">Etapas de evolución</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="beneficios-grid">
+                    <article class="beneficio-card">
+                        <h3>Catálogo Enfocado</h3>
+                        <p>Una selección breve y bien presentada para que cada variedad tenga lugar, contexto y mejor percepción de valor.</p>
+                    </article>
+                    <article class="beneficio-card">
+                        <h3>Experiencia Clara</h3>
+                        <p>Desde el acceso hasta cada ficha, todo busca transmitir orden, confianza y una navegación fácil de entender.</p>
+                    </article>
+                    <article class="beneficio-card">
+                        <h3>Gestión Comercial</h3>
+                        <p>El sistema acompaña al club para publicar contenido, mantener el catálogo al día y comunicar novedades sin depender de terceros.</p>
+                    </article>
+                </div>
+            </div>
+        </details>
         <h2 class="section-title">
             <i class="fas fa-newspaper"></i> Novedades
         </h2>

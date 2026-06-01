@@ -58,6 +58,28 @@ function alternarMenuUsuario() {
     boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
 }
 
+function obtenerVideoHistoria() {
+    return document.querySelector('#historiaMediaPrincipal video');
+}
+
+function actualizarBotonMuteHistoria() {
+    const boton = document.getElementById('btnToggleMute');
+    if (!boton) return;
+    const video = obtenerVideoHistoria();
+    const silenciado = !video || video.muted;
+    boton.innerHTML = silenciado
+        ? '<i class="fas fa-volume-up"></i> Activar sonido'
+        : '<i class="fas fa-volume-mute"></i> Silenciar';
+}
+
+function alternarMuteHistoria() {
+    const video = obtenerVideoHistoria();
+    if (!video) return;
+    video.muted = !video.muted;
+    if (!video.muted && typeof video.play === 'function') video.play().catch(() => {});
+    actualizarBotonMuteHistoria();
+}
+
 async function ejecutarCargaSegura(etiqueta, fn) {
     try {
         await fn();
@@ -159,6 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('mobileBtnLogin')?.addEventListener('click', iniciarSesion);
     document.getElementById('mobileBtnLogout')?.addEventListener('click', cerrarSesionHandler);
     document.getElementById('userName')?.addEventListener('click', alternarMenuUsuario);
+    document.getElementById('btnToggleMute')?.addEventListener('click', alternarMuteHistoria);
     document.addEventListener('click', (event) => {
         if (event.target.closest('.app-session-actions')) return;
         cerrarMenuUsuario();
@@ -226,6 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await verificarSesion();
     actualizarBotonActividadesPrincipal();
+    actualizarBotonMuteHistoria();
     mostrarSeccion(localStorage.getItem('cururu_seccion_activa') || 'inicio');
 });
 
