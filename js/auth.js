@@ -22,10 +22,12 @@ function actualizarBotonesSesion(autenticado) {
     const desktopLogout = document.getElementById('btnLogout');
     const mobileLogout = document.getElementById('mobileBtnLogout');
 
-    if (desktopLogin) desktopLogin.style.display = autenticado ? 'none' : 'inline-block';
+    if (desktopLogin) desktopLogin.style.display = autenticado ? 'none' : 'inline-flex';
     if (mobileLogin) mobileLogin.style.display = autenticado ? 'none' : 'flex';
-    if (desktopLogout) desktopLogout.style.display = autenticado ? 'inline-block' : 'none';
+    if (desktopLogout) desktopLogout.style.display = autenticado ? 'flex' : 'none';
     if (mobileLogout) mobileLogout.style.display = autenticado ? 'flex' : 'none';
+    const userName = document.getElementById('userName');
+    if (userName) userName.style.display = autenticado ? 'inline-flex' : 'none';
 }
 
 async function actualizarUIporRol() {
@@ -37,20 +39,25 @@ async function actualizarUIporRol() {
         if (socio.success && socio.data) {
             appState.rolUsuario = socio.data.rol || 'socio';
             appState.socioData = socio.data;
-            document.getElementById('userName').innerHTML =
-                `<i class="fas fa-${appState.rolUsuario === 'maestro' ? 'crown' : (appState.rolUsuario === 'admin' ? 'user-shield' : 'user')}"></i> ${escapeHtml(socio.data.nombre)} ${escapeHtml(socio.data.apellido)}`;
+            const nombre = escapeHtml(socio.data.nombre || 'Socio');
+            document.getElementById('userName').innerHTML = `<span class="nav-user-token">${nombre}</span>`;
         } else {
             appState.rolUsuario = 'socio';
             appState.socioData = null;
-            document.getElementById('userName').innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(usuario.email)}`;
+            document.getElementById('userName').innerHTML = `<span class="nav-user-token">${escapeHtml(usuario.email)}</span>`;
         }
+        document.getElementById('userName')?.setAttribute('role', 'button');
+        document.getElementById('userName')?.setAttribute('aria-haspopup', 'menu');
+        document.getElementById('userName')?.setAttribute('aria-expanded', 'false');
         actualizarBotonesSesion(true);
     } else {
         appState.rolUsuario = 'invitado';
         appState.socioData = null;
         appState.gramosReservadosCiclo = 0;
         appState.cicloClubActual = null;
-        document.getElementById('userName').innerHTML = '<i class="fas fa-user"></i> Invitado';
+        document.getElementById('userName').innerHTML = '<span class="nav-user-token">Invitado</span>';
+        document.getElementById('userName')?.setAttribute('role', 'status');
+        document.getElementById('userName')?.setAttribute('aria-expanded', 'false');
         actualizarBotonesSesion(false);
         mostrarPanelLogin();
     }
@@ -74,6 +81,7 @@ async function actualizarUIporRol() {
     if (appState.rolUsuario === 'maestro' && typeof cargarMaestroDataCompleta === 'function') {
         await cargarMaestroDataCompleta();
     }
+    if (typeof actualizarBotonActividadesPrincipal === 'function') actualizarBotonActividadesPrincipal();
 }
 
 async function iniciarSesion() {

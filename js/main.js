@@ -1,4 +1,4 @@
-const mainSections = ['inicio', 'productos', 'admin', 'maestro', 'login'];
+const mainSections = ['inicio', 'productos', 'carrito', 'actividades', 'admin', 'maestro', 'menu', 'login'];
 const restrictedSections = {
     admin: ['admin', 'maestro'],
     maestro: ['maestro']
@@ -23,6 +23,39 @@ function mostrarSeccion(seccionId) {
     document.querySelectorAll('.nav-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.section === destino);
     });
+    document.body.classList.toggle('app-home', destino === 'inicio');
+    document.body.classList.toggle('app-internal', destino !== 'inicio');
+}
+
+function obtenerSeccionActividadesPrincipal() {
+    if (appState.rolUsuario === 'maestro') return 'maestro';
+    if (appState.rolUsuario === 'admin') return 'admin';
+    return 'actividades';
+}
+
+function actualizarBotonActividadesPrincipal() {
+    const boton = document.querySelector('[data-smart-section="actividades"] span');
+    if (!boton) return;
+    boton.textContent = (appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro') ? 'HERRAMIENTAS' : 'ACTIVIDADES';
+}
+
+function cerrarMenuUsuario() {
+    const menu = document.getElementById('userMenuDropdown');
+    const boton = document.getElementById('userName');
+    if (!menu || !boton) return;
+    menu.hidden = true;
+    menu.classList.remove('is-open');
+    boton.setAttribute('aria-expanded', 'false');
+}
+
+function alternarMenuUsuario() {
+    const menu = document.getElementById('userMenuDropdown');
+    const boton = document.getElementById('userName');
+    if (!menu || !boton || boton.getAttribute('role') !== 'button') return;
+    const abierto = menu.hidden;
+    menu.hidden = !abierto;
+    menu.classList.toggle('is-open', abierto);
+    boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
 }
 
 async function ejecutarCargaSegura(etiqueta, fn) {
@@ -125,9 +158,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnLogout')?.addEventListener('click', cerrarSesionHandler);
     document.getElementById('mobileBtnLogin')?.addEventListener('click', iniciarSesion);
     document.getElementById('mobileBtnLogout')?.addEventListener('click', cerrarSesionHandler);
+    document.getElementById('userName')?.addEventListener('click', alternarMenuUsuario);
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.app-session-actions')) return;
+        cerrarMenuUsuario();
+    });
+    document.querySelector('.app-home-button')?.addEventListener('click', async (event) => {
+        if (event.target.closest('button')) return;
+        mostrarSeccion('inicio');
+    });
 
     document.querySelectorAll('.nav-btn').forEach((btn) => {
         if (btn.id === 'mobileBtnLogin' || btn.id === 'mobileBtnLogout') return;
+        if (btn.dataset.smartSection === 'actividades') {
+            btn.addEventListener('click', () => mostrarSeccion(obtenerSeccionActividadesPrincipal()));
+            return;
+        }
         btn.addEventListener('click', () => mostrarSeccion(btn.dataset.section));
     });
 
@@ -179,6 +225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     await verificarSesion();
+    actualizarBotonActividadesPrincipal();
     mostrarSeccion(localStorage.getItem('cururu_seccion_activa') || 'inicio');
 });
 
