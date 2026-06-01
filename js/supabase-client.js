@@ -1,34 +1,83 @@
 // ============================================
-// SUPABASE CLIENT - CURURÚ CLUB
+// SUPABASE CLIENT - GENERICO CLUB
 // VERSIÓN CON LOGIN POR EMAIL
 // ============================================
 
-const SUPABASE_URL = 'https://xdgiensgdpedeenwgxyn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkZ2llbnNnZHBlZGVlbndneHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDE4MjYsImV4cCI6MjA5MjAxNzgyNn0._tRzyV3Y-J-yyGPjuPaaXTe_0wctMKW1EpqeTXgiFtk';
+function resolverSupabaseEnv() {
+    const supabaseUrl = String(window.__SUPABASE_ENV__?.url || '').trim();
+    const supabaseAnonKey = String(window.__SUPABASE_ENV__?.anonKey || '').trim();
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('%VITE_') || supabaseAnonKey.includes('%VITE_')) {
+        throw new Error('Configuracion de Supabase no disponible. Abrir la web desde npm run dev o desde el deploy, no como archivo file://.');
+    }
 
-// ============================================
-// PRUEBA DE CONEXIÓN
-// ============================================
-
-async function testConexion() {
-    console.log('🔌 Probando conexión con Supabase...');
-    
+    let parsedUrl;
     try {
-        const { data, error } = await supabaseClient
-            .from('noticias')
-            .select('*')
-            .limit(3);
-        
-        if (error) throw error;
-        
-        console.log('✅ Conexión exitosa!');
-        console.log('📰 Noticias:', data);
-        return true;
+        parsedUrl = new URL(supabaseUrl);
+    } catch (_error) {
+        throw new Error('SUPABASE_URL invalida. Verificar variables de entorno del servidor.');
+    }
+
+    return {
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+        projectRef: parsedUrl.hostname.split('.')[0]
+    };
+}
+
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var SUPABASE_PROJECT_REF = '';
+var supabaseClient = null;
+
+const supabaseEnv = resolverSupabaseEnv();
+SUPABASE_URL = supabaseEnv.url;
+SUPABASE_ANON_KEY = supabaseEnv.anonKey;
+SUPABASE_PROJECT_REF = supabaseEnv.projectRef;
+
+window.SUPABASE_URL = SUPABASE_URL;
+
+supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabaseClient = supabaseClient;
+
+function errorEsRefreshTokenInvalido(error) {
+    const mensaje = String(error?.message || '').toLowerCase();
+    return mensaje.includes('invalid refresh token') || mensaje.includes('refresh token not found');
+}
+
+function limpiarSesionLocalSupabase() {
+    if (typeof localStorage === 'undefined') return;
+    try {
+        const prefijo = `sb-${SUPABASE_PROJECT_REF}-`;
+        Object.keys(localStorage).forEach((clave) => {
+            if (clave.startsWith(prefijo)) localStorage.removeItem(clave);
+        });
     } catch (error) {
-        console.error('❌ Error:', error.message);
-        return false;
+        console.warn('No se pudo limpiar la sesión local de Supabase:', error);
+    }
+}
+
+async function cancelarReserva(reservaId, socioId) {
+    try {
+        if (!reservaId || !socioId) {
+            return { success: false, message: 'No se pudo validar el pedido y el socio.' };
+        }
+
+        const { data, error } = await supabaseClient
+            .from('reservas_mensuales')
+            .update({ estado: 'cancelado' })
+            .eq('id', reservaId)
+            .eq('socio_id', socioId)
+            .select();
+
+        if (error) throw error;
+        if (!data || !data.length) {
+            return { success: false, message: 'No se encontro un pedido activo para este socio.' };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error al cancelar reserva:', error.message);
+        return { success: false, message: error.message };
     }
 }
 
@@ -148,6 +197,94 @@ async function enviarEnlaceRecuperacionPassword(email) {
     }
 }
 
+function normalizarTelefonoAuth(telefono) {
+    const limpio = String(telefono || '').replace(/[^\d+]/g, '').trim();
+    const digitos = limpio.replace(/[^\d]/g, '');
+    if (limpio.startsWith('+598')) return limpio;
+    if (digitos.startsWith('598') && digitos.length === 11) return `+${digitos}`;
+    if (digitos.startsWith('09') && digitos.length === 9) return `+598${digitos.slice(1)}`;
+    if (digitos.startsWith('9') && digitos.length === 8) return `+598${digitos}`;
+    return limpio;
+}
+
+async function loginConTelefonoPassword(telefono, password) {
+    try {
+        const phone = normalizarTelefonoAuth(telefono);
+        const { data: emailTecnico, error: rpcError } = await supabaseClient.rpc('get_login_email_by_phone', {
+            p_phone: phone
+        });
+
+        if (rpcError) throw rpcError;
+        if (!emailTecnico) throw new Error('Telefono o contrasena incorrectos');
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: emailTecnico,
+            password
+        });
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error al iniciar sesion con telefono:', error.message);
+        return { success: false, error };
+    }
+}
+
+async function cambiarPasswordActual(passwordActual, nuevaPassword) {
+    try {
+        const usuario = await obtenerUsuarioActual();
+        const telefono = appState?.socioData?.telefono || '';
+
+        if (!usuario || !telefono) {
+            return { success: false, error: 'No se pudo validar la sesión actual.' };
+        }
+
+        const reauth = await loginConTelefonoPassword(telefono, passwordActual);
+        if (!reauth.success) {
+            return { success: false, error: 'La contraseña actual no es válida.' };
+        }
+
+        if (reauth.data?.user?.id && reauth.data.user.id !== usuario.id) {
+            return { success: false, error: 'No se pudo validar la sesión actual.' };
+        }
+
+        const { data, error } = await supabaseClient.auth.updateUser({ password: nuevaPassword });
+        if (error) throw error;
+        return { success: true, data };
+    } catch (_error) {
+        return { success: false, error: 'No se pudo actualizar la contraseña.' };
+    }
+}
+
+async function marcarPasswordCambiada() {
+    try {
+        const { data, error } = await supabaseClient.rpc('mark_password_changed');
+        if (error) throw error;
+        appState.socioData = {
+            ...appState.socioData,
+            debe_cambiar_password: false,
+            password_temporal: false,
+            password_changed_at: new Date().toISOString()
+        };
+        return { success: true, data };
+    } catch (error) {
+        console.error('No se pudo marcar la contraseña como cambiada:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+async function cambiarPasswordTemporal(nuevaPassword) {
+    try {
+        const { data, error } = await supabaseClient.auth.updateUser({ password: nuevaPassword });
+        if (error) throw error;
+        const marcado = await marcarPasswordCambiada();
+        if (!marcado.success) return marcado;
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error.message || 'No se pudo actualizar la contraseña.' };
+    }
+}
+
 // Obtener usuario actual (sesión activa)
 async function obtenerUsuarioActual() {
     try {
@@ -155,6 +292,10 @@ async function obtenerUsuarioActual() {
         if (error) throw error;
         return user;
     } catch (error) {
+        if (errorEsRefreshTokenInvalido(error)) {
+            limpiarSesionLocalSupabase();
+            return null;
+        }
         if (error?.message !== 'Auth session missing!') {
             console.error('Error al obtener usuario:', error.message);
         }
@@ -177,6 +318,23 @@ async function cerrarSesion() {
 // ============================================
 // FUNCIONES PARA SOCIOS (PANEL)
 // ============================================
+
+// Obtener socio por ID de Supabase Auth
+async function obtenerSocioPorAuthId(authUserId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('socios')
+            .select('*')
+            .eq('auth_user_id', authUserId)
+            .single();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.warn('No se pudo obtener socio por Auth ID:', error.message);
+        return { success: false, error: error.message };
+    }
+}
 
 // Obtener socio por email
 async function obtenerSocioPorEmail(email) {
@@ -213,20 +371,24 @@ async function obtenerReservas(socioId) {
 }
 
 // Confirmar reserva
-async function confirmarReserva(socioId, gramos, tipo, fechaRetiro) {
+async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = null) {
     try {
+        if (!producto?.id) {
+            return { success: false, message: 'El pedido debe tener una variedad seleccionada.' };
+        }
         const fechaReserva = new Date(fechaRetiro);
         const reserva = {
             socio_id: socioId,
             mes: fechaReserva.getMonth() + 1,
-            año: fechaReserva.getFullYear(),
+            ['a\u00c3\u00b1o']: fechaReserva.getFullYear(),
             cantidad_gramos: gramos,
             fecha_retiro: fechaRetiro,
             tipo_entrega: tipo === 'primer' ? 'primer_jueves' : 'ultimo_jueves',
             fecha_confirmacion: new Date(),
-            estado: 'confirmado'
+            estado: 'pendiente',
+            producto_id: producto.id,
+            producto_nombre: producto.nombre || null
         };
-        
         const { data, error } = await supabaseClient
             .from('reservas_mensuales')
             .insert([reserva]);
@@ -235,6 +397,29 @@ async function confirmarReserva(socioId, gramos, tipo, fechaRetiro) {
         return { success: true, data };
     } catch (error) {
         console.error('Error al confirmar reserva:', error.message);
+        return { success: false, message: error.message };
+    }
+}
+
+async function modificarReserva(reservaId, socioId, cambios = {}) {
+    try {
+        const payload = { estado: 'pendiente' };
+        if (Number.isFinite(Number(cambios.gramos))) payload.cantidad_gramos = Number(cambios.gramos);
+        if (cambios.producto) {
+            payload.producto_id = cambios.producto.id || null;
+            payload.producto_nombre = cambios.producto.nombre || null;
+        }
+        let { data, error } = await supabaseClient
+            .from('reservas_mensuales')
+            .update(payload)
+            .eq('id', reservaId)
+            .eq('socio_id', socioId)
+            .select();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error al modificar reserva:', error.message);
         return { success: false, message: error.message };
     }
 }
@@ -293,23 +478,30 @@ window.eliminarImagenProducto = eliminarImagenProducto;
 
 // Funciones públicas
 window.supabaseClient = supabaseClient;
-window.testConexion = testConexion;
 window.obtenerNoticias = obtenerNoticias;
 window.obtenerProductos = obtenerProductos;
 window.obtenerActividades = obtenerActividades;
 window.solicitarMembresia = solicitarMembresia;
 
-// Autenticación email (NUEVAS)
+// Autenticación principal
 window.loginConEmail = loginConEmail;
 window.verificarEmail = verificarEmail;
 window.enviarEnlaceRecuperacionPassword = enviarEnlaceRecuperacionPassword;
+window.loginConTelefonoPassword = loginConTelefonoPassword;
+window.cambiarPasswordActual = cambiarPasswordActual;
+window.cambiarPasswordTemporal = cambiarPasswordTemporal;
+window.marcarPasswordCambiada = marcarPasswordCambiada;
+window.normalizarTelefonoAuth = normalizarTelefonoAuth;
 window.obtenerUsuarioActual = obtenerUsuarioActual;
 window.cerrarSesion = cerrarSesion;
 
 // Funciones para socio
+window.obtenerSocioPorAuthId = obtenerSocioPorAuthId;
 window.obtenerSocioPorEmail = obtenerSocioPorEmail;
 window.obtenerReservas = obtenerReservas;
 window.confirmarReserva = confirmarReserva;
+window.modificarReserva = modificarReserva;
+window.cancelarReserva = cancelarReserva;
 
 // Autenticación WhatsApp (mantenida)
 window.loginConWhatsapp = loginConWhatsapp;
@@ -388,8 +580,3 @@ window.obtenerCalificacionUsuario = obtenerCalificacionUsuario;
 window.calificarProducto = calificarProducto;
 window.calcularPromedioEstrellas = calcularPromedioEstrellas;
 window.renderizarEstrellas = renderizarEstrellas;
-
-
-
-
-console.log('GEENERICO - Client listo (con login por email)');

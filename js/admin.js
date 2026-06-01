@@ -22,21 +22,8 @@ function renderizarPreviewImagenes(files, previewId) {
 }
 
 const MAX_IMAGENES_POR_CONTENIDO = 3;
+const MAX_MENSAJE_TELEGRAM_LENGTH = 4096;
 const archivosAcumuladosPorInput = {};
-
-function normalizarUrlsImagenes(value) {
-    return String(value || '')
-        .split(/\r?\n/)
-        .map((item) => item.trim())
-        .filter(Boolean);
-}
-
-function validarMaximoImagenes(urls = [], files = null, contexto = 'contenido') {
-    const total = (urls?.length || 0) + (files?.length || 0);
-    if (total > MAX_IMAGENES_POR_CONTENIDO) {
-        throw new Error(`Solo se permiten hasta ${MAX_IMAGENES_POR_CONTENIDO} imagenes por ${contexto}.`);
-    }
-}
 
 function obtenerClaveArchivo(file) {
     return [file?.name || '', file?.size || 0, file?.lastModified || 0].join('__');
@@ -53,14 +40,11 @@ function obtenerArchivosAcumulados(inputId) {
     return archivosAcumuladosPorInput[inputId] || [];
 }
 
-function limpiarArchivosAcumulados(inputId, previewId = null) {
-    archivosAcumuladosPorInput[inputId] = [];
-    const input = document.getElementById(inputId);
-    if (input) {
-        input.value = '';
-        sincronizarInputConArchivos(input, []);
+function validarMaximoImagenes(urls = [], files = null, contexto = 'contenido') {
+    const total = (urls?.length || 0) + (files?.length || 0);
+    if (total > MAX_IMAGENES_POR_CONTENIDO) {
+        throw new Error(`Solo se permiten hasta ${MAX_IMAGENES_POR_CONTENIDO} imágenes por ${contexto}.`);
     }
-    if (previewId) renderizarPreviewImagenes([], previewId);
 }
 
 function configurarInputImagenesConLimite(inputId, previewId, contexto) {
@@ -79,7 +63,7 @@ function configurarInputImagenesConLimite(inputId, previewId, contexto) {
         const acumulados = Array.from(mapa.values());
 
         if (acumulados.length > MAX_IMAGENES_POR_CONTENIDO) {
-            mostrarMensaje(`Solo podes seleccionar hasta ${MAX_IMAGENES_POR_CONTENIDO} imagenes para ${contexto}.`, false);
+            mostrarMensaje(`Solo podés seleccionar hasta ${MAX_IMAGENES_POR_CONTENIDO} imágenes para ${contexto}.`, false);
             sincronizarInputConArchivos(event.target, actuales);
             return;
         }
@@ -90,17 +74,36 @@ function configurarInputImagenesConLimite(inputId, previewId, contexto) {
     });
 }
 
+function limpiarInputImagenes(inputId, previewId) {
+    archivosAcumuladosPorInput[inputId] = [];
+    const input = document.getElementById(inputId);
+    if (input) input.value = '';
+
+    const preview = document.getElementById(previewId);
+    if (preview) {
+        preview.innerHTML = '';
+        preview.style.display = '';
+    }
+}
+
+window.limpiarInputImagenes = limpiarInputImagenes;
+
 async function subirMultiplesImagenes(bucket, files, prefijo) {
     const imagenes = [];
     for (const file of Array.from(files || [])) {
-        const ext = file.name.split('.').pop();
+        const archivoLimpio = typeof sanitizeImageBeforeUpload === 'function'
+            ? await sanitizeImageBeforeUpload(file)
+            : file;
+        const ext = (archivoLimpio.name.split('.').pop() || 'jpg').toLowerCase();
         const fileName = `${prefijo}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabaseClient.storage.from(bucket).upload(fileName, file);
+        const { error } = await supabaseClient.storage.from(bucket).upload(fileName, archivoLimpio, {
+            contentType: archivoLimpio.type || undefined
+        });
         if (error) {
             const mensaje = String(error.message || '').toLowerCase();
             const bucketFaltante = error.statusCode === '400' || error.statusCode === 400 || mensaje.includes('bucket') || mensaje.includes('not found');
             if (bucketFaltante) {
-                throw new Error(`No existe o no esta listo el bucket "${bucket}" en Supabase Storage.`);
+                throw new Error(`No existe o no está listo el bucket "${bucket}" en Supabase Storage.`);
             }
             throw error;
         }
@@ -109,119 +112,430 @@ async function subirMultiplesImagenes(bucket, files, prefijo) {
     return imagenes;
 }
 
+function obtenerReferenciaStorageDesdeUrl(url) {
+    if (!url) return null;
+    try {
+        const parsed = new URL(url);
+        const base = new URL(SUPABASE_URL);
+        if (parsed.origin !== base.origin) return null;
+
+        const marker = '/storage/v1/object/public/';
+        const index = parsed.pathname.indexOf(marker);
+        if (index === -1) return null;
+
+        const relativePath = parsed.pathname.slice(index + marker.length);
+        const segments = relativePath.split('/').filter(Boolean);
+        if (segments.length < 2) return null;
+
+        const bucket = segments.shift();
+        const path = decodeURIComponent(segments.join('/'));
+        return bucket && path ? { bucket, path } : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function eliminarArchivoStoragePorUrl(url) {
+    const referencia = obtenerReferenciaStorageDesdeUrl(url);
+    if (!referencia) return { success: false, skipped: true };
+
+    const { error } = await supabaseClient.storage.from(referencia.bucket).remove([referencia.path]);
+    if (error) {
+        console.warn(`No se pudo eliminar ${referencia.path} de ${referencia.bucket}`, error);
+        return { success: false, error };
+    }
+    return { success: true };
+}
+
+async function eliminarArchivosStoragePorUrls(urls = []) {
+    const unicos = Array.from(new Set((urls || []).filter(Boolean)));
+    const resultados = [];
+    for (const url of unicos) {
+        resultados.push(await eliminarArchivoStoragePorUrl(url));
+    }
+    return resultados;
+}
+
+window.obtenerReferenciaStorageDesdeUrl = obtenerReferenciaStorageDesdeUrl;
+window.eliminarArchivoStoragePorUrl = eliminarArchivoStoragePorUrl;
+window.eliminarArchivosStoragePorUrls = eliminarArchivosStoragePorUrls;
+
+let cacheProductosTieneTipoCultivo = null;
+let cacheProductosTieneIndicaSativa = null;
+
+function parsearPerfilIndicaSativa(valor) {
+    const texto = String(valor || '').trim();
+    const matchIndica = texto.match(/(\d+(?:[.,]\d+)?)\s*%\s*indica/i);
+    const matchSativa = texto.match(/(\d+(?:[.,]\d+)?)\s*%\s*sativa/i);
+    return {
+        indica: matchIndica ? parseFloat(matchIndica[1].replace(',', '.')) : null,
+        sativa: matchSativa ? parseFloat(matchSativa[1].replace(',', '.')) : null
+    };
+}
+
+function construirPerfilIndicaSativa(indica, sativa) {
+    const indicaNum = Number(indica);
+    const sativaNum = Number(sativa);
+    const indicaValida = Number.isFinite(indicaNum);
+    const sativaValida = Number.isFinite(sativaNum);
+    if (!indicaValida && !sativaValida) return null;
+    const indicaTexto = indicaValida ? `${indicaNum}% Indica` : null;
+    const sativaTexto = sativaValida ? `${sativaNum}% Sativa` : null;
+    return [indicaTexto, sativaTexto].filter(Boolean).join(' - ');
+}
+
+function normalizarTipoCultivoAdmin(tipoCultivo) {
+    const valor = String(tipoCultivo || '').trim().toLowerCase();
+    if (valor === 'exterior') return 'exterior';
+    if (valor === 'dispositivos_pipas' || valor === 'parafernalia_accesorios') return valor;
+    return 'invernaculo';
+}
+
+function productoAdminEsArticuloTipo(tipoCultivo) {
+    const normalizado = normalizarTipoCultivoAdmin(tipoCultivo);
+    return normalizado === 'dispositivos_pipas' || normalizado === 'parafernalia_accesorios';
+}
+
+function renderPlanPlusEstadoAdmin(plusActivo) {
+    return `
+        <div class="plan-plus-admin-notice ${plusActivo ? 'activo' : 'inactivo'}">
+            <div>
+                <strong>Plan Plus: ${plusActivo ? 'activo' : 'no activo'}</strong>
+                <span>${plusActivo
+                    ? 'Artículos destacados habilitados para la página inicial.'
+                    : 'Para activar Artículos destacados, contactar al proveedor.'}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderOpcionesTipoProductoAdmin(plusActivo) {
+    return `
+        <option value="invernaculo">PREMIUM</option>
+        <option value="exterior">STANDARD</option>
+        ${plusActivo ? `
+            <option value="dispositivos_pipas">Dispositivos y pipas</option>
+            <option value="parafernalia_accesorios">Parafernalia y Accesorios</option>
+        ` : ''}
+    `;
+}
+
+function obtenerTipoCatalogoProductoAdmin(producto = {}) {
+    const cepa = String(producto.cepa || '').trim();
+    if (cepa.startsWith('ARTICULO:')) return normalizarTipoCultivoAdmin(cepa.slice('ARTICULO:'.length));
+    return normalizarTipoCultivoAdmin(producto.tipo_cultivo);
+}
+
+function obtenerEtiquetaTipoCultivoAdmin(tipoCultivo) {
+    const normalizado = normalizarTipoCultivoAdmin(tipoCultivo);
+    if (normalizado === 'exterior') return 'STANDARD';
+    if (normalizado === 'dispositivos_pipas') return 'Dispositivos y pipas';
+    if (normalizado === 'parafernalia_accesorios') return 'Parafernalia y Accesorios';
+    return 'PREMIUM';
+}
+
+function obtenerEtiquetaProductoAdmin(producto = {}) {
+    return obtenerEtiquetaTipoCultivoAdmin(obtenerTipoCatalogoProductoAdmin(producto));
+}
+
+function errorEsColumnaTipoCultivoFaltante(error) {
+    const mensaje = String(error?.message || '').toLowerCase();
+    const codigo = String(error?.code || '').toUpperCase();
+    return codigo === 'PGRST204' || (mensaje.includes('tipo_cultivo') && (mensaje.includes('schema cache') || mensaje.includes('column')));
+}
+
+function errorEsColumnaIndicaSativaFaltante(error) {
+    const mensaje = String(error?.message || '').toLowerCase();
+    const codigo = String(error?.code || '').toUpperCase();
+    return codigo === 'PGRST204' || mensaje.includes('indica_sativa');
+}
+
+function errorEsColumnaStockFaltante(error) {
+    const mensaje = String(error?.message || '').toLowerCase();
+    return mensaje.includes('stock_packs')
+        || mensaje.includes('bajo_stock_packs')
+        || mensaje.includes('stock_activo')
+        || mensaje.includes('pack_gramos');
+}
+
+function quitarCamposStock(payload = {}) {
+    const { stock_packs, bajo_stock_packs, stock_activo, pack_gramos, ...sinStock } = payload;
+    return sinStock;
+}
+
+function obtenerPayloadStockAdmin(prefix) {
+    const stockPacks = normalizarEnteroNoNegativo(document.getElementById(`${prefix}StockPacks`)?.value, 0);
+    const bajoStockPacks = normalizarEnteroNoNegativo(document.getElementById(`${prefix}BajoStockPacks`)?.value, 2);
+    const stockActivo = document.getElementById(`${prefix}StockActivo`)?.checked !== false;
+    return {
+        stock_packs: stockPacks,
+        bajo_stock_packs: bajoStockPacks,
+        stock_activo: stockActivo,
+        pack_gramos: PACK_GRAMOS_DEFAULT
+    };
+}
+
+function renderEstadoStockAdmin(producto = {}) {
+    const stock = obtenerInfoStockProducto(producto);
+    if (!stock.stockActivo) return '<span class="stock-admin-pill neutral">Stock inactivo</span>';
+    if (stock.sinStock) return '<span class="stock-admin-pill sin-stock">SIN STOCK</span>';
+    if (stock.bajoStock) return `<span class="stock-admin-pill bajo-stock">Poca disponibilidad · ${stock.stockPacks} packs</span>`;
+    return `<span class="stock-admin-pill disponible">${formatearPacksDisponibles(stock.stockPacks, stock.gramosDisponibles)}</span>`;
+}
+
+function actualizarEquivalenciaStockAdmin(prefix) {
+    const input = document.getElementById(`${prefix}StockPacks`);
+    const output = document.getElementById(`${prefix}StockEquivalente`);
+    if (!input || !output) return;
+    const packs = normalizarEnteroNoNegativo(input.value, 0);
+    output.textContent = formatearPacksDisponibles(packs, packs * PACK_GRAMOS_DEFAULT);
+}
+
+async function productosTieneTipoCultivo() {
+    if (cacheProductosTieneTipoCultivo !== null) return cacheProductosTieneTipoCultivo;
+    const { error } = await supabaseClient.from('productos').select('tipo_cultivo').limit(1);
+    cacheProductosTieneTipoCultivo = !error || !errorEsColumnaTipoCultivoFaltante(error);
+    return cacheProductosTieneTipoCultivo;
+}
+
+async function productosTieneIndicaSativa() {
+    return cacheProductosTieneIndicaSativa !== false;
+}
+
+function marcarProductosSinTipoCultivo() {
+    cacheProductosTieneTipoCultivo = false;
+}
+
+function marcarProductosSinIndicaSativa() {
+    cacheProductosTieneIndicaSativa = false;
+}
+
+async function actualizarProductoConCompatibilidad(id, updates) {
+    const variantes = [];
+    let base = { ...updates };
+
+    const incluirTipoCultivo = await productosTieneTipoCultivo();
+    if (!incluirTipoCultivo) {
+        const { tipo_cultivo, ...sinTipo } = base;
+        base = sinTipo;
+    }
+
+    const incluirIndicaSativa = await productosTieneIndicaSativa();
+    if (!incluirIndicaSativa) {
+        const { indica_sativa, ...sinIndica } = base;
+        base = sinIndica;
+    }
+
+    variantes.push(base);
+
+    const { indica_sativa, ...sinIndicaBase } = base;
+    if (Object.keys(sinIndicaBase).length !== Object.keys(base).length) variantes.push(sinIndicaBase);
+
+    const { tipo_cultivo, ...sinTipoBase } = base;
+    if (Object.keys(sinTipoBase).length !== Object.keys(base).length) variantes.push(sinTipoBase);
+
+    const sinStockBase = quitarCamposStock(base);
+    if (Object.keys(sinStockBase).length !== Object.keys(base).length) variantes.push(sinStockBase);
+
+    const { tipo_cultivo: _omitTipo, indica_sativa: _omitIndica, ...sinTipoNiIndica } = updates;
+    variantes.push(sinTipoNiIndica);
+    variantes.push(quitarCamposStock(sinTipoNiIndica));
+
+    const vistas = new Set();
+    const unicas = variantes.filter((variante) => {
+        const clave = JSON.stringify(Object.keys(variante).sort().map((k) => [k, variante[k]]));
+        if (vistas.has(clave)) return false;
+        vistas.add(clave);
+        return true;
+    });
+
+    let ultimoResultado = null;
+    for (const variante of unicas) {
+        ultimoResultado = await supabaseClient.from('productos').update(variante).eq('id', id);
+        if (!ultimoResultado.error) return ultimoResultado;
+
+        if (errorEsColumnaTipoCultivoFaltante(ultimoResultado.error)) marcarProductosSinTipoCultivo();
+        if (errorEsColumnaIndicaSativaFaltante(ultimoResultado.error)) marcarProductosSinIndicaSativa();
+        if (errorEsColumnaStockFaltante(ultimoResultado.error)) variantes.push(quitarCamposStock(variante));
+    }
+
+    return ultimoResultado;
+}
+
+async function insertarProductoConCompatibilidad(payload) {
+    const incluirTipoCultivo = await productosTieneTipoCultivo();
+    const incluirIndicaSativa = await productosTieneIndicaSativa();
+    let payloadFinal = { ...payload };
+    if (!incluirTipoCultivo) {
+        const { tipo_cultivo, ...payloadSinTipo } = payloadFinal;
+        payloadFinal = payloadSinTipo;
+    }
+    if (!incluirIndicaSativa) {
+        const { indica_sativa, ...payloadSinIndica } = payloadFinal;
+        payloadFinal = payloadSinIndica;
+    }
+
+    let query = supabaseClient.from('productos').insert([payloadFinal]).select().single();
+    let resultado = await query;
+    if (!resultado.error) return resultado;
+
+    let payloadFallback = { ...payload };
+    if (errorEsColumnaTipoCultivoFaltante(resultado.error)) {
+        marcarProductosSinTipoCultivo();
+        const { tipo_cultivo, ...payloadSinTipo } = payloadFallback;
+        payloadFallback = payloadSinTipo;
+    }
+    if (errorEsColumnaIndicaSativaFaltante(resultado.error)) {
+        marcarProductosSinIndicaSativa();
+        const { indica_sativa, ...payloadSinIndica } = payloadFallback;
+        payloadFallback = payloadSinIndica;
+    }
+    if (errorEsColumnaStockFaltante(resultado.error)) {
+        payloadFallback = quitarCamposStock(payloadFallback);
+    }
+
+    if (payloadFallback === payload) return resultado;
+    return supabaseClient.from('productos').insert([payloadFallback]).select().single();
+}
+
+window.errorEsColumnaTipoCultivoFaltante = errorEsColumnaTipoCultivoFaltante;
+window.errorEsColumnaIndicaSativaFaltante = errorEsColumnaIndicaSativaFaltante;
+window.insertarProductoConCompatibilidad = insertarProductoConCompatibilidad;
+window.actualizarProductoConCompatibilidad = actualizarProductoConCompatibilidad;
+window.productosTieneTipoCultivo = productosTieneTipoCultivo;
+window.productosTieneIndicaSativa = productosTieneIndicaSativa;
+window.marcarProductosSinTipoCultivo = marcarProductosSinTipoCultivo;
+window.marcarProductosSinIndicaSativa = marcarProductosSinIndicaSativa;
+window.parsearPerfilIndicaSativa = parsearPerfilIndicaSativa;
+window.construirPerfilIndicaSativa = construirPerfilIndicaSativa;
+
 async function cargarAdminData() {
     const cards = document.getElementById('adminCards');
-    if (!cards) return;
 
-    const [socios, solicitudes, noticias, productos, reservas] = await Promise.all([
+    const [socios, solicitudes, productos, reservas] = await Promise.all([
         supabaseClient.from('socios').select('*', { count: 'exact', head: true }),
         supabaseClient.from('solicitudes_membresia').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-        supabaseClient.from('noticias').select('*', { count: 'exact', head: true }),
         supabaseClient.from('productos').select('*', { count: 'exact', head: true }),
-        supabaseClient.from('reservas_mensuales').select('*', { count: 'exact', head: true }).eq('estado', 'confirmado')
+        supabaseClient.from('reservas_mensuales').select('*', { count: 'exact', head: true }).neq('estado', 'cancelado')
     ]);
 
-    cards.innerHTML = `
-        <div class="card"><div class="card-number">${socios.count || 0}</div><div class="card-label">Socios</div></div>
-        <div class="card"><div class="card-number">${solicitudes.count || 0}</div><div class="card-label">Solicitudes</div></div>
-        <div class="card"><div class="card-number">${noticias.count || 0}</div><div class="card-label">Noticias</div></div>
-        <div class="card"><div class="card-number">${productos.count || 0}</div><div class="card-label">Productos</div></div>
-        <div class="card"><div class="card-number">${reservas.count || 0}</div><div class="card-label">Reservas</div></div>
-    `;
+    if (cards) {
+        cards.innerHTML = `
+            <div class="card"><div class="card-number">${socios.count || 0}</div><div class="card-label">Socios</div></div>
+            <div class="card"><div class="card-number">${solicitudes.count || 0}</div><div class="card-label">Solicitudes</div></div>
+            <div class="card"><div class="card-number">${productos.count || 0}</div><div class="card-label">Productos</div></div>
+            <div class="card"><div class="card-number">${reservas.count || 0}</div><div class="card-label">Pedidos</div></div>
+            <div class="card"><div class="card-number"><i class="fas fa-circle-question"></i></div><div class="card-label">Manual</div></div>
+        `;
+    }
 
     await Promise.all([
-        cargarNoticiasAdmin(),
+        cargarHistoriaAdmin(),
         cargarActividadesAdmin(),
         cargarProductosAdmin(),
         cargarSolicitudesAdmin(),
         cargarSociosAdmin(),
         cargarReservasAdmin(),
-        cargarManualAdmin(),
         cargarSociosParaMensajes(),
+        cargarTelegramInboxMensajes(),
         cargarHistorialMensajes()
     ]);
     if (typeof cargarGraficosDashboard === 'function') await cargarGraficosDashboard();
 }
 
-async function cargarNoticiasAdmin() {
-    const container = document.getElementById('admin-noticias');
-    if (!container) return;
-    const noticias = (await obtenerNoticias()) || [];
-
-    container.innerHTML = `
-        <form id="formNoticiaAdmin">
-            <h3>Nueva noticia</h3>
-            <div class="form-grid">
-                <div class="form-group full-width"><input type="text" id="noticiaTituloAdmin" placeholder="Titulo" required></div>
-                <div class="form-group full-width"><textarea id="noticiaContenidoAdmin" rows="4" placeholder="Contenido" required></textarea></div>
-                <div class="form-group"><input type="text" id="noticiaAutorAdmin" placeholder="Autor"></div>
-            </div>
-            <div style="margin: 15px 0;">
-                <label style="color: #c8d8b5; display: block; margin-bottom: 8px;"><i class="fas fa-image"></i> Imágenes opcionales</label>
-                <input type="file" id="noticiaImagenAdmin" accept="image/*" multiple style="background: rgba(8,15,6,0.8); border: 1px solid rgba(100,140,75,0.4); border-radius: 12px; padding: 10px; color: #e0ecd0; width: 100%;">
-            </div>
-            <div id="noticiaPreview" style="margin: 10px 0; text-align: center;"></div>
-            <button type="submit" class="btn-submit">Publicar noticia</button>
-        </form>
-        <hr>
-        ${noticias.length ? `
-            <table class="tabla-datos">
-                <thead><tr><th>Fecha</th><th>Titulo</th><th>Imagen</th><th>Acciones</th></tr></thead>
-                <tbody>${noticias.map((noticia) => `
-                    <tr>
-                        <td>${new Date(noticia.fecha_publicacion).toLocaleDateString('es')}</td>
-                        <td>${escapeHtml(noticia.titulo)}</td>
-                        <td>${normalizarListaImagenes(noticia.imagen_url).length ? 'Si' : 'No'}</td>
-                        <td><button class="btn-eliminar" onclick="eliminarNoticiaAdmin('${noticia.id}')">Eliminar</button></td>
-                    </tr>
-                `).join('')}</tbody>
-            </table>
-        ` : '<div class="loading">No hay noticias todavia.</div>'}
-    `;
-
-    configurarInputImagenesConLimite('noticiaImagenAdmin', 'noticiaPreview', 'noticias');
-
-    document.getElementById('formNoticiaAdmin')?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        let imagenes = [];
-        const imagenFiles = document.getElementById('noticiaImagenAdmin')?.files;
-        if (imagenFiles?.length) {
-            try {
-                validarMaximoImagenes([], imagenFiles, 'noticias');
-                imagenes = await subirMultiplesImagenes('noticias', imagenFiles, 'noticia');
-            } catch (error) {
-                mostrarMensaje(`Las imagenes no se pudieron subir: ${error.message}`, false);
-                return;
-            }
-        }
-
-        const { error } = await supabaseClient.from('noticias').insert([{
-            titulo: document.getElementById('noticiaTituloAdmin').value,
-            contenido: document.getElementById('noticiaContenidoAdmin').value,
-            autor: document.getElementById('noticiaAutorAdmin').value || 'Admin',
-            imagen_url: imagenes.length > 1 ? JSON.stringify(imagenes) : (imagenes[0] || null)
-        }]);
-        if (error) {
-            mostrarMensaje(`No se pudo crear la noticia: ${error.message}`, false);
-            return;
-        }
-
-        mostrarMensaje('Noticia publicada', true);
-        await cargarNoticiasAdmin();
-        if (typeof cargarNoticias === 'function') await cargarNoticias();
+async function cargarHistoriaAdmin() {
+    const container = document.getElementById('admin-historia');
+    if (!container || typeof renderizarEditorHistoria !== 'function' || typeof obtenerConfigHistoriaActual !== 'function') return;
+    const configHistoria = await obtenerConfigHistoriaActual();
+    renderizarEditorHistoria(container, {
+        titulo: 'Editar Nuestra Historia',
+        prefijo: 'adminHistoria',
+        botonGuardar: 'guardarHistoriaAdmin',
+        configHistoria
     });
+    renderizarPortadaAdmin(container, appState.configMap || {});
 }
 
-window.eliminarNoticiaAdmin = async function(id) {
-    if (!confirm('Eliminar noticia?')) return;
-    const { error } = await supabaseClient.from('noticias').delete().eq('id', id);
-    if (error) {
-        mostrarMensaje(`No se pudo eliminar: ${error.message}`, false);
-        return;
+window.guardarHistoriaAdmin = async function() {
+    try {
+        if (typeof guardarHistoriaDesdeEditor === 'function') {
+            await guardarHistoriaDesdeEditor('adminHistoria');
+        }
+        mostrarMensaje('Historia guardada', true);
+    } catch (error) {
+        mostrarMensaje('No se pudo guardar la historia', false);
     }
-    await cargarNoticiasAdmin();
-    if (typeof cargarNoticias === 'function') await cargarNoticias();
 };
+
+function valorPortadaAdmin(configMap, clave, fallback = '') {
+    if (!Object.prototype.hasOwnProperty.call(configMap || {}, clave)) return fallback;
+    return String(configMap[clave] || '');
+}
+
+function portadaActivaAdmin(configMap = {}) {
+    if (!Object.prototype.hasOwnProperty.call(configMap, 'portada_activa')) return true;
+    return ['true', '1', 'si', 'sí', 'on', 'activo'].includes(String(configMap.portada_activa || '').trim().toLowerCase());
+}
+
+function renderizarPortadaAdmin(container, configMap = {}) {
+    const titulo = valorPortadaAdmin(configMap, 'portada_titulo', 'Club privado para socios');
+    const subtitulo = valorPortadaAdmin(configMap, 'portada_subtitulo', 'Pedidos mensuales, entregas claras y novedades en un solo lugar.');
+    const descripcion = valorPortadaAdmin(configMap, 'portada_descripcion', 'Nombre del Club centraliza el catálogo, el cupo mensual, las fechas de retiro, las novedades y la comunicación interna para que cada socio tenga una experiencia simple, ordenada y segura.');
+
+    container.insertAdjacentHTML('afterbegin', `
+        <form id="formPortadaAdmin" class="admin-portada-form">
+            <h3>Portada institucional</h3>
+            <p class="admin-portada-copy">Edita el bloque principal de la home o ocultalo si queres dejar solo la historia y el contenido multimedia.</p>
+            <div class="form-grid">
+                <div class="form-group full-width portada-toggle-row">
+                    <label for="portadaActivaAdmin"><input type="checkbox" id="portadaActivaAdmin" ${portadaActivaAdmin(configMap) ? 'checked' : ''}> Mostrar portada</label>
+                </div>
+                <div class="form-group full-width">
+                    <label for="portadaTituloAdmin">Título</label>
+                    <input type="text" id="portadaTituloAdmin" value="${escapeHtml(titulo)}" placeholder="Club privado para socios">
+                </div>
+                <div class="form-group full-width">
+                    <label for="portadaSubtituloAdmin">Subtítulo</label>
+                    <input type="text" id="portadaSubtituloAdmin" value="${escapeHtml(subtitulo)}" placeholder="Pedidos mensuales, entregas claras y novedades en un solo lugar.">
+                </div>
+                <div class="form-group full-width">
+                    <label for="portadaDescripcionAdmin">Descripción</label>
+                    <textarea id="portadaDescripcionAdmin" rows="4" placeholder="Descripción institucional visible en la home">${escapeHtml(descripcion)}</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-submit">Guardar portada</button>
+                </div>
+            </div>
+        </form>
+    `);
+
+    document.getElementById('formPortadaAdmin')?.addEventListener('submit', guardarPortadaAdmin);
+}
+
+async function guardarPortadaAdmin(event) {
+    event.preventDefault();
+    const updates = [
+        { clave: 'portada_activa', valor: document.getElementById('portadaActivaAdmin')?.checked ? 'true' : 'false' },
+        { clave: 'portada_titulo', valor: document.getElementById('portadaTituloAdmin')?.value?.trim() || '' },
+        { clave: 'portada_subtitulo', valor: document.getElementById('portadaSubtituloAdmin')?.value?.trim() || '' },
+        { clave: 'portada_descripcion', valor: document.getElementById('portadaDescripcionAdmin')?.value?.trim() || '' }
+    ];
+
+    for (const item of updates) {
+        const { error } = await supabaseClient.from('configuracion_sistema').upsert(item, { onConflict: 'clave' });
+        if (error) {
+            mostrarMensaje(`No se pudo guardar la portada: ${error.message}`, false);
+            return;
+        }
+    }
+
+    appState.configMap = {
+        ...(appState.configMap || {}),
+        ...Object.fromEntries(updates.map((item) => [item.clave, item.valor]))
+    };
+    aplicarContenidoInstitucional(appState.configMap);
+    mostrarMensaje('Portada guardada', true);
+}
 
 async function cargarActividadesAdmin() {
     const container = document.getElementById('admin-actividades');
@@ -231,6 +545,7 @@ async function cargarActividadesAdmin() {
     container.innerHTML = `
         <form id="formActividadAdmin">
             <h3>Nueva actividad</h3>
+            <p style="color:var(--text-muted); margin: 8px 0 18px; line-height: 1.5;">Usá este formulario para crear actividades, sorteos o regalos. La fecha es obligatoria y el resto de los datos completan la ficha pública.</p>
             <div class="form-grid">
                 <div class="form-group full-width">
                     <label style="color: #c8d8b5;">Tipo</label>
@@ -240,23 +555,19 @@ async function cargarActividadesAdmin() {
                         <option value="regalo">Regalo</option>
                     </select>
                 </div>
-                <div class="form-group full-width"><input type="text" id="actividadTituloAdmin" placeholder="Titulo" required></div>
+                <div class="form-group full-width"><input type="text" id="actividadTituloAdmin" placeholder="Título" required></div>
                 <div class="form-group"><input type="date" id="actividadFechaAdmin" required></div>
                 <div class="form-group"><input type="time" id="actividadHoraAdmin"></div>
-                <div class="form-group"><input type="text" id="actividadUbicacionAdmin" placeholder="Ubicacion"></div>
-                <div class="form-group full-width"><textarea id="actividadDescripcionAdmin" rows="3" placeholder="Descripcion"></textarea></div>
-                <div class="form-group full-width">
-                    <label style="color: #c8d8b5; display: block; margin-bottom: 8px;"><i class="fas fa-image"></i> Imagenes opcionales (max. 3)</label>
-                    <input type="file" id="actividadImagenAdmin" accept="image/*" multiple style="background: rgba(8,15,6,0.8); border: 1px solid rgba(100,140,75,0.4); border-radius: 12px; padding: 10px; color: #e0ecd0; width: 100%;">
-                    <div id="actividadPreview" style="margin: 10px 0; text-align: center;"></div>
-                </div>
+                <div class="form-group"><input type="text" id="actividadUbicacionAdmin" placeholder="Ubicación"></div>
+                <div class="form-group full-width"><textarea id="actividadDescripcionAdmin" rows="3" placeholder="Descripción"></textarea></div>
             </div>
             <button type="submit" class="btn-submit">Crear</button>
         </form>
         <hr>
         ${actividades.length ? `
+            <div class="admin-tabla-scroll">
             <table class="tabla-datos">
-                <thead><tr><th>Fecha</th><th>Tipo</th><th>Titulo</th><th></th></tr></thead>
+                <thead><tr><th>Fecha</th><th>Tipo</th><th>Título</th><th></th></tr></thead>
                 <tbody>${actividades.map((actividad) => `
                     <tr>
                         <td>${new Date(actividad.fecha).toLocaleDateString('es')}</td>
@@ -266,32 +577,19 @@ async function cargarActividadesAdmin() {
                     </tr>
                 `).join('')}</tbody>
             </table>
-        ` : '<div class="loading">No hay actividades todavia.</div>'}
+            </div>
+        ` : '<div class="loading">No hay actividades todavía.</div>'}
     `;
-
-    configurarInputImagenesConLimite('actividadImagenAdmin', 'actividadPreview', 'actividades');
 
     document.getElementById('formActividadAdmin')?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        let imagenes = [];
-        const imagenFiles = document.getElementById('actividadImagenAdmin')?.files;
-        if (imagenFiles?.length) {
-            try {
-                validarMaximoImagenes([], imagenFiles, 'actividades');
-                imagenes = await subirMultiplesImagenes('noticias', imagenFiles, 'actividad');
-            } catch (error) {
-                mostrarMensaje(`Las imagenes no se pudieron subir: ${error.message}`, false);
-                return;
-            }
-        }
         const { error } = await supabaseClient.from('actividades').insert([{
             titulo: document.getElementById('actividadTituloAdmin').value,
             fecha: document.getElementById('actividadFechaAdmin').value,
             hora: document.getElementById('actividadHoraAdmin').value,
             ubicacion: document.getElementById('actividadUbicacionAdmin').value,
             descripcion: document.getElementById('actividadDescripcionAdmin').value,
-            tipo: document.getElementById('actividadTipoAdmin').value,
-            imagen_url: imagenes.length > 1 ? JSON.stringify(imagenes) : (imagenes[0] || null)
+            tipo: document.getElementById('actividadTipoAdmin').value
         }]);
         if (error) {
             mostrarMensaje(`No se pudo crear la actividad: ${error.message}`, false);
@@ -314,83 +612,305 @@ window.eliminarActividadAdmin = async function(id) {
     if (typeof cargarActividadesPublicas === 'function') await cargarActividadesPublicas();
 };
 
+function calcularRangoHorarioEntrega(horaInicio = '18:00') {
+    const match = String(horaInicio || '').match(/^(\d{2}):(\d{2})$/);
+    if (!match) return { inicio: '18:00', fin: '20:00', texto: '18:00 a 20:00' };
+    const inicioMinutos = Number(match[1]) * 60 + Number(match[2]);
+    const finMinutos = (inicioMinutos + 120) % (24 * 60);
+    const inicio = `${String(Math.floor(inicioMinutos / 60)).padStart(2, '0')}:${String(inicioMinutos % 60).padStart(2, '0')}`;
+    const fin = `${String(Math.floor(finMinutos / 60)).padStart(2, '0')}:${String(finMinutos % 60).padStart(2, '0')}`;
+    return { inicio, fin, texto: `${inicio} a ${fin}` };
+}
+
+function renderEntregasPeriodoAdmin(configMap, lugarEntrega, mesSeleccionado = obtenerMesesEntregaProximos(3)[0]?.mesClave) {
+    const periodos = obtenerMesesEntregaProximos(3);
+    const mesActivo = periodos.find((periodo) => periodo.mesClave === mesSeleccionado)?.mesClave || periodos[0]?.mesClave;
+
+    return `
+        <div class="form-group full-width">
+            <label>Mes y año a editar</label>
+            <select id="entregaMesSeleccionAdmin" class="entrega-mes-admin">
+                ${periodos.map((periodo) => `
+                    <option value="${escapeHtml(periodo.mesClave)}" ${periodo.mesClave === mesActivo ? 'selected' : ''}>${escapeHtml(periodo.etiqueta)}</option>
+                `).join('')}
+            </select>
+        </div>
+        ${periodos.map((periodo) => `
+            <div class="form-group full-width entrega-periodo-admin ${periodo.mesClave === mesActivo ? '' : 'is-hidden'}" data-mes-clave="${escapeHtml(periodo.mesClave)}">
+                <h4>${escapeHtml(periodo.etiqueta)}</h4>
+                <div class="entrega-periodo-grid">
+                    ${[1, 2].map((indice) => {
+                        const entrega = obtenerEntregaPeriodoConfig(configMap, periodo.mesClave, indice);
+                        const rango = calcularRangoHorarioEntrega(entrega.hora);
+                        return `
+                            <div class="entrega-slot-admin" data-mes-clave="${escapeHtml(periodo.mesClave)}" data-indice="${indice}">
+                                <strong>Entrega ${indice}</strong>
+                                <label>Fecha de entrega</label>
+                                <input type="date" class="entrega-fecha-admin" value="${escapeHtml(entrega.fecha)}">
+                                <label>Hora de inicio</label>
+                                <input type="time" class="entrega-hora-admin" value="${escapeHtml(rango.inicio)}">
+                                <label>Horario visible</label>
+                                <input type="text" class="entrega-rango-admin" value="${escapeHtml(rango.texto)}" readonly>
+                                <label>Lugar</label>
+                                <input type="text" class="entrega-lugar-admin" value="${escapeHtml(entrega.lugar || lugarEntrega)}">
+                                <label>Mensaje automatico para socios</label>
+                                <textarea class="entrega-mensaje-admin" rows="3">${escapeHtml(entrega.mensaje)}</textarea>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `).join('')}
+    `;
+}
+
+async function cargarEntregasAdmin() {
+    const container = document.getElementById('admin-entregas');
+    if (!container) return;
+    const configMap = await cargarContenidoInstitucional();
+    const lugarEntrega = configMap.lugar_entrega || 'Lugar de Siempre';
+
+    container.innerHTML = `
+        <h3 style="color:var(--text-strong); margin-bottom: 12px;">Entregas</h3>
+        <p style="color:var(--text-muted); margin: 0 0 16px;">Configura hasta dos entregas por mes, eligiendo cualquier fecha del calendario. Las reservas, avisos y alertas quedan sujetas a la fecha que guardes para cada entrega.</p>
+        <form id="formEntregaAdmin">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Aviso automatico</label>
+                    <input type="text" value="Tenes hasta 48 horas antes de la entrega para realizar tu reserva" readonly>
+                </div>
+                <div class="form-group full-width">
+                    <label>Lugar por defecto visible en Actividades</label>
+                    <input type="text" id="entregaLugarDefaultAdmin" value="${escapeHtml(lugarEntrega)}" required>
+                </div>
+                ${renderEntregasPeriodoAdmin(configMap, lugarEntrega)}
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-submit">Guardar calendario de entregas</button>
+                </div>
+                <div class="form-group full-width">
+                    ${construirGoogleCalendarEmbedHTML({
+                        badge: 'Google Calendar',
+                        titulo: 'Calendario embebido en el panel admin',
+                        descripcion: 'Mirá el calendario oficial de entregas desde Google dentro del panel de administración cuando la URL esté configurada.',
+                        fallbackTitle: 'Calendario embebido sin configurar',
+                        fallbackDescripcion: 'El calendario interno actual sigue activo y podés habilitar el embed con una URL válida en la configuración del frontend.',
+                        panelClass: 'google-calendar-panel-admin'
+                    })}
+                </div>
+            </div>
+        </form>
+    `;
+
+    const selector = document.getElementById('entregaMesSeleccionAdmin');
+    const paneles = container.querySelectorAll('.entrega-periodo-admin');
+    const aplicarSeleccionEntrega = () => {
+        const seleccionado = selector?.value || paneles[0]?.dataset.mesClave;
+        paneles.forEach((panel) => {
+            const visible = panel.dataset.mesClave === seleccionado;
+            panel.classList.toggle('is-hidden', !visible);
+            panel.setAttribute('aria-hidden', String(!visible));
+        });
+    };
+
+    selector?.addEventListener('change', aplicarSeleccionEntrega);
+    aplicarSeleccionEntrega();
+
+    container.querySelectorAll('.entrega-hora-admin').forEach((input) => {
+        input.addEventListener('input', (event) => {
+            const slot = event.target.closest('.entrega-slot-admin');
+            const rango = calcularRangoHorarioEntrega(event.target.value);
+            const visible = slot?.querySelector('.entrega-rango-admin');
+            if (visible) visible.value = rango.texto;
+        });
+    });
+
+    document.getElementById('formEntregaAdmin')?.addEventListener('submit', guardarEntregaAdmin);
+}
+
+async function guardarEntregaAdmin(event) {
+    event.preventDefault();
+    const lugarDefault = document.getElementById('entregaLugarDefaultAdmin')?.value?.trim() || 'Lugar de Siempre';
+    const updates = [
+        { clave: 'lugar_entrega', valor: lugarDefault },
+        { clave: 'horas_limite_primer', valor: '48' },
+        { clave: 'horas_limite_ultimo', valor: '48' }
+    ];
+
+    document.querySelectorAll('#admin-entregas .entrega-slot-admin').forEach((slot) => {
+        const mesClave = slot.dataset.mesClave;
+        const indice = slot.dataset.indice;
+        const fecha = slot.querySelector('.entrega-fecha-admin')?.value || '';
+        const hora = slot.querySelector('.entrega-hora-admin')?.value || '18:00';
+        const lugar = slot.querySelector('.entrega-lugar-admin')?.value?.trim() || lugarDefault;
+        const mensaje = slot.querySelector('.entrega-mensaje-admin')?.value?.trim() || '';
+        updates.push(
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'fecha'), valor: fecha },
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'hora'), valor: calcularRangoHorarioEntrega(hora).inicio },
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'lugar'), valor: lugar },
+            { clave: obtenerClaveEntregaPeriodo(mesClave, indice, 'mensaje'), valor: mensaje }
+        );
+    });
+
+    const configPreview = {
+        ...(appState.configMap || {}),
+        ...Object.fromEntries(updates.map((item) => [item.clave, item.valor]))
+    };
+    const proximas = obtenerEntregasConfiguradasFuturas(configPreview, 3);
+    updates.push(
+        { clave: 'fecha_entrega_primer', valor: '' },
+        { clave: 'mensaje_entrega_primer', valor: '' },
+        { clave: 'fecha_entrega_ultimo', valor: '' },
+        { clave: 'mensaje_entrega_ultimo', valor: '' }
+    );
+    if (proximas[0]) {
+        updates.push(
+            { clave: 'fecha_entrega_primer', valor: proximas[0].fecha },
+            { clave: 'mensaje_entrega_primer', valor: proximas[0].mensaje || '' }
+        );
+    }
+    if (proximas[1]) {
+        updates.push(
+            { clave: 'fecha_entrega_ultimo', valor: proximas[1].fecha },
+            { clave: 'mensaje_entrega_ultimo', valor: proximas[1].mensaje || '' }
+        );
+    }
+
+    const fechasInvalidas = updates
+        .filter((item) => item.clave.endsWith('_fecha') && item.valor && !parsearFechaConfigEntrega(item.valor));
+    if (fechasInvalidas.length) {
+        mostrarMensaje('Hay una fecha de entrega invalida.', false);
+        return;
+    }
+
+    for (const item of updates) {
+        const { error } = await supabaseClient.from('configuracion_sistema').upsert(item, { onConflict: 'clave' });
+        if (error) {
+            mostrarMensaje(`No se pudo guardar el calendario: ${error.message}`, false);
+            return;
+        }
+    }
+
+    appState.configMap = {
+        ...(appState.configMap || {}),
+        ...Object.fromEntries(updates.map((item) => [item.clave, item.valor]))
+    };
+
+    mostrarMensaje('Calendario de entregas guardado', true);
+    if (typeof cargarActividadesPublicas === 'function') await cargarActividadesPublicas();
+    await cargarEntregasAdmin();
+}
+
 async function cargarProductosAdmin() {
     const container = document.getElementById('admin-productos');
     if (!container) return;
     const productos = (await obtenerProductos()) || [];
+    const plusActivo = typeof planPlusActivo === 'function' ? planPlusActivo() : false;
+    const productosVisibles = plusActivo
+        ? productos
+        : productos.filter((producto) => !productoAdminEsArticuloTipo(obtenerTipoCatalogoProductoAdmin(producto)));
 
     container.innerHTML = `
-        <form id="formProductoAdmin">
+        ${renderPlanPlusEstadoAdmin(plusActivo)}
+        <form id="formProductoAdmin" class="admin-product-form">
             <h3>Nuevo producto</h3>
+            <p class="admin-product-form-intro">${plusActivo ? 'Podés cargar variedades o artículos destacados. Las variedades se reservan por packs; los artículos aparecen en Artículos destacados.' : 'Cargá variedades disponibles para socios. Las reservas se realizan por packs.'}</p>
             <div class="form-grid">
-                <div class="form-group full-width"><input type="text" id="productoNombreAdmin" placeholder="Nombre" required></div>
-                <div class="form-group"><input type="text" id="productoCepaAdmin" placeholder="Cepa"></div>
-                <div class="form-group"><input type="number" step="0.1" id="productoThcAdmin" placeholder="THC %"></div>
-                <div class="form-group"><input type="number" step="0.1" id="productoCbdAdmin" placeholder="CBD %"></div>
-                <div class="form-group"><input type="number" step="0.01" id="productoPrecioAdmin" placeholder="Precio 10g" value="1600"></div>
-                <div class="form-group full-width"><textarea id="productoDescripcionAdmin" rows="3" placeholder="Descripcion"></textarea></div>
-                <div class="form-group full-width"><textarea id="productoImagenAdmin" rows="3" placeholder="URLs de imagen opcionales, una por linea"></textarea></div>
+                <div class="form-group full-width"><label for="productoNombreAdmin">Nombre</label><input type="text" id="productoNombreAdmin" placeholder="Nombre del producto o articulo" required></div>
+                <div class="form-group"><label for="productoCepaAdmin">Cepa</label><input type="text" id="productoCepaAdmin" placeholder="Ej: híbrida, kush, candy"></div>
+                <div class="form-group"><label for="productoThcAdmin">THC %</label><input type="number" step="0.1" id="productoThcAdmin" placeholder="Ej: 18.5"></div>
+                <div class="form-group"><label for="productoCbdAdmin">CBD %</label><input type="number" step="0.1" id="productoCbdAdmin" placeholder="Ej: 1.2"></div>
+                <div class="form-group"><label for="productoIndicaPorcentajeAdmin">Índica %</label><input type="number" step="10" min="0" max="100" id="productoIndicaPorcentajeAdmin" placeholder="50"></div>
+                <div class="form-group"><label for="productoSativaPorcentajeAdmin">Sativa %</label><input type="number" step="10" min="0" max="100" id="productoSativaPorcentajeAdmin" placeholder="50"></div>
+                <div class="form-group">
+                    <label for="productoTipoCultivoAdmin">Tipo</label>
+                    <select id="productoTipoCultivoAdmin">
+                        ${renderOpcionesTipoProductoAdmin(plusActivo)}
+                    </select>
+                </div>
+                <div class="form-group"><label for="productoPrecioAdmin">Precio base ($)</label><input type="number" step="0.01" id="productoPrecioAdmin" placeholder="1600" value="1600"></div>
+                <div class="form-group"><label for="productoStockPacks">Stock disponible en packs</label><input type="number" min="0" step="1" id="productoStockPacks" placeholder="0" value="0"></div>
+                <div class="form-group"><label for="productoBajoStockPacks">Bajo stock desde X packs</label><input type="number" min="0" step="1" id="productoBajoStockPacks" placeholder="2" value="2"></div>
+                <div class="form-group stock-admin-control stock-admin-control-create">
+                    <label for="productoStockActivo"><input type="checkbox" id="productoStockActivo" checked> Controlar stock</label>
+                    <small>Equivalencia en packs/gramos: <span id="productoStockEquivalente">0 Packs (0g)</span></small>
+                </div>
+                <div class="form-group full-width"><label for="productoDescripcionAdmin">Descripción</label><textarea id="productoDescripcionAdmin" rows="3" placeholder="Descripción visible para socios"></textarea></div>
+                <div class="form-group full-width"><label for="productoImagenAdmin">URLs de imagen opcionales</label><textarea id="productoImagenAdmin" rows="3" placeholder="Una URL por linea"></textarea></div>
                 <div class="form-group full-width">
-                    <label style="color: #c8d8b5; margin-bottom: 8px;"><i class="fas fa-image"></i> O subir varias imágenes</label>
+                    <label for="productoImagenFileAdmin"><i class="fas fa-image"></i> Fotos del producto</label>
                     <input type="file" id="productoImagenFileAdmin" accept="image/*" multiple style="background: rgba(8,15,6,0.8); border: 1px solid rgba(100,140,75,0.4); border-radius: 12px; padding: 10px; color: #e0ecd0; width: 100%;">
+                    <small class="privacy-upload-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> Las imagenes son limpiadas automaticamente para proteger privacidad y ubicacion.</small>
                     <div id="productoPreview" style="margin: 10px 0; text-align: center;"></div>
                 </div>
             </div>
             <button type="submit" class="btn-submit">Agregar</button>
         </form>
         <hr>
-        ${productos.length ? `
-            <table class="tabla-datos">
-                <thead><tr><th>Nombre</th><th>Precio</th><th>Disp.</th><th></th></tr></thead>
-                <tbody>${productos.map((producto) => `
+        ${productosVisibles.length ? `
+            <div class="admin-tabla-scroll">
+            <table class="tabla-datos admin-productos-tabla">
+                <thead><tr><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Disp.</th><th></th></tr></thead>
+                <tbody>${productosVisibles.map((producto) => `
                     <tr>
                         <td>${escapeHtml(producto.nombre)}</td>
-                        <td><input type="number" step="0.01" value="${producto.precio_por_10g || 1600}" style="width:100px;background:rgba(8,15,6,0.8);border:1px solid #7ca35a;border-radius:8px;padding:5px;color:#e0ecd0;" onchange="actualizarPrecioProductoAdmin('${producto.id}', this.value)"></td>
+                        <td>${escapeHtml(obtenerEtiquetaProductoAdmin(producto))}</td>
+                        <td><input type="number" step="0.01" value="${producto.precio_por_10g || 1600}" class="admin-productos-precio" style="background:rgba(8,15,6,0.8);border:1px solid #7ca35a;border-radius:8px;padding:5px;color:#e0ecd0;" onchange="actualizarPrecioProductoAdmin('${producto.id}', this.value)"></td>
+                        <td>${renderEstadoStockAdmin(producto)}</td>
                         <td><input type="checkbox" ${producto.disponible !== false ? 'checked' : ''} onchange="actualizarDisponibilidadProductoAdmin('${producto.id}', this.checked)"></td>
-                        <td><button class="btn-editar" onclick="editarProductoAdmin('${producto.id}')">Editar</button> <button class="btn-eliminar" onclick="eliminarProductoAdminClick('${producto.id}')">Eliminar</button></td>
+                        <td><div class="admin-productos-acciones"><button class="btn-editar" onclick="editarProductoAdmin('${producto.id}')">Editar</button><button class="btn-eliminar" onclick="eliminarProductoAdminClick('${producto.id}')">Eliminar</button></div></td>
                     </tr>
                 `).join('')}</tbody>
             </table>
-        ` : '<div class="loading">No hay productos todavia.</div>'}
+            </div>
+        ` : '<div class="loading">No hay variedades todavía.</div>'}
     `;
 
     configurarInputImagenesConLimite('productoImagenFileAdmin', 'productoPreview', 'productos');
+    actualizarEquivalenciaStockAdmin('producto');
+    document.getElementById('productoStockPacks')?.addEventListener('input', () => actualizarEquivalenciaStockAdmin('producto'));
 
     document.getElementById('formProductoAdmin')?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const urlsManual = normalizarUrlsImagenes(document.getElementById('productoImagenAdmin').value);
+        const urlsManual = (document.getElementById('productoImagenAdmin').value || '')
+            .split(/\r?\n/)
+            .map((item) => item.trim())
+            .filter(Boolean);
 
         let imagenes = [...urlsManual];
         const imagenFiles = document.getElementById('productoImagenFileAdmin')?.files;
         if (imagenFiles?.length) {
             try {
-                validarMaximoImagenes(urlsManual, imagenFiles, 'productos');
                 const subidas = await subirMultiplesImagenes('productos', imagenFiles, 'producto');
                 imagenes = [...imagenes, ...subidas];
             } catch (error) {
-                mostrarMensaje(`Las imagenes no se pudieron subir: ${error.message}`, false);
-                return;
-            }
-        }
-        if (!imagenFiles?.length) {
-            try {
-                validarMaximoImagenes(urlsManual, null, 'productos');
-            } catch (error) {
-                mostrarMensaje(error.message, false);
+                mostrarMensaje(`Las imágenes no se pudieron subir: ${error.message}`, false);
                 return;
             }
         }
 
-        const { data: productoCreado, error } = await supabaseClient.from('productos').insert([{
+        const tipoSeleccionado = normalizarTipoCultivoAdmin(document.getElementById('productoTipoCultivoAdmin').value);
+        const esArticulo = productoAdminEsArticuloTipo(tipoSeleccionado);
+        if (esArticulo && !plusActivo) {
+            mostrarMensaje('Artículos destacados requiere Plan Plus. Contactá al proveedor para activarlo.', false);
+            return;
+        }
+        const payloadProducto = {
             nombre: document.getElementById('productoNombreAdmin').value,
-            cepa: document.getElementById('productoCepaAdmin').value,
-            thc_porcentaje: parseFloat(document.getElementById('productoThcAdmin').value) || null,
-            cbd_porcentaje: parseFloat(document.getElementById('productoCbdAdmin').value) || null,
+            cepa: esArticulo ? `ARTICULO:${tipoSeleccionado}` : document.getElementById('productoCepaAdmin').value,
+            thc_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('productoThcAdmin').value) || null),
+            cbd_porcentaje: esArticulo ? null : (parseFloat(document.getElementById('productoCbdAdmin').value) || null),
+            indica_sativa: esArticulo ? null : construirPerfilIndicaSativa(
+                document.getElementById('productoIndicaPorcentajeAdmin')?.value,
+                document.getElementById('productoSativaPorcentajeAdmin')?.value
+            ),
+            tipo_cultivo: esArticulo ? 'invernaculo' : tipoSeleccionado,
             precio_por_10g: parseFloat(document.getElementById('productoPrecioAdmin').value) || 1600,
             descripcion: document.getElementById('productoDescripcionAdmin').value,
-            imagen_url: imagenes.length > 1 ? JSON.stringify(imagenes) : (imagenes[0] || null),
-            disponible: true
-        }]).select().single();
+            imagen_url: imagenes[0] || null,
+            disponible: true,
+            ...obtenerPayloadStockAdmin('producto')
+        };
+        const { data: productoCreado, error } = await insertarProductoConCompatibilidad(payloadProducto);
         if (error) {
             mostrarMensaje(`No se pudo crear el producto: ${error.message}`, false);
             return;
@@ -400,7 +920,7 @@ async function cargarProductosAdmin() {
             for (const [index, imagenUrl] of imagenes.entries()) {
                 const resultado = await agregarImagenProducto(productoCreado.id, imagenUrl, index);
                 if (resultado.error) {
-                    mostrarMensaje(`El producto se creo, pero una imagen no se pudo guardar: ${resultado.error.message}`, false);
+                    mostrarMensaje(`El producto se creó, pero una imagen no se pudo guardar: ${resultado.error.message}`, false);
                     break;
                 }
             }
@@ -452,18 +972,20 @@ async function cargarSolicitudesAdmin() {
         return;
     }
     container.innerHTML = (data || []).length ? `
+        <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Fecha</th><th>Nombre</th><th>Email</th><th>Telefono</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Nombre</th><th>Telegram</th><th>Telefono</th><th>Acciones</th></tr></thead>
             <tbody>${data.map((solicitud) => `
                 <tr>
                     <td>${new Date(solicitud.fecha_solicitud).toLocaleDateString('es')}</td>
                     <td>${escapeHtml(solicitud.nombre)} ${escapeHtml(solicitud.apellido)}</td>
-                    <td>${escapeHtml(solicitud.email || '-')}</td>
+                    <td>${solicitud.telegram_enabled && solicitud.telegram_chat_id ? 'Verificado' : 'Pendiente'}</td>
                     <td>${escapeHtml(solicitud.telefono)}</td>
                     <td><button class="btn-aprobar" onclick="aprobarSolicitudAdmin('${solicitud.id}')">Aprobar</button> <button class="btn-rechazar" onclick="rechazarSolicitudAdmin('${solicitud.id}')">Rechazar</button></td>
                 </tr>
             `).join('')}</tbody>
         </table>
+        </div>
     ` : '<div class="loading">No hay solicitudes pendientes.</div>';
 }
 
@@ -479,6 +1001,10 @@ window.aprobarSolicitudAdmin = async function(id) {
         cedula: solicitud.cedula,
         telefono: solicitud.telefono,
         email: solicitud.email,
+        telegram_chat_id: solicitud.telegram_chat_id || null,
+        telegram_username: solicitud.telegram_username || null,
+        telegram_enabled: Boolean(solicitud.telegram_enabled && solicitud.telegram_chat_id),
+        telegram_linked_at: solicitud.telegram_linked_at || null,
         estado: 'activo',
         rol: 'socio'
     }]);
@@ -509,129 +1035,381 @@ async function cargarSociosAdmin() {
         container.innerHTML = '<div class="loading">No se pudieron cargar los socios.</div>';
         return;
     }
-    container.innerHTML = (data || []).length ? `
+    const crearSocioHTML = `
+        <div class="admin-create-socio-card">
+            <div class="admin-create-socio-copy">
+                <span class="metric-label">Alta controlada</span>
+                <h3><i class="fas fa-user-plus"></i> Crear socio</h3>
+                <p>Creá un acceso real con teléfono y contraseña temporal automática. El correo técnico interno se genera en backend y no se muestra al socio.</p>
+            </div>
+            <form id="formCrearSocioAdmin" class="admin-create-socio-form">
+                <div class="form-group">
+                    <label for="nuevoSocioNombre">Nombre</label>
+                    <input type="text" id="nuevoSocioNombre" placeholder="Nombre del socio" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioTelefono">Teléfono</label>
+                    <input type="tel" id="nuevoSocioTelefono" placeholder="09XXXXXXX" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioRol">Rol</label>
+                    <select id="nuevoSocioRol">
+                        <option value="socio" selected>Socio</option>
+                        <option value="admin">Admin</option>
+                        <option value="maestro">Maestro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioEstado">Estado</label>
+                    <select id="nuevoSocioEstado">
+                        <option value="activo" selected>Activo</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit"><i class="fas fa-lock"></i> Crear socio</button>
+            </form>
+            <div id="crearSocioResultado" class="admin-create-socio-result" hidden></div>
+            <small class="admin-create-socio-note">La contraseña temporal se muestra una sola vez. El socio deberá cambiarla en su primer ingreso.</small>
+        </div>
+    `;
+    const tablaSociosHTML = (data || []).length ? `
+        <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
             <tbody>${data.map((socio) => `
                 <tr>
-                    <td>${escapeHtml(socio.email || '-')}</td>
-                    <td>${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}</td>
-                    <td>${escapeHtml(socio.rol || 'socio')}</td>
-                    <td>${escapeHtml(socio.estado || '-')}</td>
+                    <td><input type="text" class="socio-edit-input" id="socioNombre_admin_${socio.id}" value="${escapeHtml(socio.nombre || '')}" placeholder="Nombre"></td>
+                    <td><input type="text" class="socio-edit-input" id="socioApellido_admin_${socio.id}" value="${escapeHtml(socio.apellido || '')}" placeholder="Apellido"></td>
+                    <td><input type="text" class="socio-edit-input small" id="socioCedula_admin_${socio.id}" value="${escapeHtml(socio.cedula || '')}" placeholder="Cedula"></td>
+                    <td><input type="number" class="socio-edit-input tiny" id="socioNumero_admin_${socio.id}" value="${escapeHtml(socio.numero_socio || '')}" placeholder="Nro."></td>
+                    <td>
+                        <div class="telefono-edit-row">
+                            <input type="tel" class="telefono-socio-input" id="socioTelefono_admin_${socio.id}" value="${escapeHtml(socio.telefono || '')}" placeholder="09XXXXXXX">
+                        </div>
+                    </td>
+                    <td>
+                        <select class="socio-edit-input tiny" id="socioRol_admin_${socio.id}">
+                            <option value="socio" ${(socio.rol || 'socio') === 'socio' ? 'selected' : ''}>Socio</option>
+                            <option value="admin" ${socio.rol === 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="maestro" ${socio.rol === 'maestro' ? 'selected' : ''}>Maestro</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="socio-edit-input small" id="socioEstado_admin_${socio.id}">
+                            <option value="activo" ${(socio.estado || 'activo') === 'activo' ? 'selected' : ''}>Activo</option>
+                            <option value="pendiente" ${socio.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="inactivo" ${socio.estado === 'inactivo' ? 'selected' : ''}>Inactivo</option>
+                            <option value="rechazado" ${socio.estado === 'rechazado' ? 'selected' : ''}>Rechazado</option>
+                        </select>
+                    </td>
+                    <td><button type="button" class="btn-editar" onclick="guardarSocioAdmin('${socio.id}', 'admin')">Guardar</button></td>
                 </tr>
             `).join('')}</tbody>
         </table>
+        </div>
     ` : '<div class="loading">No hay socios.</div>';
+    container.innerHTML = crearSocioHTML + tablaSociosHTML;
+    document.getElementById('formCrearSocioAdmin')?.addEventListener('submit', crearSocioDesdeAdmin);
+}
+
+async function crearSocioDesdeAdmin(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const boton = form.querySelector('button[type="submit"]');
+    const resultadoEl = document.getElementById('crearSocioResultado');
+    const payload = {
+        nombre: document.getElementById('nuevoSocioNombre')?.value?.trim() || '',
+        telefono: document.getElementById('nuevoSocioTelefono')?.value?.trim() || '',
+        rol: document.getElementById('nuevoSocioRol')?.value || 'socio',
+        estado: document.getElementById('nuevoSocioEstado')?.value || 'activo'
+    };
+
+    if (!payload.nombre || !payload.telefono) {
+        mostrarMensaje('Nombre y teléfono son obligatorios.', false);
+        return;
+    }
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = 'Creando...';
+    }
+    if (resultadoEl) resultadoEl.hidden = true;
+
+    try {
+        const { data, error } = await supabaseClient.functions.invoke('admin-create-socio', {
+            body: payload
+        });
+        if (error) throw error;
+        if (!data?.ok) throw new Error(data?.error || 'No se pudo crear el socio.');
+
+        const linkWeb = data.link_web || window.location.origin;
+        if (resultadoEl) {
+            resultadoEl.hidden = false;
+            resultadoEl.innerHTML = `
+                <strong>Socio creado correctamente</strong>
+                <span>Datos para entregar al socio:</span>
+                <dl>
+                    <div><dt>Link de la web</dt><dd>${escapeHtml(linkWeb)}</dd></div>
+                    <div><dt>Teléfono</dt><dd>${escapeHtml(data.telefono || payload.telefono)}</dd></div>
+                    <div><dt>Contraseña temporal</dt><dd><code>${escapeHtml(data.temporary_password || '')}</code></dd></div>
+                </dl>
+                <em>Esta contraseña se muestra una sola vez. El socio deberá cambiarla en su primer ingreso.</em>
+            `;
+        }
+        form.reset();
+        mostrarMensaje('Socio creado correctamente.', true);
+        await cargarSociosAdmin();
+    } catch (error) {
+        const detalle = error?.message || error?.context?.error || 'No se pudo crear el socio.';
+        mostrarMensaje(detalle, false);
+        if (resultadoEl) {
+            resultadoEl.hidden = false;
+            resultadoEl.innerHTML = `<strong>No se pudo crear el socio</strong><span>${escapeHtml(detalle)}</span>`;
+        }
+    } finally {
+        if (boton) {
+            boton.disabled = false;
+            boton.innerHTML = '<i class="fas fa-lock"></i> Crear socio';
+        }
+    }
+}
+
+function normalizarTelefonoSocioInput(valor) {
+    return String(valor || '').replace(/[^\d+]/g, '').trim();
+}
+
+function obtenerValorCampoSocio(socioId, origen, campo) {
+    return document.getElementById(`socio${campo}_${origen}_${socioId}`)?.value?.trim() || '';
+}
+
+window.guardarSocioAdmin = async function(socioId, origen = 'admin') {
+    const nombre = obtenerValorCampoSocio(socioId, origen, 'Nombre');
+    const apellido = obtenerValorCampoSocio(socioId, origen, 'Apellido');
+    const cedula = obtenerValorCampoSocio(socioId, origen, 'Cedula');
+    const numeroSocio = obtenerValorCampoSocio(socioId, origen, 'Numero');
+    const telefono = normalizarTelefonoSocioInput(obtenerValorCampoSocio(socioId, origen, 'Telefono'));
+    const rol = obtenerValorCampoSocio(socioId, origen, 'Rol') || 'socio';
+    const estado = obtenerValorCampoSocio(socioId, origen, 'Estado') || 'activo';
+
+    if (!nombre || !apellido) {
+        mostrarMensaje('Nombre y apellido son obligatorios.', false);
+        return;
+    }
+
+    const payload = {
+        nombre,
+        apellido,
+        cedula: cedula || null,
+        numero_socio: numeroSocio ? Number(numeroSocio) : null,
+        telefono,
+        rol,
+        estado
+    };
+
+    const { error } = await supabaseClient
+        .from('socios')
+        .update(payload)
+        .eq('id', socioId);
+
+    if (error) {
+        mostrarMensaje(`No se pudo guardar el socio: ${error.message}`, false);
+        return;
+    }
+
+    mostrarMensaje('Socio actualizado', true);
+    if (origen === 'admin') {
+        await cargarSociosAdmin();
+        await cargarSociosParaMensajes();
+    }
+    if (origen === 'maestro' && typeof cargarMaestroSocios === 'function') {
+        await cargarMaestroSocios();
+    }
+};
+
+function obtenerVariedadReservaAdmin(reserva) {
+    const principal = reserva?.producto_nombre || reserva?.variedad || reserva?.variety || reserva?.productos?.nombre || 'Sin variedad registrada';
+    return principal;
+}
+
+function reservaAdminEsArticulo(reserva = {}) {
+    const producto = reserva.productos || {};
+    const cepa = String(producto.cepa || '').trim().toUpperCase();
+    if (cepa.startsWith('ARTICULO:')) return true;
+    return typeof productoEsArticulo === 'function' && producto?.id && productoEsArticulo(producto);
+}
+
+function formatearCantidadReservaAdmin(reserva = {}) {
+    if (!reservaAdminEsArticulo(reserva)) return formatearPacksReserva(reserva.cantidad_gramos);
+    const unidades = Math.max(0, Math.round(Number(reserva.cantidad_gramos || 0) / 20));
+    return `${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`;
+}
+
+function obtenerEtiquetaEstadoReservaAdmin(estado) {
+    const etiquetas = {
+        pendiente: 'Pendiente de confirmacion',
+        confirmado: 'Pedido recibido',
+        entregado: 'Entrega confirmada',
+        retirado: 'Entrega confirmada',
+        cancelado: 'Cancelado'
+    };
+    return etiquetas[String(estado || 'pendiente').toLowerCase()] || estado || 'Pendiente';
+}
+
+function construirAccionesReservaAdmin(reserva, origen = 'admin') {
+    const estado = String(reserva.estado || 'pendiente').toLowerCase();
+    if (estado === 'cancelado') return '<span class="metric-label">Cancelada</span>';
+    if (estado === 'entregado' || estado === 'retirado') return '<span class="metric-label">Cerrada</span>';
+    if (estado === 'confirmado') {
+        return `<button type="button" class="btn-aprobar" onclick="actualizarEstadoReservaAdmin('${reserva.id}', 'entregado', '${origen}')">Confirmar entrega</button>`;
+    }
+    return `<button type="button" class="btn-aprobar" onclick="actualizarEstadoReservaAdmin('${reserva.id}', 'confirmado', '${origen}')">Confirmar</button>`;
+}
+
+function formatearFechaExportacion(valor) {
+    if (!valor) return '';
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return String(valor);
+    return fecha.toLocaleDateString('es-UY');
+}
+
+function obtenerNombreCompletoSocioReserva(reserva = {}) {
+    const nombre = [reserva.socios?.nombre, reserva.socios?.apellido].filter(Boolean).join(' ').trim();
+    return nombre || 'Sin socio';
+}
+
+function obtenerPedidosMesActual(reservas = []) {
+    const hoy = new Date();
+    return (reservas || []).filter((reserva) => {
+        const fecha = new Date(reserva.fecha_retiro);
+        if (Number.isNaN(fecha.getTime())) return false;
+        return fecha.getMonth() === hoy.getMonth() && fecha.getFullYear() === hoy.getFullYear();
+    });
+}
+
+function exportarPedidosMesExcel(reservas = []) {
+    if (!window.XLSX || typeof window.XLSX.utils?.json_to_sheet !== 'function') {
+        mostrarMensaje('La exportación a Excel no está disponible en este navegador.', false);
+        return;
+    }
+
+    const pedidosMes = obtenerPedidosMesActual(reservas);
+    if (!pedidosMes.length) {
+        mostrarMensaje('No hay pedidos para exportar en el mes actual.', false);
+        return;
+    }
+
+    const hoja = XLSX.utils.json_to_sheet(pedidosMes.map((reserva) => ({
+        'Fecha retiro': formatearFechaExportacion(reserva.fecha_retiro),
+        'Socio': obtenerNombreCompletoSocioReserva(reserva),
+        'Variedad': obtenerVariedadReservaAdmin(reserva),
+        'Cantidad': formatearCantidadReservaAdmin(reserva),
+        'Estado': obtenerEtiquetaEstadoReservaAdmin(reserva.estado),
+        'Registrada': formatearFechaExportacion(reserva.created_at)
+    })));
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Pedidos del mes');
+    const hoy = new Date();
+    const nombreArchivo = `pedidos_${hoy.getFullYear()}_${String(hoy.getMonth() + 1).padStart(2, '0')}.xlsx`;
+    XLSX.writeFile(libro, nombreArchivo);
+    mostrarMensaje(`Exportación descargada: ${nombreArchivo}`, true);
+}
+
+window.exportarPedidosMesExcel = exportarPedidosMesExcel;
+
+function renderizarTablaReservasAdmin(data, origen = 'admin') {
+    const encabezadoPedidoAttrs = 'class="tabla-reservas-encabezado" style="color: #000000 !important; background: #eef5ea !important;"';
+    return (data || []).length ? `
+        <div class="admin-tabla-scroll">
+        <table class="tabla-datos tabla-reservas-excel">
+            <thead><tr><th ${encabezadoPedidoAttrs}>Fecha retiro</th><th ${encabezadoPedidoAttrs}>Socio</th><th ${encabezadoPedidoAttrs}>Variedad</th><th ${encabezadoPedidoAttrs}>Cantidad</th><th ${encabezadoPedidoAttrs}>Estado</th><th ${encabezadoPedidoAttrs}>Registrada</th><th ${encabezadoPedidoAttrs}>Accion</th></tr></thead>
+            <tbody>${data.map((reserva) => `
+                <tr>
+                    <td data-label="Fecha retiro">${reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : '-'}</td>
+                    <td data-label="Socio">${escapeHtml(reserva.socios?.nombre || '-')} ${escapeHtml(reserva.socios?.apellido || '')}</td>
+                    <td data-label="Variedad">${escapeHtml(obtenerVariedadReservaAdmin(reserva))}</td>
+                    <td data-label="Cantidad">${escapeHtml(formatearCantidadReservaAdmin(reserva))}</td>
+                    <td data-label="Estado"><span class="reserva-status-badge estado-${escapeHtml(String(reserva.estado || 'pendiente').toLowerCase())}">${escapeHtml(obtenerEtiquetaEstadoReservaAdmin(reserva.estado))}</span></td>
+                    <td data-label="Registrada">${reserva.created_at ? new Date(reserva.created_at).toLocaleDateString('es-UY') : '-'}</td>
+                    <td data-label="Accion">${construirAccionesReservaAdmin(reserva, origen)}</td>
+                </tr>
+            `).join('')}</tbody>
+        </table>
+        </div>
+    ` : '<div class="empty-state"><i class="fas fa-box-open"></i><strong>Sin pedidos por ahora</strong><span>Cuando los socios realicen pedidos mensuales, van a aparecer aca.</span></div>';
 }
 
 async function cargarReservasAdmin() {
     const container = document.getElementById('admin-reservasAdmin');
     if (!container) return;
-    const { data, error } = await supabaseClient.from('reservas_mensuales').select('*, socios(nombre, apellido)').order('fecha_retiro', { ascending: false });
+    const { data, error } = await supabaseClient
+        .from('reservas_mensuales')
+        .select('*, socios(nombre, apellido), productos(nombre, cepa, tipo_cultivo)')
+        .order('fecha_retiro', { ascending: false });
     if (error) {
         container.innerHTML = '<div class="loading">No se pudieron cargar las reservas.</div>';
         return;
     }
-    container.innerHTML = (data || []).length ? `
-        <table class="tabla-datos">
-            <thead><tr><th>Fecha</th><th>Socio</th><th>Cantidad</th><th>Estado</th></tr></thead>
-            <tbody>${data.map((reserva) => `
-                <tr>
-                    <td>${new Date(reserva.fecha_retiro).toLocaleDateString('es')}</td>
-                    <td>${escapeHtml(reserva.socios?.nombre || '-')} ${escapeHtml(reserva.socios?.apellido || '')}</td>
-                    <td>${reserva.cantidad_gramos}g</td>
-                    <td>${escapeHtml(reserva.estado)}</td>
-                </tr>
-            `).join('')}</tbody>
-        </table>
-    ` : '<div class="loading">No hay reservas.</div>';
-}
-
-async function cargarManualAdmin() {
-    const container = document.getElementById('admin-manual');
-    if (!container) return;
-
     container.innerHTML = `
-        <div class="section" style="background: rgba(8, 15, 6, 0.18); margin-top: 10px;">
-            <h3 style="color:#e8d8cc; margin-bottom: 8px;">Manual de usuario para administradores</h3>
-            <p style="color:#ead6c7; line-height:1.7;">Esta guía resume cómo usar cada herramienta del panel. La idea es que cualquier persona del equipo pueda entrar, entender el flujo y mantener el sitio sin depender de soporte técnico.</p>
-
-            <div class="manual-grid">
-                <article class="manual-card">
-                    <h3>Noticias y novedades</h3>
-                    <p>Usá esta sección para publicar anuncios, avances, lanzamientos o recordatorios visibles en la home.</p>
-                    <ul>
-                        <li>Completá título y contenido antes de publicar.</li>
-                        <li>Podés subir hasta 3 imágenes por novedad.</li>
-                        <li>Si una novedad queda incompleta, el sitio mostrará un respaldo automático.</li>
-                    </ul>
-                </article>
-
-                <article class="manual-card">
-                    <h3>Productos y variedades</h3>
-                    <p>Desde aquí se agregan, editan y ordenan las variedades visibles en catálogo.</p>
-                    <ul>
-                        <li>Cargá nombre, perfil, precio y descripción clara.</li>
-                        <li>Podés usar URLs o subir imágenes, con máximo de 3 por producto.</li>
-                        <li>Marcá disponibilidad para habilitar o pausar pedidos.</li>
-                    </ul>
-                </article>
-
-                <article class="manual-card">
-                    <h3>Actividades, sorteos y regalos</h3>
-                    <p>Esta sección concentra acciones de calendario y contenido promocional.</p>
-                    <ul>
-                        <li>Elegí el tipo correcto: actividad, sorteo o regalo.</li>
-                        <li>Agregá fecha, hora, descripción e imágenes si hace falta.</li>
-                        <li>También acá se permiten hasta 3 imágenes.</li>
-                    </ul>
-                </article>
-
-                <article class="manual-card">
-                    <h3>Solicitudes y socios</h3>
-                    <p>Permite revisar ingresos pendientes y ver la base actual de usuarios cargados.</p>
-                    <ul>
-                        <li>Revisá datos antes de aprobar una solicitud.</li>
-                        <li>Confirmá siempre email y teléfono cuando aplique.</li>
-                        <li>La tabla de socios sirve como referencia rápida de estado y rol.</li>
-                    </ul>
-                </article>
-
-                <article class="manual-card">
-                    <h3>Reservas y mensajes</h3>
-                    <p>Acá podés monitorear movimientos y enviar comunicaciones internas.</p>
-                    <ul>
-                        <li>Usá mensajes para avisos generales o comunicaciones puntuales.</li>
-                        <li>Verificá el destinatario antes de enviar.</li>
-                        <li>Consultá el historial para controlar qué ya fue comunicado.</li>
-                    </ul>
-                </article>
-
-                <article class="manual-card">
-                    <h3>Buenas prácticas</h3>
-                    <p>Pequeñas reglas que ayudan a mantener consistencia y orden en todo el sitio.</p>
-                    <ul>
-                        <li>Evitá títulos demasiado largos.</li>
-                        <li>Usá imágenes livianas y bien encuadradas.</li>
-                        <li>Antes de cerrar cambios, revisá la vista pública del sitio.</li>
-                    </ul>
-                </article>
+        <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-bottom: 12px;">
+            <div>
+                <h3 style="color:var(--text-strong); margin-bottom: 12px;">Pedidos</h3>
+                <p style="color:var(--text-muted); margin: 0;">Control de pedidos mensuales: variedad, packs, fecha de retiro y estado operativo.</p>
             </div>
-
-            <div class="manual-destacado">
-                <strong style="display:block; color: var(--accent-strong); margin-bottom: 8px;">Recordatorio importante</strong>
-                El panel permite cargar hasta 3 imágenes por contenido visual. Si algo no aparece como esperabas, recargá la página y revisá primero la vista pública para confirmar el resultado final.
-            </div>
+            <button type="button" id="btnExportarPedidosMes" class="btn-submit"><i class="fas fa-file-excel"></i> Exportar pedidos del mes</button>
         </div>
+        ${renderizarTablaReservasAdmin(data, 'admin')}
     `;
+
+    const boton = document.getElementById('btnExportarPedidosMes');
+    if (boton) {
+        boton.addEventListener('click', () => exportarPedidosMesExcel(data));
+    }
 }
+
+window.actualizarEstadoReservaAdmin = async function(reservaId, estado, origen = 'admin') {
+    const { data: reserva, error: loadError } = await supabaseClient
+        .from('reservas_mensuales')
+        .select('id, socio_id, cantidad_gramos, fecha_retiro, estado')
+        .eq('id', reservaId)
+        .single();
+    if (loadError || !reserva) {
+        mostrarMensaje('No se pudo cargar la reserva.', false);
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from('reservas_mensuales')
+        .update({ estado })
+        .eq('id', reservaId);
+    if (error) {
+        mostrarMensaje(`No se pudo actualizar la reserva: ${error.message}`, false);
+        return;
+    }
+
+    if (typeof notificationService !== 'undefined' && reserva.socio_id) {
+        const tipo = estado === 'entregado' ? 'retiro_disponible' : 'reserva_confirmada';
+        const mensaje = notificationService.render(tipo, {
+            grams: reserva.cantidad_gramos,
+            retiro: reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : ''
+        });
+        notificationService
+            .send(reserva.socio_id, mensaje, { type: tipo, channel: 'telegram', metadata: { reserva_id: reservaId, estado } })
+            .catch((notifyError) => console.warn('No se pudo encolar notificacion de reserva admin:', notifyError));
+    }
+
+    mostrarMensaje(estado === 'entregado' ? 'Entrega confirmada' : 'Pedido recibido confirmado', true);
+    await cargarReservasAdmin();
+    if (typeof cargarMaestroReservas === 'function') await cargarMaestroReservas();
+};
 
 async function cargarSociosParaMensajes() {
     const select = document.getElementById('mensajeDestinatario');
     if (!select) return;
-    const { data } = await supabaseClient.from('socios').select('id, email, nombre, apellido').eq('estado', 'activo');
+    const { data } = await supabaseClient.from('socios').select('id, nombre, apellido, telefono, telegram_enabled, telegram_chat_id').eq('estado', 'activo');
     select.innerHTML = '<option value="todos">Todos los socios</option>' + (data || []).map((socio) => `
-        <option value="${socio.id}">${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)} (${escapeHtml(socio.email || '-')})</option>
+        <option value="${socio.id}">${escapeHtml(socio.nombre)} ${escapeHtml(socio.apellido)}${socio.telegram_enabled ? ' · Telegram' : (socio.telefono ? ` · ${escapeHtml(socio.telefono)}` : '')}</option>
     `).join('');
 }
 
@@ -646,22 +1424,294 @@ async function cargarHistorialMensajes() {
     container.innerHTML = (data || []).length ? data.map((mensaje) => `
         <div class="mensaje-item">
             <div class="mensaje-fecha">${new Date(mensaje.created_at).toLocaleString()}</div>
-            <div class="mensaje-destino">Destino: ${mensaje.tipo === 'todos' ? 'Todos los socios' : 'Socio especifico'}</div>
+            <div class="mensaje-destino">Destino: ${mensaje.tipo === 'todos' ? 'Todos los socios' : 'Socio especifico'} · Canal: ${escapeHtml(mensaje.canal || 'telegram')}</div>
             <div class="mensaje-texto">${escapeHtml(mensaje.mensaje)}</div>
         </div>
     `).join('') : '<div class="loading">No hay mensajes enviados.</div>';
 }
 
+function obtenerNombreTelegramInbox(mensaje = {}) {
+    const socioNombre = [mensaje.socios?.nombre, mensaje.socios?.apellido].filter(Boolean).join(' ').trim();
+    return socioNombre || mensaje.display_name || (mensaje.username ? `@${mensaje.username}` : 'Usuario Telegram');
+}
+
+function construirItemTelegramInboxHTML(mensaje = {}) {
+    const fecha = mensaje.message_date || mensaje.created_at;
+    const fechaTexto = fecha ? new Date(fecha).toLocaleString('es-UY') : 'Fecha no disponible';
+    const nombre = obtenerNombreTelegramInbox(mensaje);
+    const identificador = mensaje.chat_id || mensaje.telegram_user_id || 'Sin identificador';
+    const username = mensaje.username ? `@${mensaje.username}` : '';
+    const texto = mensaje.text || '(Mensaje sin texto)';
+    return `
+        <div class="mensaje-item telegram-inbox-item">
+            <div class="mensaje-fecha">${escapeHtml(fechaTexto)}</div>
+            <div class="mensaje-destino">
+                ${escapeHtml(nombre)}${username && username !== nombre ? ` · ${escapeHtml(username)}` : ''} · chat_id: ${escapeHtml(identificador)}
+            </div>
+            <div class="mensaje-texto">${escapeHtml(texto)}</div>
+        </div>
+    `;
+}
+
+async function cargarTelegramInboxMensajes() {
+    const container = document.getElementById('telegramInboxMensajes');
+    if (!container) return;
+    container.innerHTML = '<div class="loading">Cargando mensajes recibidos...</div>';
+
+    const { data, error } = await supabaseClient
+        .from('telegram_mensajes_entrantes')
+        .select('id, chat_id, telegram_user_id, username, display_name, text, message_date, created_at, socio_id, socios(nombre, apellido, email)')
+        .order('created_at', { ascending: false })
+        .limit(80);
+
+    if (error) {
+        console.error('No se pudo cargar la bandeja de Telegram:', error);
+        container.innerHTML = '<div class="loading">No se pudieron cargar los mensajes recibidos.</div>';
+        return;
+    }
+
+    container.innerHTML = (data || []).length
+        ? data.map(construirItemTelegramInboxHTML).join('')
+        : '<div class="empty-state"><i class="fab fa-telegram"></i><strong>Todavía no hay mensajes recibidos.</strong><span>Cuando un socio escriba al bot, va a aparecer acá.</span></div>';
+}
+
+function inicializarAcordeonesMensajesAdmin() {
+    const acordeon = document.querySelector('#admin-mensajes .admin-mensajes-acordeon');
+    inicializarAcordeonAdmin(acordeon, async (tipoCultivo) => {
+        if (tipoCultivo === 'bandeja-entrada') await cargarTelegramInboxMensajes();
+        if (tipoCultivo === 'nuevo-mensaje') {
+            await cargarSociosParaMensajes();
+            await cargarHistorialMensajes();
+        }
+    });
+}
+
+function inicializarAcordeonAdmin(acordeon, onOpen) {
+    if (!acordeon || acordeon.dataset.inicializado === 'true') return;
+    acordeon.dataset.inicializado = 'true';
+    const obtenerItemsPropios = (selector) => Array.from(acordeon.querySelectorAll(selector))
+        .filter((elemento) => elemento.closest('.productos-acordeon') === acordeon);
+
+    obtenerItemsPropios('.productos-toggle').forEach((toggle) => {
+        toggle.addEventListener('click', async () => {
+            const tipoCultivo = toggle.dataset.tipoCultivo;
+            const columna = toggle.closest('.productos-columna');
+            const panel = obtenerItemsPropios(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`)[0];
+            if (!columna || !panel || columna.hidden) return;
+
+            const expandido = toggle.getAttribute('aria-expanded') === 'true';
+            obtenerItemsPropios('.productos-columna.activa').forEach((columnaActiva) => {
+                if (columnaActiva === columna) return;
+                const toggleActivo = columnaActiva.querySelector('.productos-toggle');
+                if (toggleActivo) toggleActivo.setAttribute('aria-expanded', 'false');
+                columnaActiva.classList.remove('activa');
+            });
+            obtenerItemsPropios('.productos-panel').forEach((panelActivo) => {
+                if (panelActivo !== panel) panelActivo.hidden = true;
+            });
+
+            toggle.setAttribute('aria-expanded', String(!expandido));
+            panel.hidden = expandido;
+            columna.classList.toggle('activa', !expandido);
+            if (!expandido && typeof onOpen === 'function') await onOpen(tipoCultivo);
+        });
+    });
+}
+
+function rolActualNormalizado() {
+    return String(appState?.rolUsuario || 'socio').toLowerCase();
+}
+
+function manualEsVisibleParaRol(elemento, rol) {
+    const roles = String(elemento?.dataset?.manualRoles || '')
+        .split(/\s+/)
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean);
+    return !roles.length || roles.includes(rol);
+}
+
+function aplicarVisibilidadManualPorRol() {
+    const acordeon = document.querySelector('#admin-manual .admin-manual-acordeon');
+    if (!acordeon) return;
+    const rol = rolActualNormalizado();
+    const togglesVisibles = [];
+
+    acordeon.querySelectorAll('.productos-columna').forEach((columna) => {
+        const toggle = columna.querySelector('.productos-toggle');
+        const panel = toggle ? acordeon.querySelector(`.productos-panel[data-tipo-cultivo="${toggle.dataset.tipoCultivo}"]`) : null;
+        const visible = manualEsVisibleParaRol(columna, rol) && (!panel || manualEsVisibleParaRol(panel, rol));
+        columna.hidden = !visible;
+        if (panel) panel.hidden = true;
+        columna.classList.remove('activa');
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', 'false');
+            if (visible) togglesVisibles.push(toggle);
+        }
+    });
+
+    const primerToggle = togglesVisibles[0];
+    if (!primerToggle) return;
+    const primeraColumna = primerToggle.closest('.productos-columna');
+    const primerPanel = acordeon.querySelector(`.productos-panel[data-tipo-cultivo="${primerToggle.dataset.tipoCultivo}"]`);
+    primerToggle.setAttribute('aria-expanded', 'true');
+    if (primeraColumna) primeraColumna.classList.add('activa');
+    if (primerPanel) primerPanel.hidden = false;
+}
+
+function inicializarAcordeonesManualAdmin() {
+    const acordeon = document.querySelector('#admin-manual .admin-manual-acordeon');
+    aplicarVisibilidadManualPorRol();
+    inicializarAcordeonAdmin(acordeon);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.nav-admin-btn').forEach((btn) => {
+    inicializarAcordeonesMensajesAdmin();
+    inicializarAcordeonesManualAdmin();
+
+    function ensureManualGridAccordion() {
+        try {
+            const manualGrid = document.querySelector('#admin-manual .manual-grid');
+            if (!manualGrid || manualGrid.classList.contains('admin-manual-acordeon-initialized')) return;
+            const bloqueItems = Array.from(manualGrid.querySelectorAll('.manual-bloque'));
+            if (!bloqueItems.length) return;
+
+            const acordeonWrapper = document.createElement('div');
+            acordeonWrapper.className = 'productos-acordeon admin-manual-acordeon';
+
+            bloqueItems.forEach((bloque, idx) => {
+                const tituloEl = bloque.querySelector('h3');
+                const contenido = Array.from(bloque.childNodes).filter(n => n !== tituloEl).map(n => n.cloneNode(true));
+                const tipo = `manual-${idx}`;
+
+                const itemWrapper = document.createElement('div');
+                itemWrapper.className = 'productos-controles';
+
+                const col = document.createElement('div');
+                col.className = 'productos-columna';
+                const h3 = document.createElement('h3');
+                h3.className = 'productos-columna-titulo';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'productos-toggle';
+                btn.dataset.tipoCultivo = tipo;
+                btn.setAttribute('aria-expanded', 'false');
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'productos-toggle-titulo';
+                titleSpan.innerHTML = tituloEl ? tituloEl.innerHTML : `Sección ${idx+1}`;
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-chevron-down productos-toggle-icono';
+                btn.appendChild(titleSpan);
+                btn.appendChild(icon);
+
+                h3.appendChild(btn);
+                col.appendChild(h3);
+                itemWrapper.appendChild(col);
+
+                const panel = document.createElement('div');
+                panel.className = 'productos-panel';
+                panel.dataset.tipoCultivo = tipo;
+                panel.hidden = true;
+                contenido.forEach(n => panel.appendChild(n));
+
+                acordeonWrapper.appendChild(itemWrapper);
+                acordeonWrapper.appendChild(panel);
+            });
+
+            manualGrid.parentNode.replaceChild(acordeonWrapper, manualGrid);
+            acordeonWrapper.classList.add('admin-manual-acordeon-initialized');
+            inicializarAcordeonAdmin(acordeonWrapper);
+        } catch (err) {
+            console.error('Error convirtiendo manual-grid en acordeón:', err);
+        }
+    }
+
+    // try once now
+    ensureManualGridAccordion();
+
+    // Fallback ligero: si la conversión completa falla, adjuntar handlers simples
+    function attachManualToggleHandlers() {
+        try {
+            const bloques = Array.from(document.querySelectorAll('#admin-manual .manual-bloque'));
+            bloques.forEach((bloque, idx) => {
+                if (bloque.dataset.toggleAttached) return;
+                const h3 = bloque.querySelector('h3');
+                if (!h3) return;
+                const contenidoNodes = Array.from(bloque.childNodes).filter(n => n !== h3);
+                const panel = document.createElement('div');
+                panel.className = 'productos-panel manual-panel-fallback';
+                contenidoNodes.forEach(n => panel.appendChild(n));
+                // create button wrapper
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'productos-toggle';
+                btn.setAttribute('aria-expanded', 'false');
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'productos-toggle-titulo';
+                titleSpan.innerHTML = h3.innerHTML;
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-chevron-down productos-toggle-icono';
+                btn.appendChild(titleSpan);
+                btn.appendChild(icon);
+                // replace h3 content with button
+                h3.innerHTML = '';
+                h3.appendChild(btn);
+                // remove old content nodes and append panel
+                bloque.appendChild(panel);
+                btn.addEventListener('click', () => {
+                    const expanded = btn.getAttribute('aria-expanded') === 'true';
+                    btn.setAttribute('aria-expanded', String(!expanded));
+                    panel.hidden = expanded;
+                    bloque.classList.toggle('activa', !expanded);
+                });
+                // start closed
+                panel.hidden = true;
+                bloque.dataset.toggleAttached = '1';
+            });
+        } catch (err) {
+            console.error('attachManualToggleHandlers error', err);
+        }
+    }
+
+    document.querySelectorAll('.admin-main-acordeon .productos-toggle[data-admin-section]').forEach((btn) => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.nav-admin-btn').forEach((other) => other.classList.remove('active'));
-            btn.classList.add('active');
             const section = btn.dataset.adminSection;
-            ['noticias', 'productos', 'actividades', 'solicitudes', 'socios', 'reservasAdmin', 'mensajes', 'manual'].forEach((key) => {
+            const panel = document.getElementById(`admin-${section}`);
+            const estaAbierto = btn.getAttribute('aria-expanded') === 'true' && panel && panel.style.display !== 'none';
+
+            document.querySelectorAll('.admin-main-acordeon .productos-toggle[data-admin-section]').forEach((other) => {
+                other.classList.remove('active');
+                other.setAttribute('aria-expanded', 'false');
+                other.closest('.productos-columna')?.classList.remove('activa');
+            });
+            const tone = getComputedStyle(btn).getPropertyValue('--admin-tone').trim() || 'rgba(124, 163, 90, 0.28)';
+            const admin = document.getElementById('admin');
+            if (admin) {
+                admin.classList.add('admin-panel-selected');
+                admin.style.setProperty('--admin-panel-bg', tone);
+            }
+            const empty = document.getElementById('admin-empty');
+            ['historia', 'manual', 'productos', 'actividades', 'entregas', 'solicitudes', 'socios', 'reservasAdmin', 'mensajes'].forEach((key) => {
                 const el = document.getElementById(`admin-${key}`);
                 if (el) el.style.display = key === section ? 'block' : 'none';
             });
+            if (estaAbierto && panel) {
+                panel.style.display = 'none';
+                if (empty) empty.style.display = '';
+                return;
+            }
+            btn.classList.add('active');
+            btn.setAttribute('aria-expanded', 'true');
+            btn.closest('.productos-columna')?.classList.add('activa');
+            if (empty) empty.style.display = 'none';
+            if (section === 'historia' && typeof cargarHistoriaAdmin === 'function') cargarHistoriaAdmin();
+            if (section === 'manual') { aplicarVisibilidadManualPorRol(); if (typeof ensureManualGridAccordion === 'function') ensureManualGridAccordion(); if (typeof attachManualToggleHandlers === 'function') attachManualToggleHandlers(); }
+            if (section === 'entregas') cargarEntregasAdmin();
+            if (section === 'reservasAdmin' && typeof cargarReservasAdmin === 'function') cargarReservasAdmin();
+            if (section === 'mensajes') {
+                cargarSociosParaMensajes();
+                cargarTelegramInboxMensajes();
+                cargarHistorialMensajes();
+            }
         });
     });
 
@@ -674,14 +1724,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const mensajeCompleto = asunto ? `${asunto}\n\n${texto}` : texto;
+        if (mensajeCompleto.length > MAX_MENSAJE_TELEGRAM_LENGTH) {
+            mostrarMensaje(`El mensaje no puede superar ${MAX_MENSAJE_TELEGRAM_LENGTH} caracteres.`, false);
+            return;
+        }
         if (destinatario === 'todos') {
-            const { data: socios } = await supabaseClient.from('socios').select('id').eq('estado', 'activo');
-            for (const socio of socios || []) {
-                await supabaseClient.from('notificaciones_programadas').insert([{ socio_id: socio.id, tipo: 'comunicado', mensaje: mensajeCompleto, fecha_programada: new Date(), estado: 'pendiente', canal: 'email' }]);
+            const { data: socios } = await supabaseClient.from('socios').select('id, telegram_enabled, telegram_chat_id').eq('estado', 'activo');
+            const vinculados = (socios || []).filter((socio) => socio.telegram_enabled && socio.telegram_chat_id);
+            if (!vinculados.length) {
+                mostrarMensaje('No hay socios con Telegram vinculado todavia.', false);
+                return;
             }
-            mostrarMensaje(`Mensaje cargado para ${socios?.length || 0} socios`, true);
+            for (const socio of vinculados) {
+                await notificationService.send(socio.id, mensajeCompleto, { type: 'aviso_general', channel: 'telegram' });
+            }
+            mostrarMensaje(`Mensaje cargado para ${vinculados.length} socios con Telegram`, true);
         } else {
-            await supabaseClient.from('notificaciones_programadas').insert([{ socio_id: destinatario, tipo: 'comunicado', mensaje: mensajeCompleto, fecha_programada: new Date(), estado: 'pendiente', canal: 'email' }]);
+            const { data: socio } = await supabaseClient
+                .from('socios')
+                .select('telegram_enabled, telegram_chat_id')
+                .eq('id', destinatario)
+                .maybeSingle();
+            if (!socio?.telegram_enabled || !socio?.telegram_chat_id) {
+                mostrarMensaje('Ese socio todavia no tiene Telegram vinculado.', false);
+                return;
+            }
+            await notificationService.send(destinatario, mensajeCompleto, { type: 'aviso_general', channel: 'telegram' });
             mostrarMensaje('Mensaje cargado', true);
         }
         document.getElementById('mensajeAsunto').value = '';
@@ -689,5 +1757,3 @@ document.addEventListener('DOMContentLoaded', () => {
         await cargarHistorialMensajes();
     });
 });
-
-console.log('Admin loaded');
