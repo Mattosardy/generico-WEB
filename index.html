@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -18,8 +18,8 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=20260525-pedidos-head-negro">
-    <link rel="stylesheet" href="css/theme-generico.css?v=20260527-cart-delete-modal-bg">
+    <link rel="stylesheet" href="css/style.css?v=20260602-clean-home-lucide">
+    <link rel="stylesheet" href="css/theme-generico.css?v=20260602-clean-home-lucide">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -37,7 +37,7 @@
     <span>CLUBES WEB</span>
   </h1>
 
-  <div class="home-subtitle">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inicio</div>
+  <div class="home-subtitle">inicio</div>
 </div>
                 <p>Area privada de socios · Pedidos · Entregas</p>
             </div>
@@ -52,20 +52,12 @@
                     </button>
                 </div>
             </div>
-            <div class="mobile-hidden-dock" aria-hidden="true">
-                <button class="dock-btn" data-section="inicio" id="dockBtnInicio"><i class="fas fa-house"></i><span>Inicio</span></button>
-                <button class="dock-btn" data-section="productos" id="dockBtnProductos"><i class="fas fa-leaf"></i><span>Productos</span></button>
-                <button class="dock-btn auth-only" data-section="actividades" id="dockBtnActividades" style="display: none;"><i class="fas fa-bell"></i><span>Actividades</span></button>
-                <button class="dock-btn admin-only" data-section="admin" id="dockBtnAdmin" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
-                <button class="dock-btn maestro-only" data-section="maestro" id="dockBtnMaestro" style="display: none;"><i class="fas fa-sliders"></i><span>Herramientas</span></button>
-                <button id="dockBtnLogin" class="dock-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i><span>Ingresar</span></button>
-            </div>
         </div>
         <div class="header-nav" id="navContainer">
-            <button class="nav-btn app-main-btn" data-section="productos"><i class="fas fa-leaf"></i><span>CATALOGO</span></button>
-            <button class="nav-btn app-main-btn auth-only" data-section="carrito" style="display: none;"><i class="fas fa-cart-shopping"></i><span>CARRITO</span></button>
-            <button class="nav-btn app-main-btn auth-only" data-smart-section="actividades" style="display: none;"><i class="fas fa-bell"></i><span>ACTIVIDADES</span></button>
-            <button class="nav-btn app-main-btn auth-only" data-section="menu" style="display: none;"><i class="fas fa-bars"></i><span>MENU</span></button>
+            <button class="nav-btn app-main-btn" data-section="productos"><svg class="lucide lucide-book-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg><span>CATALOGO</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-section="carrito" style="display: none;"><svg class="lucide lucide-shopping-cart" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span>CARRITO</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-smart-section="actividades" style="display: none;"><svg class="lucide lucide-calendar-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M21 10V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/><path d="M3 10h18"/><path d="m17.8 21.6-2.1 1.1.4-2.3-1.7-1.6 2.3-.3 1-2.1 1 2.1 2.3.3-1.7 1.6.4 2.3z"/></svg><span>ACTIVIDADES</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-section="menu" style="display: none;"><svg class="lucide lucide-menu" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M4 18h16"/><path d="M4 6h16"/></svg><span>MENU</span></button>
         </div>
     </div>
 
@@ -73,7 +65,6 @@
         <source src="assets/sound/cortina.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- INICIO -->
     <div id="inicio" class="section">
         <div class="historia-container">
             <h2 class="section-title">
@@ -92,13 +83,12 @@
                 </div>
             </div>
             <div class="historia-content">
-                <!-- IMAGEN CENTRADA ARRIBA -->
+                
                 <div class="historia-imagen" id="historiaMediaPrincipal">
                     <img src="assets/images/home_inst.png" alt="generico_WEB" class="historia-media-principal">
                 </div>
                 <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
-                
-                <!-- TEXTO DEBAJO -->
+
                 <div class="historia-texto historia-texto-principal" data-institutional-block="standby" hidden aria-hidden="true">
                     <div id="historiaTituloPrincipal" class="modal-titulo" style="margin-bottom: 14px;">Nombre del Club</div>
                     <div id="historiaTextoPrincipal" class="historia-texto-contenido">Contenido institucional del club.</div>
@@ -120,7 +110,6 @@
         </div>
     </div>
 
-    <!-- ACTIVIDADES -->
     <div id="actividades" class="section" style="display: none;">
         <div id="genericoNews" class="generico-news-section">
             <h2 class="section-title">
@@ -266,18 +255,15 @@
         </div>
     </div>
 
-    <!-- PRODUCTOS -->
     <div id="productos" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-leaf"></i> Catalogo</h2>
         <div id="productos-container" class="productos-grid"><div class="loading">Cargando productos...</div></div>
     </div>
 
-    <!-- CARRITO -->
     <div id="carrito" class="section auth-only" style="display: none;">
         <div id="carritoPantallaBody"><div class="loading">Cargando carrito...</div></div>
     </div>
 
-    <!-- MENU -->
     <div id="menu" class="section auth-only" style="display: none;">
         <h2 class="section-title"><i class="fas fa-bars"></i> Menu</h2>
         <div class="productos-acordeon actividades-acordeon menu-acordeon">
@@ -297,8 +283,7 @@
             </div>
         </div>
     </div>
-    
-    <!-- LOGIN -->
+
     <div id="login" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-lock"></i> Acceso Socios</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(100,140,75,0.3); padding-bottom: 10px;">
@@ -338,8 +323,7 @@
             <p style="color: var(--text-main); margin-bottom: 20px;">Solicitá una nueva clave temporal al administrador del club.</p>
         </div>
     </div>
-    
-        <!-- ADMIN -->
+
     <div id="admin" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de Administración <span class="admin-section-title-subtitle">Resumen, guía y accesos rápidos</span></h2>
         <div id="admin-empty" class="admin-empty-state">
@@ -511,8 +495,7 @@
             </div>
         </div>
     </div>
-    
-    <!-- MAESTRO -->
+
         <div id="maestro" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-crown"></i> Panel Maestro - Control Total</h2>
         <div class="dashboard-grid" id="maestroCards"><div class="loading">Cargando estadísticas...</div></div>
@@ -545,14 +528,13 @@
     </div>
     
     <div class="footer">
-        <p>🌿 Nombre del Club · Cultura · Comunidad 🌿</p>
+        <p>?? Nombre del Club · Cultura · Comunidad ??</p>
         <p style="font-size: 0.7rem;">© 2025 - Todos los derechos reservados</p>
         <p class="footer-legal">Plataforma privada para socios. La informacion y los pedidos se gestionan dentro del marco interno del club.</p>
         <p class="footer-cameo"><a href="https://mattosardy.github.io/telecomt3-card/" class="footer-cameo-link" target="_blank" rel="noopener noreferrer">Conectividad y soporte digital · <strong>Telecom T3</strong></a></p>
     </div>
 </div>
 
-<!-- MODAL PRODUCTOS -->
 <div id="productoModal" class="modal">
     <div class="modal-content">
         <span class="cerrar-modal">&times;</span>
@@ -570,7 +552,7 @@
                     <i class="fas fa-star"></i> Calificar
                 </button>
             </div>
-                        <!-- Panel de calificación (oculto inicialmente) -->
+                        
             <div id="panelCalificacion" style="display: none;" class="calificacion-panel">
                 <div style="color: #e0ecd0; margin-bottom: 10px;">Tu calificación:</div>
                 <div id="estrellasInteractivas" class="calificacion-estrellas-interactivas">
@@ -594,7 +576,6 @@
     </div>
 </div>
 
-<!-- MODAL NOTICIAS -->
 <div id="noticiaModal" class="modal">
     <div class="modal-content">
         <span class="cerrar-modal" onclick="cerrarNoticiaModal()">&times;</span>
@@ -608,11 +589,10 @@
     </div>
 </div>
 
-<!-- MODAL EDITAR PRODUCTO -->
 <div id="editProductoModal" class="edit-modal">
     <div class="edit-modal-content">
         <span class="cerrar-modal" style="position: absolute; top: 10px; right: 20px; cursor: pointer;" onclick="cerrarEditProducto()">&times;</span>
-        <h3 style="color: var(--accent-strong); margin-bottom: 20px;">✏️ Editar Producto</h3>
+        <h3 style="color: var(--accent-strong); margin-bottom: 20px;">?? Editar Producto</h3>
         <form id="formEditProducto">
             <div class="form-grid">
                 <div class="form-group full-width"><label>Nombre</label><input type="text" id="editNombre" required></div>
@@ -645,7 +625,7 @@ window.__SUPABASE_ENV__ = {
 <script src="js/supabase-client.js?v=20260527-cart-delete"></script>
 
 <script src="js/config.js?v=20260526-restore-functional"></script>
-<script src="js/utils.js?v=20260526-restore-functional"></script>
+<script src="js/utils.js?v=20260602-calendar-table-align"></script>
 <script src="js/notifications.js?v=20260521-env-cleanup"></script>
 <script src="js/auth.js?v=20260526-restore-functional"></script>
 <script src="js/public.js?v=20260526-restore-functional"></script>
@@ -654,6 +634,6 @@ window.__SUPABASE_ENV__ = {
 <script src="js/admin.js?v=20260525-pedidos-head-negro"></script>
 <script src="js/maestro.js?v=20260521-env-cleanup"></script>
 <script src="js/tour.js?v=20260521-env-cleanup"></script>
-<script src="js/main.js?v=20260526-menu-audio-polish"></script>
+<script src="js/main.js?v=20260602-no-curtain"></script>
 </body>
 </html>
