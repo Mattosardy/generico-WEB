@@ -6222,3 +6222,36 @@ select,
 #admin .tabla-datos.tabla-reservas-excel thead th.tabla-reservas-encabezado * {
     color: #000000 !important;
 }
+
+.home-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-main-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 0;
+  line-height: 1;
+}
+
+.home-main-title .logo-mark {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.home-subtitle {
+  margin-top: 2px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  line-height: 1;
+  text-align: center;
+  opacity: 0.85;
+}
