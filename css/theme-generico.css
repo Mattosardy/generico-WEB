@@ -1200,7 +1200,8 @@ body.app-home .footer-cameo-link { color: #121812; }
 /* Ritmo uniforme para acordeones internos de las vistas principales. */
 #productos .productos-acordeon,
 #actividades .actividades-acordeon,
-#menu .menu-acordeon {
+#menu .menu-acordeon,
+#carrito .carrito-acordeon {
     display: grid;
     gap: 10px;
     width: 100%;
@@ -1215,9 +1216,11 @@ body.app-home .footer-cameo-link { color: #121812; }
 #productos .productos-acordeon .productos-columna,
 #actividades .actividades-acordeon .productos-columna,
 #menu .menu-acordeon .productos-columna,
+#carrito .carrito-acordeon .productos-columna,
 #productos .productos-acordeon .productos-columna-titulo,
 #actividades .actividades-acordeon .productos-columna-titulo,
-#menu .menu-acordeon .productos-columna-titulo {
+#menu .menu-acordeon .productos-columna-titulo,
+#carrito .carrito-acordeon .productos-columna-titulo {
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -1226,7 +1229,8 @@ body.app-home .footer-cameo-link { color: #121812; }
 
 #productos .productos-acordeon .productos-toggle,
 #actividades .actividades-acordeon .productos-toggle,
-#menu .menu-acordeon .productos-toggle {
+#menu .menu-acordeon .productos-toggle,
+#carrito .carrito-acordeon .productos-toggle {
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -1243,9 +1247,26 @@ body.app-home .footer-cameo-link { color: #121812; }
 
 #productos .productos-acordeon .productos-panel,
 #actividades .actividades-acordeon .productos-panel,
-#menu .menu-acordeon .productos-panel {
+#menu .menu-acordeon .productos-panel,
+#carrito .carrito-acordeon .productos-panel {
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
+}
+
+#productos .productos-acordeon .productos-toggle,
+#actividades .actividades-acordeon .productos-toggle,
+#menu .menu-acordeon .productos-toggle,
+#carrito .carrito-acordeon .productos-toggle,
+#productos .productos-acordeon .productos-panel,
+#actividades .actividades-acordeon .productos-panel,
+#menu .menu-acordeon .productos-panel,
+#carrito .carrito-acordeon .productos-panel {
+    border-color: rgba(43, 95, 22, 0.82);
+}
+
+.productos-acordeon .productos-toggle,
+.productos-acordeon .productos-panel {
+    border-color: rgba(43, 95, 22, 0.82);
 }

@@ -94,7 +94,7 @@ function construirEventoCalendarioReservaUsuario(evento, indice) {
         detalle: detalleEntrega.hora ? 'Retiro coordinado por el club' : 'Horario a confirmar',
         lugar: detalleEntrega.lugar || 'Lugar de Siempre',
         actionId: evento.tipo,
-        destacado: false,
+        destacádo: false,
         fechaTexto: evento.fecha.toLocaleDateString('es-UY')
     };
 }
@@ -112,7 +112,7 @@ function renderReservasActividadCalendar(reservas, reservaPrimer, reservaUltimo,
         <div class="reservas-activity-head">
             <span class="dashboard-eyebrow">Calendario de entregas</span>
             <strong>Próximas fechas de retiro</strong>
-            <small>El calendario muestra únicamente las entregas creadas por administración. Tus productos reservados están en el carrito.</small>
+            <small>El calendario muestra únicamente las entregas creadas por administración. Tus productos reservados estén en el carrito.</small>
         </div>
         <div class="reservas-activity-events">
             ${construirCalendarioEntregasHTML(eventos.map(construirEventoCalendarioReservaUsuario))}
@@ -253,7 +253,7 @@ function asegurarCarritoSocioModal() {
 
 async function abrirCarritoSocio() {
     if (!appState.socioData?.id) {
-        mostrarMensaje('Inicia sesion para ver tu carrito.', false);
+        mostrarMensaje('Iniciá sesión para ver tu carrito.', false);
         return;
     }
     const modal = asegurarCarritoSocioModal();
@@ -277,24 +277,56 @@ async function renderCarritoSocioEn(body, esModal = false) {
     body.innerHTML = `
         <span class="dashboard-eyebrow">Carrito del socio</span>
         <h2 class="modal-titulo">Carrito de ${escapeHtml(appState.socioData.nombre || 'socio')}</h2>
-        <div class="carrito-modal-summary">
-            <strong>${packsUsados} de 2 packs reservados</strong>
-            <span>${packsRestantes} packs disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
+        <div class="productos-acordeon carrito-acordeon">
+            <div class="productos-columna activa">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="carrito-resumen" aria-expanded="true">
+                        <span class="productos-toggle-titulo"><i class="fas fa-cart-shopping"></i> Resumen</span>
+                        <span class="productos-toggle-descripcion">Cupo disponible del ciclo</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="carrito-resumen">
+                <div class="carrito-modal-summary">
+                    <strong>${packsUsados} de 2 packs reservados</strong>
+                    <span>${packsRestantes} packs disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
+                </div>
+            </div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="carrito-variedades" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-leaf"></i> Variedades reservadas</span>
+                        <span class="productos-toggle-descripcion">Pedidos activos del socio</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="carrito-variedades" hidden>
+                <div class="carrito-modal-list">
+                    ${activas.length ? activas.map(construirItemCarritoReservaHTML).join('') : '<div class="carrito-modal-empty">Todavía no tenes variedades reservadas.</div>'}
+                </div>
+            </div>
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="carrito-articulos" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-box"></i> Artículos</span>
+                        <span class="productos-toggle-descripcion">Reservas por unidad</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="carrito-articulos" hidden>
+                <div class="carrito-modal-list">
+                    ${articulos.length ? '' : '<div class="carrito-modal-empty">Los artículos que reserves aparecerán acá cuando activemos esa sección.</div>'}
+                </div>
+            </div>
         </div>
-        <section class="carrito-modal-section">
-            <h3>Variedades reservadas</h3>
-            <div class="carrito-modal-list">
-                ${activas.length ? activas.map(construirItemCarritoReservaHTML).join('') : '<div class="carrito-modal-empty">Todavia no tenes variedades reservadas.</div>'}
-            </div>
-        </section>
-        <section class="carrito-modal-section">
-            <h3>Artículos</h3>
-            <div class="carrito-modal-list">
-                ${articulos.length ? '' : '<div class="carrito-modal-empty">Los artículos que reserves aparecerán acá cuando activemos esa sección.</div>'}
-            </div>
-        </section>
     `;
 
+    if (typeof inicializarAcordeonesProductos === 'function') {
+        inicializarAcordeonesProductos();
+    }
     body.querySelectorAll('[data-carrito-editar]').forEach((btn) => {
         btn.addEventListener('click', async () => {
             if (esModal) cerrarCarritoSocioModal();
@@ -313,7 +345,7 @@ async function abrirCarritoPantalla() {
     const body = document.getElementById('carritoPantallaBody');
     if (!body) return;
     if (!appState.socioData?.id) {
-        body.innerHTML = '<div class="empty-state"><i class="fas fa-cart-shopping"></i><strong>Carrito</strong><span>Inicia sesion para ver tus pedidos.</span></div>';
+        body.innerHTML = '<div class="empty-state"><i class="fas fa-cart-shopping"></i><strong>Carrito</strong><span>Iniciá sesión para ver tus pedidos.</span></div>';
         return;
     }
     body.innerHTML = '<div class="loading">Cargando carrito...</div>';
@@ -342,7 +374,7 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
     dashboard.innerHTML = `
         <div class="socio-dashboard-hero">
             <div>
-                <span class="dashboard-eyebrow">Area privada</span>
+                <span class="dashboard-eyebrow">Área privada</span>
                 <h2>Hola, ${escapeHtml(nombre)}</h2>
                 <p>${escapeHtml(resumenEntrega)}</p>
             </div>
@@ -359,7 +391,7 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
             <article class="socio-metric-card">
                 <span class="metric-label">Pedidos activos</span>
                 <strong>${reservasActivas.length}</strong>
-                <small>${reservasActivas.length ? 'Tenes entregas coordinadas.' : 'Sin pedidos activos por ahora.'}</small>
+                <small>${reservasActivas.length ? 'Tenés entregas coordinadas.' : 'Sin pedidos activos por ahora.'}</small>
             </article>
             <article class="socio-metric-card">
                 <span class="metric-label">Primera entrega</span>
@@ -425,7 +457,7 @@ async function cargarReservasSocio() {
 
 async function modificarReservaHandler(reservaId, tipo) {
     if (!appState.socioData?.id) {
-        mostrarMensaje('Inicia sesion para modificar el pedido.', false);
+        mostrarMensaje('Iniciá sesión para modificar el pedido.', false);
         return;
     }
     const reservas = await obtenerReservas(appState.socioData.id);
@@ -435,13 +467,13 @@ async function modificarReservaHandler(reservaId, tipo) {
         && reservaEstaActiva(item)
     ));
     if (!reserva) {
-        mostrarMensaje('No se encontro el pedido.', false);
+        mostrarMensaje('No se encontró el pedido.', false);
         return;
     }
     const fechaEntrega = tipo === 'primer' ? appState.fechasEntrega.primerJueves : appState.fechasEntrega.ultimoJueves;
     const horasLimite = tipo === 'primer' ? configSistema.horasLimitePrimer : configSistema.horasLimiteUltimo;
     if (!puedeConfirmar(fechaEntrega, horasLimite)) {
-        mostrarMensaje('No se puede modificar: el plazo del pedido ya vencio.', false);
+        mostrarMensaje('No se puede modificar: el plazo del pedido ya venció.', false);
         return;
     }
     const productos = await obtenerProductos();
@@ -457,7 +489,7 @@ async function modificarReservaHandler(reservaId, tipo) {
 
 async function eliminarReservaCarritoHandler(reservaId) {
     if (!appState.socioData?.id) {
-        mostrarMensaje('Inicia sesion para eliminar el pedido.', false);
+        mostrarMensaje('Iniciá sesión para eliminar el pedido.', false);
         return;
     }
     const reservas = await obtenerReservas(appState.socioData.id);
@@ -467,7 +499,7 @@ async function eliminarReservaCarritoHandler(reservaId) {
         && reservaEstaActiva(item)
     ));
     if (!reserva) {
-        mostrarMensaje('No se encontro un pedido activo para este socio.', false);
+        mostrarMensaje('No se encontró un pedido activo para este socio.', false);
         await cargarReservasSocio();
         if (document.getElementById('carrito')?.style.display !== 'none' && typeof abrirCarritoPantalla === 'function') {
             await abrirCarritoPantalla();
@@ -477,7 +509,7 @@ async function eliminarReservaCarritoHandler(reservaId) {
         return;
     }
 
-    const confirmar = window.confirm('¿Eliminar esta selección del carrito? El pedido quedará marcado como cancelado.');
+    const confirmar = window.confirm('?Eliminar esta selección del carrito? El pedido quedará marcado como cancelado.');
     if (!confirmar) return;
 
     const resultado = await cancelarReserva(reserva.id, appState.socioData.id);
