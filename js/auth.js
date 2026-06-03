@@ -57,10 +57,8 @@ function actualizarNombreUsuarioNav(partes = ['Invitado'], rol = appState.rolUsu
     const userName = document.getElementById('userName');
     if (!userName) return;
     const nombrePila = obtenerNombrePilaSesion(partes);
-    const rolNormalizado = String(rol || 'socio').toLowerCase();
-    const esSocio = rolNormalizado === 'socio';
     actualizarNombreHeaderSesion(nombrePila);
-    userName.classList.toggle('nav-user-name-hidden', !esSocio && nombrePila !== 'Invitado');
+    userName.classList.remove('nav-user-name-hidden');
     const visibles = nombrePila && nombrePila !== 'Invitado'
         ? [nombrePila]
         : ['Invitado'];

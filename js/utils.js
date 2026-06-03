@@ -365,6 +365,19 @@ function obtenerEtiquetaDiaCalendario(fecha) {
     return fecha.toLocaleDateString('es-UY', { weekday: 'short' }).replace('.', '');
 }
 
+function obtenerNumeroSemanaISO(fecha) {
+    const normalizada = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
+    const dia = normalizada.getUTCDay() || 7;
+    normalizada.setUTCDate(normalizada.getUTCDate() + 4 - dia);
+    const inicioAnio = new Date(Date.UTC(normalizada.getUTCFullYear(), 0, 1));
+    return Math.ceil((((normalizada - inicioAnio) / 86400000) + 1) / 7);
+}
+
+function formatearTituloMesCalendario(fecha) {
+    const titulo = fecha.toLocaleDateString('es-UY', { month: 'long', year: 'numeric' });
+    return titulo ? titulo.charAt(0).toUpperCase() + titulo.slice(1) : '';
+}
+
 function obtenerMesesDesdeEventosCalendario(eventos = []) {
     const meses = new Map();
     eventos.forEach((evento) => {
@@ -428,24 +441,34 @@ function construirCalendarioMesEntregasHTML(fechaMes, eventos = [], pendientes =
             && fecha.getMonth() === fechaMes.getMonth();
     });
 
-    const celdas = Array.from({ length: 42 }, (_, indice) => {
-        const fecha = new Date(inicioGrilla);
-        fecha.setDate(inicioGrilla.getDate() + indice);
-        const clave = formatearFechaClave(fecha);
-        const eventosDia = eventosPorDia[clave] || [];
-        const eventoPrincipal = eventosDia.find((evento) => evento.actionId);
-        const accionDiaAttrs = eventoPrincipal?.actionId
-            ? ` role="button" tabindex="0" data-entrega-day-action="true" data-reserva-evento="${escapeHtml(eventoPrincipal.actionId)}" aria-label="Ver entrega del ${escapeHtml(fecha.toLocaleDateString('es-UY'))}"`
-            : '';
-        const fueraMes = fecha.getMonth() !== inicioMes.getMonth();
+    const filas = Array.from({ length: 6 }, (_, fila) => {
+        const inicioSemana = new Date(inicioGrilla);
+        inicioSemana.setDate(inicioGrilla.getDate() + (fila * 7));
+        const dias = Array.from({ length: 7 }, (_, columna) => {
+            const fecha = new Date(inicioSemana);
+            fecha.setDate(inicioSemana.getDate() + columna);
+            const clave = formatearFechaClave(fecha);
+            const eventosDia = eventosPorDia[clave] || [];
+            const eventoPrincipal = eventosDia.find((evento) => evento.actionId);
+            const etiquetaFecha = fecha.toLocaleDateString('es-UY');
+            const accionDiaAttrs = eventoPrincipal?.actionId
+                ? ` role="button" tabindex="0" data-entrega-day-action="true" data-reserva-evento="${escapeHtml(eventoPrincipal.actionId)}" aria-label="Ver entrega del ${escapeHtml(etiquetaFecha)}"`
+                : ` aria-label="${escapeHtml(etiquetaFecha)}"`;
+            const fueraMes = fecha.getMonth() !== inicioMes.getMonth();
+            const tooltip = eventosDia.length ? ` title="${escapeHtml(eventosDia.map((evento) => evento.titulo || 'Entrega').join(' · '))}"` : '';
+            return `
+                <td class="entrega-calendar-day ${fueraMes ? 'fuera-mes' : ''} ${clave === hoyClave ? 'hoy' : ''} ${eventosDia.length ? 'con-entrega' : ''} ${eventoPrincipal?.actionId ? 'entrega-day-clickable' : ''}"${accionDiaAttrs}${tooltip}>
+                    <div class="entrega-calendar-date">
+                        <strong>${fecha.getDate()}</strong>
+                    </div>
+                </td>
+            `;
+        }).join('');
         return `
-            <div class="entrega-calendar-day ${fueraMes ? 'fuera-mes' : ''} ${clave === hoyClave ? 'hoy' : ''} ${eventosDia.length ? 'con-entrega' : ''} ${eventoPrincipal?.actionId ? 'entrega-day-clickable' : ''}"${accionDiaAttrs}>
-                <div class="entrega-calendar-date">
-                    <span>${escapeHtml(obtenerEtiquetaDiaCalendario(fecha))}</span>
-                    <strong>${fecha.getDate()}</strong>
-                </div>
-                ${eventosDia.length ? `<div class="entrega-calendar-events">${eventosDia.map((evento) => construirEventoEntregaCalendarioHTML(evento, { accionEnDia: Boolean(eventoPrincipal?.actionId) })).join('')}</div>` : ''}
-            </div>
+            <tr class="entrega-calendar-week-row">
+                <th class="entrega-calendar-week-number" scope="row">${obtenerNumeroSemanaISO(inicioSemana)}</th>
+                ${dias}
+            </tr>
         `;
     }).join('');
 
@@ -457,12 +480,21 @@ function construirCalendarioMesEntregasHTML(fechaMes, eventos = [], pendientes =
                     ${pendientesMes.length ? `<span>${pendientesMes.length} entrega${pendientesMes.length > 1 ? 's' : ''} a confirmar</span>` : ''}
                 </div>
             `}
-            <div class="entrega-calendar-weekdays">
-                ${['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].map((dia) => `<span>${dia}</span>`).join('')}
-            </div>
-            <div class="entrega-calendar-grid">
-                ${celdas}
-            </div>
+            <table class="entrega-calendar-table" aria-label="${escapeHtml(formatearTituloMesCalendario(inicioMes))}">
+                <colgroup>
+                    <col class="entrega-calendar-week-col">
+                    ${Array.from({ length: 7 }, () => '<col class="entrega-calendar-day-col">').join('')}
+                </colgroup>
+                <thead class="entrega-calendar-weekdays">
+                    <tr>
+                        <th class="entrega-calendar-week-spacer" scope="col"></th>
+                        ${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((dia) => `<th scope="col">${dia}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody class="entrega-calendar-grid">
+                    ${filas}
+                </tbody>
+            </table>
         </section>
     `;
 }
@@ -492,30 +524,27 @@ function construirCalendarioEntregasHTML(eventos = [], opciones = {}) {
     const mesesRender = mesesUnicos.length ? mesesUnicos : [new Date(new Date().getFullYear(), new Date().getMonth(), 1)];
     const indiceInicial = Math.max(0, Math.min(Number(opciones.indiceInicial || 0), mesesRender.length - 1));
     const mesInicial = mesesRender[indiceInicial];
-    const tituloInicial = mesInicial.toLocaleDateString('es-UY', { month: 'long', year: 'numeric' });
+    const tituloInicial = formatearTituloMesCalendario(mesInicial);
 
     return `
         <div class="entrega-google-calendar entrega-google-calendar-single" data-entrega-calendar data-active-index="${indiceInicial}">
-            <div class="entrega-calendar-legend">
-                <span><i class="fas fa-circle"></i> Hoy</span>
-                <span><i class="fas fa-circle estado-confirmada"></i> Confirmada</span>
-                <span><i class="fas fa-circle estado-pendiente"></i> Pendiente</span>
-            </div>
             <div class="entrega-calendar-shell-head">
-                <button type="button" class="entrega-calendar-nav" data-entrega-calendar-nav="-1" aria-label="Mes anterior" ${indiceInicial === 0 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-left"></i>
-                </button>
                 <div class="entrega-calendar-shell-title">
                     <strong data-entrega-calendar-title>${escapeHtml(tituloInicial)}</strong>
                     <span data-entrega-calendar-count>${indiceInicial + 1} de ${mesesRender.length}</span>
                 </div>
-                <button type="button" class="entrega-calendar-nav" data-entrega-calendar-nav="1" aria-label="Mes siguiente" ${indiceInicial >= mesesRender.length - 1 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <div class="entrega-calendar-actions">
+                    <button type="button" class="entrega-calendar-nav" data-entrega-calendar-nav="-1" aria-label="Mes anterior" ${indiceInicial === 0 ? 'disabled' : ''}>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button type="button" class="entrega-calendar-nav" data-entrega-calendar-nav="1" aria-label="Mes siguiente" ${indiceInicial >= mesesRender.length - 1 ? 'disabled' : ''}>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
             <div class="entrega-calendar-panes">
                 ${mesesRender.map((mes, index) => {
-                    const titulo = mes.toLocaleDateString('es-UY', { month: 'long', year: 'numeric' });
+                    const titulo = formatearTituloMesCalendario(mes);
                     return `
                         <div class="entrega-calendar-pane ${index === indiceInicial ? 'active' : ''}" data-entrega-calendar-pane="${index}" data-month-title="${escapeHtml(titulo)}" data-month-count="${index + 1} de ${mesesRender.length}">
                             ${construirCalendarioMesEntregasHTML(mes, eventosConfirmados, eventosPendientes, { ocultarTitulo: true })}

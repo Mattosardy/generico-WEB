@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -15,11 +15,11 @@
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512.png">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=20260602-clean-home-lucide">
-    <link rel="stylesheet" href="css/theme-generico.css?v=20260602-clean-home-lucide">
+    <link rel="stylesheet" href="css/style.css?v=20260602-home-menu-fix">
+    <link rel="stylesheet" href="css/theme-generico.css?v=20260602-home-menu-fix">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -39,7 +39,7 @@
 
   <div class="home-subtitle">inicio</div>
 </div>
-                <p>Area privada de socios · Pedidos · Entregas</p>
+                <p>Area privada de socios Â· Pedidos Â· Entregas</p>
             </div>
             <div class="app-session-actions">
                 <button id="btnLogin" class="btn-inicio nav-session-btn" style="display: none;"><i class="fas fa-sign-in-alt"></i> Iniciar Sesion</button>
@@ -66,51 +66,71 @@
     </audio>
 
     <div id="inicio" class="section">
-        <div class="historia-container">
-            <h2 class="section-title">
-                <i class="fas fa-book-open"></i> Nuestra Historia
-            </h2>
-            <div class="club-intro-panel" id="portadaInstitucional">
-                <span class="dashboard-eyebrow" id="portadaTitulo">Club privado para socios</span>
-                <h2 id="portadaSubtitulo">Pedidos mensuales, entregas claras y novedades en un solo lugar.</h2>
-                <p id="portadaDescripcion">Nombre del Club centraliza la informacion institucional, las actividades, los pedidos y la comunicacion interna para que cada socio tenga una experiencia simple y ordenada.</p>
-                <div class="club-intro-badges" aria-label="Resumen del servicio">
-                    <span><i class="fas fa-leaf"></i> Catalogo configurable</span>
-                    <span><i class="fas fa-calendar-check"></i> Pedidos y entregas configurables</span>
-                    <span><i class="fas fa-bell"></i> Avisos y entregas organizadas</span>
-                    <span><i class="fas fa-pen-to-square"></i> Posibilidad de modificar o eliminar pedidos según disponibilidad y estado</span>
-                    <button type="button" class="club-intro-badge-action" data-install-app><i class="fas fa-mobile-screen-button"></i> Instalar generico_WEB en el dispositivo</button>
-                </div>
-            </div>
-            <div class="historia-content">
-                
-                <div class="historia-imagen" id="historiaMediaPrincipal">
-                    <img src="assets/images/home_inst.png" alt="generico_WEB" class="historia-media-principal">
-                </div>
-                <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
-
-                <div class="historia-texto historia-texto-principal" data-institutional-block="standby" hidden aria-hidden="true">
-                    <div id="historiaTituloPrincipal" class="modal-titulo" style="margin-bottom: 14px;">Nombre del Club</div>
-                    <div id="historiaTextoPrincipal" class="historia-texto-contenido">Contenido institucional del club.</div>
-                    <div id="historiaTextoAdicional" class="historia-texto-contenido" hidden>Espacio preparado para cargar la historia, los servicios y la informacion publica del club.</div>
-                    <div class="historia-toggle">
-                        <button type="button" id="btnLeerMasHistoria" class="btn-leer-mas">
-                            <i class="fas fa-chevron-down"></i> Mostrar más
-                        </button>
-                    </div>
-                    
-                <div class="historia-cifras">
-                        <div class="cifra"><span class="cifra-numero" id="cifra-socios">0</span><span class="cifra-texto">Socios activos</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-cepas">0</span><span class="cifra-texto">Items de catalogo</span></div>
-                        <div class="cifra"><span class="cifra-numero" id="cifra-anios">0</span><span class="cifra-texto">Anios de actividad</span></div>
-                    </div>
-                </div>
-                <div id="socioDashboard" class="socio-dashboard auth-only" style="display: none;"></div>
-            </div>
+        <div class="welcome-placeholder" style="text-align: center; padding: 40px 20px;">
+            <i class="fas fa-leaf" style="font-size: 48px; color: var(--accent-strong);"></i>
+            <h3 style="margin-top: 16px;">Bienvenido al &aacute;rea de socios</h3>
+            <p style="color: var(--text-muted);">Us&aacute; el men&uacute; para explorar el cat&aacute;logo, tus pedidos y actividades.</p>
         </div>
     </div>
 
     <div id="actividades" class="section" style="display: none;">
+        <div class="productos-acordeon actividades-acordeon">
+            <div class="productos-columna">
+                <h3 class="productos-columna-titulo">
+                    <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-historia" aria-expanded="false">
+                        <span class="productos-toggle-titulo"><i class="fas fa-book-open"></i> Nuestra Historia</span>
+                        <span class="productos-toggle-descripcion">Conoc&eacute; el origen y la comunidad del club</span>
+                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
+                    </button>
+                </h3>
+            </div>
+            <div class="productos-panel" data-tipo-cultivo="actividades-historia" hidden>
+                <div id="historiaEnActividades">
+                    <div class="historia-container">
+                                <h2 class="section-title">
+                                    <i class="fas fa-book-open"></i> Nuestra Historia
+                                </h2>
+                                <div class="club-intro-panel" id="portadaInstitucional">
+                                    <span class="dashboard-eyebrow" id="portadaTitulo">Club privado para socios</span>
+                                    <h2 id="portadaSubtitulo">Pedidos mensuales, entregas claras y novedades en un solo lugar.</h2>
+                                    <p id="portadaDescripcion">Nombre del Club centraliza la informacion institucional, las actividades, los pedidos y la comunicacion interna para que cada socio tenga una experiencia simple y ordenada.</p>
+                                    <div class="club-intro-badges" aria-label="Resumen del servicio">
+                                        <span><i class="fas fa-leaf"></i> Catalogo configurable</span>
+                                        <span><i class="fas fa-calendar-check"></i> Pedidos y entregas configurables</span>
+                                        <span><i class="fas fa-bell"></i> Avisos y entregas organizadas</span>
+                                        <span><i class="fas fa-pen-to-square"></i> Posibilidad de modificar o eliminar pedidos segÃºn disponibilidad y estado</span>
+                                        <button type="button" class="club-intro-badge-action" data-install-app><i class="fas fa-mobile-screen-button"></i> Instalar generico_WEB en el dispositivo</button>
+                                    </div>
+                                </div>
+                                <div class="historia-content">
+
+                                    <div class="historia-imagen" id="historiaMediaPrincipal">
+                                        <img src="assets/images/home_inst.png" alt="generico_WEB" class="historia-media-principal">
+                                    </div>
+                                    <div id="historiaGaleria" class="historia-galeria" style="display: none;"></div>
+
+                                    <div class="historia-texto historia-texto-principal" data-institutional-block="standby" hidden aria-hidden="true">
+                                        <div id="historiaTituloPrincipal" class="modal-titulo" style="margin-bottom: 14px;">Nombre del Club</div>
+                                        <div id="historiaTextoPrincipal" class="historia-texto-contenido">Contenido institucional del club.</div>
+                                        <div id="historiaTextoAdicional" class="historia-texto-contenido" hidden>Espacio preparado para cargar la historia, los servicios y la informacion publica del club.</div>
+                                        <div class="historia-toggle">
+                                            <button type="button" id="btnLeerMasHistoria" class="btn-leer-mas">
+                                                <i class="fas fa-chevron-down"></i> Mostrar mÃ¡s
+                                            </button>
+                                        </div>
+
+                                    <div class="historia-cifras">
+                                            <div class="cifra"><span class="cifra-numero" id="cifra-socios">0</span><span class="cifra-texto">Socios activos</span></div>
+                                            <div class="cifra"><span class="cifra-numero" id="cifra-cepas">0</span><span class="cifra-texto">Items de catalogo</span></div>
+                                            <div class="cifra"><span class="cifra-numero" id="cifra-anios">0</span><span class="cifra-texto">Anios de actividad</span></div>
+                                        </div>
+                                    </div>
+                                    <div id="socioDashboard" class="socio-dashboard auth-only" style="display: none;"></div>
+                                </div>
+                            </div>
+                </div>
+            </div>
+        </div>
         <div id="genericoNews" class="generico-news-section">
             <h2 class="section-title">
                 <i class="fas fa-bell"></i> Agenda y pedidos
@@ -120,7 +140,7 @@
                     <h3 class="productos-columna-titulo">
                         <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-calendario" aria-expanded="false">
                             <span class="productos-toggle-titulo"><i class="fas fa-calendar-check"></i> Calendario de entregas</span>
-                            <span class="productos-toggle-descripcion">Próximas fechas de retiro</span>
+                            <span class="productos-toggle-descripcion">PrÃ³ximas fechas de retiro</span>
                             <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                         </button>
                     </h3>
@@ -150,7 +170,7 @@
                     <h3 class="productos-columna-titulo">
                         <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-cuenta" aria-expanded="false">
                             <span class="productos-toggle-titulo"><i class="fas fa-user-lock"></i> Mi cuenta</span>
-                            <span class="productos-toggle-descripcion">Cambiar contraseña</span>
+                            <span class="productos-toggle-descripcion">Cambiar contraseÃ±a</span>
                             <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                         </button>
                     </h3>
@@ -158,21 +178,21 @@
                 <div class="productos-panel auth-only" data-tipo-cultivo="actividades-cuenta" style="display: none;" hidden>
                     <div id="miCuentaPanel" class="socio-dashboard">
                         <h3><i class="fas fa-user-lock"></i> Mi cuenta</h3>
-                        <p style="color: var(--text-muted); margin: 6px 0 16px; line-height: 1.5;">Actualizá tu contraseña usando tu clave actual para confirmar la operación.</p>
+                        <p style="color: var(--text-muted); margin: 6px 0 16px; line-height: 1.5;">ActualizÃ¡ tu contraseÃ±a usando tu clave actual para confirmar la operaciÃ³n.</p>
                         <form id="formCambiarPassword" style="max-width: 420px;">
                             <div class="form-group">
-                                <label>Contraseña actual *</label>
+                                <label>ContraseÃ±a actual *</label>
                                 <input type="password" id="passwordActual" autocomplete="current-password" required>
                             </div>
                             <div class="form-group">
-                                <label>Nueva contraseña *</label>
+                                <label>Nueva contraseÃ±a *</label>
                                 <input type="password" id="passwordNueva" autocomplete="new-password" required>
                             </div>
                             <div class="form-group">
-                                <label>Repetir nueva contraseña *</label>
+                                <label>Repetir nueva contraseÃ±a *</label>
                                 <input type="password" id="passwordNuevaConfirmar" autocomplete="new-password" required>
                             </div>
-                            <button type="submit" id="btnCambiarPassword" class="btn-submit"><i class="fas fa-key"></i> Actualizar contraseña</button>
+                            <button type="submit" id="btnCambiarPassword" class="btn-submit"><i class="fas fa-key"></i> Actualizar contraseÃ±a</button>
                         </form>
                     </div>
                 </div>
@@ -181,7 +201,7 @@
                     <h3 class="productos-columna-titulo">
                         <button type="button" class="productos-toggle" data-tipo-cultivo="actividades-manual" aria-expanded="false">
                             <span class="productos-toggle-titulo"><i class="fas fa-circle-question"></i> Manual</span>
-                            <span class="productos-toggle-descripcion">Guía rápida para socios</span>
+                            <span class="productos-toggle-descripcion">GuÃ­a rÃ¡pida para socios</span>
                             <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                         </button>
                     </h3>
@@ -190,39 +210,39 @@
                     <div class="manual-grid">
                         <article class="manual-bloque">
                             <h3><i class="fas fa-mobile-screen-button"></i> Instalar en dispositivo</h3>
-                            <p>Android: abrí la web en Chrome y tocá Instalar app. iPhone/iPad: abrí Safari, tocá Compartir y elegí Agregar a pantalla de inicio.</p>
+                            <p>Android: abrÃ­ la web en Chrome y tocÃ¡ Instalar app. iPhone/iPad: abrÃ­ Safari, tocÃ¡ Compartir y elegÃ­ Agregar a pantalla de inicio.</p>
                             <p><button type="button" class="manual-install-link" data-install-app>Instalar</button></p>
                         </article>
                         <article class="manual-bloque">
                             <h3><i class="fas fa-leaf"></i> Pedir variedades</h3>
-                            <p>Entrá a Variedades, abrí la ficha, elegí 20g o 40g y confirmá el pedido. El cupo mensual aplica solo a variedades.</p>
+                            <p>EntrÃ¡ a Variedades, abrÃ­ la ficha, elegÃ­ 20g o 40g y confirmÃ¡ el pedido. El cupo mensual aplica solo a variedades.</p>
                         </article>
                         <article class="manual-bloque">
-                            <h3><i class="fas fa-box"></i> Pedir artículos</h3>
-                            <p>Los artículos se piden por unidad y se entregan junto a la mensu. No descuentan cupo mensual de variedades.</p>
+                            <h3><i class="fas fa-box"></i> Pedir artÃ­culos</h3>
+                            <p>Los artÃ­culos se piden por unidad y se entregan junto a la mensu. No descuentan cupo mensual de variedades.</p>
                         </article>
                         <article class="manual-bloque">
                             <h3><i class="fas fa-cart-shopping"></i> Carrito y entregas</h3>
-                            <p>Tocá tu nombre de usuario para ver el carrito. En Actividades podés revisar el calendario y el estado de tus pedidos.</p>
+                            <p>TocÃ¡ tu nombre de usuario para ver el carrito. En Actividades podÃ©s revisar el calendario y el estado de tus pedidos.</p>
                         </article>
                     </div>
                 </div>
                 <div id="passwordTemporalGate" class="password-temporal-card auth-only" hidden>
                     <div class="password-temporal-copy">
                         <span class="metric-label">Seguridad de acceso</span>
-                        <strong>Debés cambiar tu contraseña temporal para continuar.</strong>
-                        <small>Elegí una contraseña propia. El correo no forma parte del flujo del socio.</small>
+                        <strong>DebÃ©s cambiar tu contraseÃ±a temporal para continuar.</strong>
+                        <small>ElegÃ­ una contraseÃ±a propia. El correo no forma parte del flujo del socio.</small>
                     </div>
                     <form id="formPasswordTemporal" class="password-temporal-form">
                         <div class="form-group">
-                            <label>Nueva contraseña *</label>
+                            <label>Nueva contraseÃ±a *</label>
                             <input type="password" id="passwordTemporalNueva" autocomplete="new-password" required>
                         </div>
                         <div class="form-group">
-                            <label>Repetir nueva contraseña *</label>
+                            <label>Repetir nueva contraseÃ±a *</label>
                             <input type="password" id="passwordTemporalConfirmar" autocomplete="new-password" required>
                         </div>
-                        <button type="submit" id="btnPasswordTemporal" class="btn-submit"><i class="fas fa-key"></i> Cambiar contraseña</button>
+                        <button type="submit" id="btnPasswordTemporal" class="btn-submit"><i class="fas fa-key"></i> Cambiar contraseÃ±a</button>
                     </form>
                 </div>
             </div>
@@ -287,49 +307,49 @@
     <div id="login" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-lock"></i> Acceso Socios</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(100,140,75,0.3); padding-bottom: 10px;">
-            <button id="tabLogin" class="btn-submit" style="background: #7ca35a;"><i class="fas fa-lock"></i> Iniciar Sesión</button>
+            <button id="tabLogin" class="btn-submit" style="background: #7ca35a;"><i class="fas fa-lock"></i> Iniciar SesiÃ³n</button>
             <button id="tabRegister" class="btn-submit" style="background: rgba(100,140,75,0.3);" hidden aria-hidden="true"><i class="fas fa-user-plus"></i> Registrarse</button>
         </div>
         <div id="panelLogin">
-            <p style="color: var(--text-main); margin-bottom: 20px;">Ingresá con tu teléfono y contraseña.</p>
+            <p style="color: var(--text-main); margin-bottom: 20px;">IngresÃ¡ con tu telÃ©fono y contraseÃ±a.</p>
             <form id="formLoginPassword" style="max-width: 400px;">
-                <div class="form-group"><label>Teléfono *</label><input type="tel" id="loginTelefonoPassword" placeholder="092456838" autocomplete="tel" required></div>
-                <div class="form-group"><label>Contraseña *</label><input type="password" id="loginPassword" required></div>
+                <div class="form-group"><label>TelÃ©fono *</label><input type="tel" id="loginTelefonoPassword" placeholder="092456838" autocomplete="tel" required></div>
+                <div class="form-group"><label>ContraseÃ±a *</label><input type="password" id="loginPassword" required></div>
                 <label class="password-toggle">
                     <input type="checkbox" id="mostrarLoginPassword">
-                    <span>Mostrar contraseña</span>
+                    <span>Mostrar contraseÃ±a</span>
                 </label>
-                <button type="submit" class="btn-submit"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
-                <p class="login-admin-help">¿Necesitás una nueva clave? Solicitá una nueva clave temporal al administrador del club.</p>
+                <button type="submit" class="btn-submit"><i class="fas fa-sign-in-alt"></i> Iniciar SesiÃ³n</button>
+                <p class="login-admin-help">Â¿NecesitÃ¡s una nueva clave? SolicitÃ¡ una nueva clave temporal al administrador del club.</p>
             </form>
         </div>
         <div id="panelRegister" style="display: none;" hidden aria-hidden="true">
-            <p style="color: var(--text-main); margin-bottom: 20px;">Completá tus datos y verificá Telegram para recibir avisos del club.</p>
+            <p style="color: var(--text-main); margin-bottom: 20px;">CompletÃ¡ tus datos y verificÃ¡ Telegram para recibir avisos del club.</p>
             <form id="formRegisterMagic" style="max-width: 400px;">
                 <div class="form-group"><label>Nombre *</label><input type="text" id="registerNombre" autocomplete="given-name" required></div>
                 <div class="form-group"><label>Apellido *</label><input type="text" id="registerApellido" autocomplete="family-name" required></div>
-                <div class="form-group"><label>Cédula *</label><input type="text" id="registerCedula" inputmode="numeric" required></div>
-                <div class="form-group"><label>Teléfono *</label><input type="tel" id="registerTelefono" placeholder="092456838" autocomplete="tel" required></div>
-                <div class="form-group"><label>Email técnico opcional</label><input type="email" id="registerEmail" autocomplete="email"></div>
+                <div class="form-group"><label>CÃ©dula *</label><input type="text" id="registerCedula" inputmode="numeric" required></div>
+                <div class="form-group"><label>TelÃ©fono *</label><input type="tel" id="registerTelefono" placeholder="092456838" autocomplete="tel" required></div>
+                <div class="form-group"><label>Email tÃ©cnico opcional</label><input type="email" id="registerEmail" autocomplete="email"></div>
                 <div class="form-group"><label>Mensaje</label><textarea id="registerMensaje" rows="3" placeholder="Contanos cualquier dato importante"></textarea></div>
                 <button type="submit" class="btn-submit"><i class="fab fa-telegram"></i> Enviar solicitud y verificar Telegram</button>
             </form>
             <div id="registerMessage" style="display: none; margin-top: 20px; padding: 15px; background: rgba(100,140,75,0.2); border-radius: 12px;">
                 <p style="color: var(--text-strong);">Solicitud creada.</p>
-                <p style="color: var(--text-muted); font-size: 0.85rem;">Se abrió Telegram. Tocá Start para completar la verificación.</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Se abriÃ³ Telegram. TocÃ¡ Start para completar la verificaciÃ³n.</p>
             </div>
         </div>
         <div id="panelForgot" style="display: none;" hidden aria-hidden="true">
-            <p style="color: var(--text-main); margin-bottom: 20px;">Solicitá una nueva clave temporal al administrador del club.</p>
+            <p style="color: var(--text-main); margin-bottom: 20px;">SolicitÃ¡ una nueva clave temporal al administrador del club.</p>
         </div>
     </div>
 
     <div id="admin" class="section" style="display: none;">
-        <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de Administración <span class="admin-section-title-subtitle">Resumen, guía y accesos rápidos</span></h2>
+        <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de AdministraciÃ³n <span class="admin-section-title-subtitle">Resumen, guÃ­a y accesos rÃ¡pidos</span></h2>
         <div id="admin-empty" class="admin-empty-state">
             <i class="fas fa-sliders"></i>
-            <strong>Panel de administración</strong>
-            <span>Elegí una sección del menú para empezar.</span>
+            <strong>Panel de administraciÃ³n</strong>
+            <span>ElegÃ­ una secciÃ³n del menÃº para empezar.</span>
         </div>
         <div class="productos-acordeon admin-main-acordeon">
             <div class="productos-columna">
@@ -346,7 +366,7 @@
                 <h3 class="productos-columna-titulo">
                     <button type="button" class="productos-toggle" data-admin-section="manual" data-tipo-cultivo="admin-manual" aria-expanded="false">
                         <span class="productos-toggle-titulo"><i class="fas fa-circle-question"></i> Manual</span>
-                        <span class="productos-toggle-descripcion">Guías rápidas de uso</span>
+                        <span class="productos-toggle-descripcion">GuÃ­as rÃ¡pidas de uso</span>
                         <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                     </button>
                 </h3>
@@ -355,34 +375,34 @@
                 <div class="manual-grid">
                     <article class="manual-bloque">
                         <h3><i class="fas fa-mobile-screen-button"></i> Instalar en dispositivo</h3>
-                        <p>Android: abrí la web en Chrome y tocá Instalar app. iPhone/iPad: abrí Safari, tocá Compartir y elegí Agregar a pantalla de inicio.</p>
+                        <p>Android: abrÃ­ la web en Chrome y tocÃ¡ Instalar app. iPhone/iPad: abrÃ­ Safari, tocÃ¡ Compartir y elegÃ­ Agregar a pantalla de inicio.</p>
                         <p><button type="button" class="manual-install-link" data-install-app>Instalar</button></p>
                     </article>
                     <article class="manual-bloque">
                         <h3><i class="fas fa-plus-circle"></i> Agregar contenido</h3>
-                        <p>Usá las secciones Historia, Productos, Actividades y Entregas para mantener la información visible y actualizada.</p>
+                        <p>UsÃ¡ las secciones Historia, Productos, Actividades y Entregas para mantener la informaciÃ³n visible y actualizada.</p>
                     </article>
                     <article class="manual-bloque">
                         <h3><i class="fas fa-leaf"></i> Productos, actividades y variedades</h3>
-                        <p>Revisá nombre, descripción, imágenes, disponibilidad y precios antes de guardar. En productos, verificá que cada variedad tenga datos completos.</p>
+                        <p>RevisÃ¡ nombre, descripciÃ³n, imÃ¡genes, disponibilidad y precios antes de guardar. En productos, verificÃ¡ que cada variedad tenga datos completos.</p>
                     </article>
                     <article class="manual-bloque">
                         <h3><i class="fas fa-envelope"></i> Mensajes</h3>
-                        <p>En Mensajes podés leer la bandeja de Telegram y enviar avisos a un socio puntual o a todos los socios vinculados.</p>
+                        <p>En Mensajes podÃ©s leer la bandeja de Telegram y enviar avisos a un socio puntual o a todos los socios vinculados.</p>
                     </article>
                     <article class="manual-bloque">
                         <h3><i class="fas fa-box"></i> Pedidos y reservas</h3>
-                        <p>Entrá a Pedidos para revisar solicitudes, confirmar recepción, confirmar entrega y controlar que los estados estén al día.</p>
+                        <p>EntrÃ¡ a Pedidos para revisar solicitudes, confirmar recepciÃ³n, confirmar entrega y controlar que los estados estÃ©n al dÃ­a.</p>
                     </article>
                     <article class="manual-bloque">
                         <h3><i class="fas fa-check-circle"></i> Recomendaciones</h3>
-                        <p>Antes de cerrar sesión, revisá solicitudes pendientes, mensajes recientes y entregas del calendario. Evitá borrar datos salvo que sea necesario.</p>
+                        <p>Antes de cerrar sesiÃ³n, revisÃ¡ solicitudes pendientes, mensajes recientes y entregas del calendario. EvitÃ¡ borrar datos salvo que sea necesario.</p>
                     </article>
                     <article class="manual-bloque">
-                        <h3><i class="fas fa-user-plus"></i> Cómo crear un socio nuevo</h3>
-                        <p>Ir al panel admin, abrir Crear socio, cargar nombre y teléfono, crear socio y copiar la contraseña temporal generada una sola vez.</p>
-                        <p>Enviar al socio el link de la web, teléfono y contraseña temporal. El socio inicia sesión, cambia la contraseña temporal, vincula Telegram, valida el dispositivo y queda listo para reservar.</p>
-                        <p>El correo no forma parte del flujo del socio. Si el sistema necesita un correo técnico interno, se genera automáticamente y no debe ser usado por el socio.</p>
+                        <h3><i class="fas fa-user-plus"></i> CÃ³mo crear un socio nuevo</h3>
+                        <p>Ir al panel admin, abrir Crear socio, cargar nombre y telÃ©fono, crear socio y copiar la contraseÃ±a temporal generada una sola vez.</p>
+                        <p>Enviar al socio el link de la web, telÃ©fono y contraseÃ±a temporal. El socio inicia sesiÃ³n, cambia la contraseÃ±a temporal, vincula Telegram, valida el dispositivo y queda listo para reservar.</p>
+                        <p>El correo no forma parte del flujo del socio. Si el sistema necesita un correo tÃ©cnico interno, se genera automÃ¡ticamente y no debe ser usado por el socio.</p>
                     </article>
                 </div>
             </div>
@@ -390,7 +410,7 @@
                 <h3 class="productos-columna-titulo">
                     <button type="button" class="productos-toggle" data-admin-section="productos" data-tipo-cultivo="admin-productos" aria-expanded="false">
                         <span class="productos-toggle-titulo"><i class="fas fa-leaf"></i> Productos</span>
-                        <span class="productos-toggle-descripcion">Variedades y catálogo</span>
+                        <span class="productos-toggle-descripcion">Variedades y catÃ¡logo</span>
                         <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                     </button>
                 </h3>
@@ -430,7 +450,7 @@
                 <h3 class="productos-columna-titulo">
                     <button type="button" class="productos-toggle" data-admin-section="socios" data-tipo-cultivo="admin-socios" aria-expanded="false">
                         <span class="productos-toggle-titulo"><i class="fas fa-users"></i> Socios</span>
-                        <span class="productos-toggle-descripcion">Gestión de usuarios</span>
+                        <span class="productos-toggle-descripcion">GestiÃ³n de usuarios</span>
                         <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                     </button>
                 </h3>
@@ -481,11 +501,11 @@
                         <div id="telegramInboxMensajes" class="mensajes-container"><div class="loading">Cargando mensajes recibidos...</div></div>
                     </div>
                     <div class="productos-panel" data-tipo-cultivo="nuevo-mensaje" hidden>
-                        <p style="color:var(--text-muted); margin: 0 0 18px; line-height: 1.5;">Elegí el destinatario, agregá un asunto claro y escribí el mensaje final antes de enviarlo. El historial de abajo muestra los envíos recientes para referencia.</p>
+                        <p style="color:var(--text-muted); margin: 0 0 18px; line-height: 1.5;">ElegÃ­ el destinatario, agregÃ¡ un asunto claro y escribÃ­ el mensaje final antes de enviarlo. El historial de abajo muestra los envÃ­os recientes para referencia.</p>
                         <div class="form-grid">
                             <div class="form-group full-width"><label>Destinatario</label><select id="mensajeDestinatario"><option value="todos">Todos los socios</option></select></div>
                             <div class="form-group full-width"><label>Asunto</label><input type="text" id="mensajeAsunto" placeholder="Asunto del mensaje"></div>
-                            <div class="form-group full-width"><label>Mensaje</label><textarea id="mensajeTexto" rows="5" placeholder="Escribí el mensaje para los socios..."></textarea></div>
+                            <div class="form-group full-width"><label>Mensaje</label><textarea id="mensajeTexto" rows="5" placeholder="EscribÃ­ el mensaje para los socios..."></textarea></div>
                             <div class="form-group full-width"><button id="enviarMensajeBtn" type="button" class="btn-submit">Enviar mensaje</button></div>
                         </div>
                         <h3 style="color:var(--text-strong); margin: 22px 0 12px;">Historial reciente</h3>
@@ -498,7 +518,7 @@
 
         <div id="maestro" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-crown"></i> Panel Maestro - Control Total</h2>
-        <div class="dashboard-grid" id="maestroCards"><div class="loading">Cargando estadísticas...</div></div>
+        <div class="dashboard-grid" id="maestroCards"><div class="loading">Cargando estadÃ­sticas...</div></div>
         <div class="nav-maestro-bar">
             <button class="nav-maestro-btn active" data-maestro-section="historia"><i class="fas fa-book-open"></i> Historia</button>
             <button class="nav-maestro-btn" data-maestro-section="productos"><i class="fas fa-leaf"></i> Productos</button>
@@ -521,17 +541,17 @@
         <div id="maestro-solicitudes" style="display: none;"><div class="loading">Cargando solicitudes...</div></div>
         <div id="maestro-admins" style="display: none;"><div class="loading">Cargando administradores...</div></div>
         <div id="maestro-logs" style="display: none;"><div class="loading">Cargando logs...</div></div>
-        <div id="maestro-config" style="display: none;"><div class="loading">Cargando configuración...</div></div>
+        <div id="maestro-config" style="display: none;"><div class="loading">Cargando configuraciÃ³n...</div></div>
         <div id="maestro-backup" style="display: none;"><div class="loading">Cargando backup...</div></div>
         <div id="maestro-mantenimiento" style="display: none;"><div class="loading">Cargando mantenimiento...</div></div>
         <div id="maestro-sorteos" style="display: none;"><div class="loading">Cargando sorteos...</div></div>
     </div>
-    
+
     <div class="footer">
-        <p>?? Nombre del Club · Cultura · Comunidad ??</p>
-        <p style="font-size: 0.7rem;">© 2025 - Todos los derechos reservados</p>
+        <p>?? Nombre del Club Â· Cultura Â· Comunidad ??</p>
+        <p style="font-size: 0.7rem;">Â© 2025 - Todos los derechos reservados</p>
         <p class="footer-legal">Plataforma privada para socios. La informacion y los pedidos se gestionan dentro del marco interno del club.</p>
-        <p class="footer-cameo"><a href="https://mattosardy.github.io/telecomt3-card/" class="footer-cameo-link" target="_blank" rel="noopener noreferrer">Conectividad y soporte digital · <strong>Telecom T3</strong></a></p>
+        <p class="footer-cameo"><a href="https://mattosardy.github.io/telecomt3-card/" class="footer-cameo-link" target="_blank" rel="noopener noreferrer">Conectividad y soporte digital Â· <strong>Telecom T3</strong></a></p>
     </div>
 </div>
 
@@ -552,9 +572,9 @@
                     <i class="fas fa-star"></i> Calificar
                 </button>
             </div>
-                        
+
             <div id="panelCalificacion" style="display: none;" class="calificacion-panel">
-                <div style="color: #e0ecd0; margin-bottom: 10px;">Tu calificación:</div>
+                <div style="color: #e0ecd0; margin-bottom: 10px;">Tu calificaciÃ³n:</div>
                 <div id="estrellasInteractivas" class="calificacion-estrellas-interactivas">
                     <i class="fas fa-star calificacion-estrella" data-valor="1" onclick="seleccionarEstrella(1)"></i>
                     <i class="fas fa-star calificacion-estrella" data-valor="2" onclick="seleccionarEstrella(2)"></i>
@@ -567,7 +587,7 @@
                 </button>
                 <div id="calificacionMensaje" style="margin-top: 8px; font-size: 0.85rem;"></div>
             </div>
-            <div class="modal-pedido-info">Elegí la cantidad para este pedido mensual:</div>
+            <div class="modal-pedido-info">ElegÃ­ la cantidad para este pedido mensual:</div>
             <div id="opcionesPedido" class="opciones-pedido"></div>
             <div id="pedidoRestante" class="modal-pedido-restante"></div>
             <button id="btnRealizarPedido" type="button" class="btn-pedido-modal" disabled>Realizar pedido</button>
@@ -603,7 +623,7 @@
                 <div class="form-group"><label>Sativa %</label><input type="number" step="10" min="0" max="100" id="editSativaPorcentaje" placeholder="50"></div>
                 <div class="form-group"><label>Tipo</label><select id="editTipoCultivo"><option value="invernaculo">PREMIUM</option><option value="exterior">STANDARD</option><option value="dispositivos_pipas">Dispositivos y pipas</option><option value="parafernalia_accesorios">Parafernalia y Accesorios</option></select></div>
                 <div class="form-group"><label>Precio base ($)</label><input type="number" step="0.01" id="editPrecio" value="1600"></div>
-                <div class="form-group full-width"><label>Descripción</label><textarea id="editDescripcion" rows="3"></textarea></div>
+                <div class="form-group full-width"><label>DescripciÃ³n</label><textarea id="editDescripcion" rows="3"></textarea></div>
                 <div class="form-group full-width"><label>URL Imagen principal</label><input type="text" id="editImagenUrl" placeholder="https://ejemplo.com/imagen.jpg"></div>
                 <div class="form-group full-width"><label>O subir imagen desde tu dispositivo</label><input type="file" id="editImagenFile" accept="image/*" style="background:rgba(255,255,255,0.82);border:1px solid var(--border-soft);border-radius:12px;padding:12px;color:var(--text-strong);"><small class="privacy-upload-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> Las imagenes son limpiadas automaticamente para proteger privacidad y ubicacion.</small></div>
                 <div class="form-group full-width"><div id="editImagenPreview" style="margin-top: 4px;"></div></div>
