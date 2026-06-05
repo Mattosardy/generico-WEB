@@ -57,7 +57,6 @@ function inicializarInstalacionPwa() {
 function inicializarManualInicio() {
     const panel = document.getElementById('manualDidacticoInicio');
     const iniciar = document.getElementById('manualInicioTour');
-    const cerrar = document.getElementById('manualInicioCerrar');
     if (!panel) return;
 
     if (sessionStorage.getItem('generico_manual_inicio_cerrado') === 'true') {
@@ -65,7 +64,6 @@ function inicializarManualInicio() {
     }
 
     iniciar?.addEventListener('click', async () => {
-        panel.hidden = true;
         if (!appState.rolUsuario) {
             if (typeof mostrarMensaje === 'function') {
                 mostrarMensaje('Inicia sesion para hacer el tour completo del socio.', true);
@@ -73,12 +71,7 @@ function inicializarManualInicio() {
             await mostrarSeccion('login');
             return;
         }
-        window.genericoTour?.open(appState.rolUsuario === 'admin' ? 'admin' : 'socio', { manual: true });
-    });
-
-    cerrar?.addEventListener('click', () => {
-        sessionStorage.setItem('generico_manual_inicio_cerrado', 'true');
-        panel.hidden = true;
+        window.genericoTour?.open(appState.rolUsuario === 'admin' ? 'admin' : 'socio', { manual: true, intro: true });
     });
 }
 

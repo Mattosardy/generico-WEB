@@ -3,14 +3,13 @@
     admin: 'generico_tour_admin_done'
 };
 
+const GENERICO_TOUR_INTRO = {
+    title: 'Instalar y recorrer la app',
+    text: 'Android: abri esta web en Chrome y toca Instalar app. iPhone/iPad: abri Safari, toca Compartir y elegi Agregar a pantalla de inicio.'
+};
+
 const GENERICO_TOUR_STEPS = {
     socio: [
-        {
-            selector: '#manualDidacticoInicio',
-            section: 'inicio',
-            title: 'Instalar en tu dispositivo',
-            text: 'Android: abri esta web en Chrome y toca Instalar app. iPhone/iPad: abri Safari, toca Compartir y elegi Agregar a pantalla de inicio.'
-        },
         {
             selector: '#telegramLinkPanel',
             section: 'actividades',
@@ -107,6 +106,7 @@ const genericoTourState = {
     stepIndex: 0,
     steps: [],
     manual: false,
+    introActive: false,
     active: false,
     renderToken: 0
 };
@@ -286,9 +286,24 @@ async function genericoTourRender() {
     const label = document.getElementById('tourStepLabel');
     const prev = document.getElementById('tourPrev');
     const next = document.getElementById('tourNext');
-    if (!root || !title || !text || !label || !prev || !next) return;
+    const skip = document.getElementById('tourSkip');
+    if (!root || !title || !text || !label || !prev || !next || !skip) return;
 
     const total = genericoTourState.steps.length;
+    if (genericoTourState.introActive) {
+        genericoTourClearHighlight();
+        label.textContent = 'Visita guiada';
+        title.textContent = GENERICO_TOUR_INTRO.title;
+        text.textContent = GENERICO_TOUR_INTRO.text;
+        prev.hidden = true;
+        skip.textContent = 'Descubrir por mi mismo';
+        next.textContent = 'Iniciar tour';
+        root.hidden = false;
+        genericoTourState.active = true;
+        window.setTimeout(() => genericoTourPlacePopover(null), 80);
+        return;
+    }
+
     const step = genericoTourState.steps[genericoTourState.stepIndex];
     if (!step) {
         genericoTourClose();
@@ -308,7 +323,9 @@ async function genericoTourRender() {
     label.textContent = `Paso ${genericoTourState.stepIndex + 1} de ${total}`;
     title.textContent = step.title;
     text.textContent = step.text;
+    prev.hidden = false;
     prev.disabled = genericoTourState.stepIndex === 0;
+    skip.textContent = 'No volver a mostrar';
     next.textContent = genericoTourState.stepIndex === total - 1 ? 'Finalizar' : 'Siguiente';
     root.hidden = false;
     genericoTourState.active = true;
@@ -325,6 +342,7 @@ function genericoTourOpen(role = genericoTourRole(), options = {}) {
     genericoTourState.steps = steps;
     genericoTourState.stepIndex = 0;
     genericoTourState.manual = Boolean(options.manual);
+    genericoTourState.introActive = options.intro !== false;
     genericoTourState.active = true;
     void genericoTourRender();
 }
@@ -333,6 +351,7 @@ function genericoTourClose() {
     const root = document.getElementById('genericoTourRoot');
     if (root) root.hidden = true;
     genericoTourState.active = false;
+    genericoTourState.introActive = false;
     genericoTourClearHighlight();
 }
 
@@ -343,6 +362,12 @@ function genericoTourPrev() {
 }
 
 function genericoTourNext() {
+    if (genericoTourState.introActive) {
+        genericoTourState.introActive = false;
+        genericoTourState.stepIndex = 0;
+        void genericoTourRender();
+        return;
+    }
     if (genericoTourState.stepIndex >= genericoTourState.steps.length - 1) {
         genericoTourClose();
         return;
@@ -352,6 +377,13 @@ function genericoTourNext() {
 }
 
 function genericoTourDismissForever() {
+    if (genericoTourState.introActive) {
+        sessionStorage.setItem('generico_manual_inicio_cerrado', 'true');
+        const panel = document.getElementById('manualDidacticoInicio');
+        if (panel) panel.hidden = true;
+        genericoTourClose();
+        return;
+    }
     const key = genericoTourKey(genericoTourState.role);
     if (key) localStorage.setItem(key, 'true');
     genericoTourClose();
