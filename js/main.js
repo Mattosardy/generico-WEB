@@ -54,6 +54,34 @@ function inicializarInstalacionPwa() {
     });
 }
 
+function inicializarManualInicio() {
+    const panel = document.getElementById('manualDidacticoInicio');
+    const iniciar = document.getElementById('manualInicioTour');
+    const cerrar = document.getElementById('manualInicioCerrar');
+    if (!panel) return;
+
+    if (sessionStorage.getItem('generico_manual_inicio_cerrado') === 'true') {
+        panel.hidden = true;
+    }
+
+    iniciar?.addEventListener('click', async () => {
+        panel.hidden = true;
+        if (!appState.rolUsuario) {
+            if (typeof mostrarMensaje === 'function') {
+                mostrarMensaje('Inicia sesion para hacer el tour completo del socio.', true);
+            }
+            await mostrarSeccion('login');
+            return;
+        }
+        window.genericoTour?.open(appState.rolUsuario === 'admin' ? 'admin' : 'socio', { manual: true });
+    });
+
+    cerrar?.addEventListener('click', () => {
+        sessionStorage.setItem('generico_manual_inicio_cerrado', 'true');
+        panel.hidden = true;
+    });
+}
+
 function actualizarBotonAudio() {
     const audio = document.getElementById('backgroundAudio');
     const boton = document.getElementById('btnAudioToggle');
@@ -367,6 +395,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarPlaceholders();
     inicializarAudioFondo();
     inicializarInstalacionPwa();
+    inicializarManualInicio();
     prepararMenuSocio();
     if (typeof actualizarBotonesSesion === 'function') actualizarBotonesSesion(false);
 

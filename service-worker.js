@@ -1,4 +1,4 @@
-﻿const GENERICO_CACHE_VERSION = 'generico-pwa-v16-20260601-audio-fetch-safe';
+﻿const GENERICO_CACHE_VERSION = 'generico-pwa-v17-20260605-manual-inicio';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',

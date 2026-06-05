@@ -1545,6 +1545,51 @@ body::before {
     outline: 2px solid rgba(50, 94, 53, 0.3);
     outline-offset: 2px;
 }
+.manual-inicio-card {
+    display: grid;
+    gap: 14px;
+    width: min(100%, 520px);
+    margin: 0 auto 28px;
+    padding: 18px;
+    border: 1px solid rgba(73, 101, 53, 0.28);
+    border-radius: 12px;
+    background: #ffffff;
+    color: #000000;
+    box-shadow: 0 14px 32px rgba(24, 46, 19, 0.12);
+}
+.manual-inicio-card[hidden] {
+    display: none;
+}
+.manual-inicio-copy {
+    display: grid;
+    gap: 8px;
+}
+.manual-inicio-copy .dashboard-eyebrow,
+.manual-inicio-copy h3,
+.manual-inicio-copy p {
+    color: #000000;
+}
+.manual-inicio-copy h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+.manual-inicio-copy p {
+    margin: 0;
+    line-height: 1.5;
+}
+.manual-inicio-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.manual-inicio-primary,
+.manual-inicio-primary:hover,
+.manual-inicio-primary:focus-visible,
+.manual-inicio-secondary,
+.manual-inicio-secondary:hover,
+.manual-inicio-secondary:focus-visible {
+    color: #000000;
+}
 #admin .admin-section-panel h3,
 #maestro h3 {
     color: var(--text-strong);

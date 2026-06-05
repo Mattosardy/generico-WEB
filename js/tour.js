@@ -6,6 +6,12 @@
 const GENERICO_TOUR_STEPS = {
     socio: [
         {
+            selector: '#manualDidacticoInicio',
+            section: 'inicio',
+            title: 'Instalar en tu dispositivo',
+            text: 'Android: abri esta web en Chrome y toca Instalar app. iPhone/iPad: abri Safari, toca Compartir y elegi Agregar a pantalla de inicio.'
+        },
+        {
             selector: '#telegramLinkPanel',
             section: 'actividades',
             title: 'Telegram del club',
