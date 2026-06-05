@@ -6540,6 +6540,11 @@ body::after {
     color: #000000;
 }
 
+.articulos-destacados-section .section-title,
+.articulos-destacados-section .section-title i {
+    color: #000000;
+}
+
 .entrega-google-calendar-single {
     background: #ffffff;
     color: #000000;
