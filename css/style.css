@@ -6533,6 +6533,49 @@ body::after {
     align-items: center;
 }
 
+.productos-acordeon-articulos .articulos-toggle,
+.productos-acordeon-articulos .articulos-toggle .productos-toggle-titulo,
+.productos-acordeon-articulos .articulos-toggle .productos-toggle-descripcion,
+.productos-acordeon-articulos .articulos-toggle .productos-toggle-icono {
+    color: #000000;
+}
+
+.entrega-google-calendar-single {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid rgb(73, 101, 53);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.entrega-calendar-shell-title strong,
+.entrega-calendar-weekdays th,
+.entrega-calendar-week-number,
+.entrega-calendar-day,
+.entrega-calendar-date strong,
+.entrega-calendar-day.fuera-mes,
+.entrega-calendar-event strong,
+.entrega-calendar-event span,
+.entrega-calendar-event small,
+.entrega-calendar-event em {
+    color: #000000;
+}
+
+.entrega-calendar-week-number {
+    background: #ffffff;
+    border: 1px solid rgb(73, 101, 53);
+}
+
+.entrega-calendar-nav {
+    color: #000000;
+}
+
+.entrega-calendar-nav:not(:disabled):hover,
+.entrega-calendar-nav:not(:disabled):focus-visible {
+    background: rgba(73, 101, 53, 0.12);
+    color: #000000;
+}
+
 @media (prefers-reduced-motion: reduce) {
     body::before,
     body::after {
