@@ -185,11 +185,19 @@ function abrirReservaActividadModal(evento) {
         </div>
     `;
     modal.style.display = 'flex';
+    modal.classList.add('is-open');
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
 }
 
 function cerrarReservaActividadModal() {
     const modal = document.getElementById('reservaActividadModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('is-open');
+    }
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
 }
 
 function obtenerReservasActivasCarrito(reservas = []) {
@@ -260,6 +268,9 @@ async function abrirCarritoSocio() {
     const body = modal.querySelector('#carritoSocioModalBody');
     body.innerHTML = '<div class="loading">Cargando carrito...</div>';
     modal.style.display = 'flex';
+    modal.classList.add('is-open');
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
     await renderCarritoSocioEn(body, true);
 }
 
@@ -354,7 +365,12 @@ async function abrirCarritoPantalla() {
 
 function cerrarCarritoSocioModal() {
     const modal = document.getElementById('carritoSocioModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('is-open');
+    }
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
 }
 
 function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo) {

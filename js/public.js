@@ -843,6 +843,8 @@ window.abrirNoticiaModal = function(noticia) {
     contenido.textContent = normalizarTextoVisual(noticia.contenido || 'Sin contenido disponible.');
 
     modal.style.display = 'flex';
+    modal.classList.add('is-open');
+    document.body.classList.add('modal-open');
     document.body.style.overflow = 'hidden';
 };
 
@@ -850,6 +852,8 @@ window.cerrarNoticiaModal = function() {
     const modal = document.getElementById('noticiaModal');
     if (!modal) return;
     modal.style.display = 'none';
+    modal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
 };
 

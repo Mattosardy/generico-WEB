@@ -18,8 +18,8 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=20260605-tour-popup">
-    <link rel="stylesheet" href="css/theme-generico.css?v=20260602-submenus-frame">
+    <link rel="stylesheet" href="css/style.css?v=20260606-tour-modal-admin">
+    <link rel="stylesheet" href="css/theme-generico.css?v=20260606-modal-identity">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -54,14 +54,14 @@
             </div>
         </div>
         <div class="header-nav" id="navContainer">
-            <button class="nav-btn app-main-btn" data-section="productos"><svg class="lucide lucide-book-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg><span>CATALOGO</span></button>
+            <button class="nav-btn app-main-btn" data-section="productos"><svg class="lucide lucide-newspaper" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 22h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/><path d="M7 6h7"/><path d="M7 10h10"/><path d="M7 14h10"/><path d="M7 18h6"/><path d="M16 6h1"/></svg><span>CATALOGO</span></button>
             <button class="nav-btn app-main-btn auth-only" data-section="carrito" style="display: none;"><svg class="lucide lucide-shopping-cart" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span>CARRITO</span></button>
-            <button class="nav-btn app-main-btn auth-only" data-smart-section="actividades" style="display: none;"><svg class="lucide lucide-calendar-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M21 10V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/><path d="M3 10h18"/><path d="m17.8 21.6-2.1 1.1.4-2.3-1.7-1.6 2.3-.3 1-2.1 1 2.1 2.3.3-1.7 1.6.4 2.3z"/></svg><span>ACTIVIDADES</span></button>
-            <button class="nav-btn app-main-btn auth-only" data-section="menu" style="display: none;"><svg class="lucide lucide-menu" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M4 18h16"/><path d="M4 6h16"/></svg><span>MENU</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-smart-section="actividades" style="display: none;"><svg class="lucide lucide-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>ACTIVIDADES</span></button>
+            <button class="nav-btn app-main-btn auth-only" data-section="menu" style="display: none;"><svg class="lucide lucide-settings" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.7 3.4a1 1 0 0 1 .9-.6h2.8a1 1 0 0 1 .9.6l.5 1.2a1 1 0 0 0 1.1.6l1.3-.2a1 1 0 0 1 1 .5l1.4 2.4a1 1 0 0 1-.1 1.1l-.8 1a1 1 0 0 0 0 1.2l.8 1a1 1 0 0 1 .1 1.1l-1.4 2.4a1 1 0 0 1-1 .5l-1.3-.2a1 1 0 0 0-1.1.6l-.5 1.2a1 1 0 0 1-.9.6h-2.8a1 1 0 0 1-.9-.6l-.5-1.2a1 1 0 0 0-1.1-.6l-1.3.2a1 1 0 0 1-1-.5l-1.4-2.4a1 1 0 0 1 .1-1.1l.8-1a1 1 0 0 0 0-1.2l-.8-1a1 1 0 0 1-.1-1.1l1.4-2.4a1 1 0 0 1 1-.5l1.3.2a1 1 0 0 0 1.1-.6z"/><circle cx="12" cy="12" r="3"/></svg><span>MENU</span></button>
         </div>
     </div>
 
-    <audio id="backgroundAudio" loop preload="auto">
+    <audio id="backgroundAudio" loop preload="auto" muted>
         <source src="assets/sound/cortina.mp3" type="audio/mpeg">
     </audio>
 
@@ -70,18 +70,6 @@
             <i class="fas fa-leaf" style="font-size: 48px; color: var(--accent-strong);"></i>
             <h3 style="margin-top: 16px;">Bienvenido al &aacute;rea de socios</h3>
             <p style="color: var(--text-muted);">Us&aacute; el men&uacute; para explorar el cat&aacute;logo, tus pedidos y actividades.</p>
-        </div>
-        <div id="manualDidacticoInicio" class="manual-inicio-card">
-            <div class="manual-inicio-copy">
-                <span class="dashboard-eyebrow">Manual did&aacute;ctico</span>
-                <h3>Instal&aacute; la p&aacute;gina en tu dispositivo</h3>
-                <p>Android: abr&iacute; esta web en Chrome y toc&aacute; Instalar app. iPhone/iPad: abr&iacute; Safari, toc&aacute; Compartir y eleg&iacute; Agregar a pantalla de inicio.</p>
-            </div>
-            <div class="manual-inicio-actions">
-                <button type="button" class="tour-open-btn manual-inicio-primary" id="manualInicioTour">
-                    <i class="fas fa-route"></i> Abrir visita guiada
-                </button>
-            </div>
         </div>
     </div>
 
@@ -227,7 +215,7 @@
                         </article>
                         <article class="manual-bloque">
                             <h3><i class="fas fa-leaf"></i> Pedir variedades</h3>
-                            <p>Entrá a Variedades, abrí la ficha, elegí 20g o 40g y confirmá el pedido. El cupo mensual aplica solo a variedades.</p>
+                            <p>Cada socio puede llevar un m&aacute;ximo de 40g mensuales. El m&iacute;nimo disponible por variedad es 1 pack (20g de producto).</p>
                         </article>
                         <article class="manual-bloque">
                             <h3><i class="fas fa-box"></i> Pedir artículos</h3>
@@ -243,8 +231,9 @@
                     <div class="password-temporal-copy">
                         <span class="metric-label">Seguridad de acceso</span>
                         <strong>Debés cambiar tu contraseña temporal para continuar.</strong>
-                        <small>Elegí una contraseña propia. El correo no forma parte del flujo del socio.</small>
+                        <small>Primero activá Telegram y validá el código de seguridad. Después elegí una contraseña propia.</small>
                     </div>
+                    <div id="passwordTemporalTelegramGate" class="password-temporal-telegram-gate"></div>
                     <form id="formPasswordTemporal" class="password-temporal-form">
                         <div class="form-group">
                             <label>Nueva contraseña *</label>
@@ -656,16 +645,16 @@ window.__SUPABASE_ENV__ = {
 </script>
 <script src="js/supabase-client.js?v=20260527-cart-delete"></script>
 
-<script src="js/config.js?v=20260526-restore-functional"></script>
+<script src="js/config.js?v=20260606-modal-identity"></script>
 <script src="js/utils.js?v=20260602-calendar-table-align"></script>
-<script src="js/notifications.js?v=20260521-env-cleanup"></script>
+<script src="js/notifications.js?v=20260605-auth-telegram"></script>
 <script src="js/auth.js?v=20260526-restore-functional"></script>
-<script src="js/public.js?v=20260526-restore-functional"></script>
-<script src="js/socio.js?v=20260602-text-cleanup"></script>
-<script src="js/modals.js?v=20260527-cart-delete"></script>
-<script src="js/admin.js?v=20260525-pedidos-head-negro"></script>
+<script src="js/public.js?v=20260606-modal-identity"></script>
+<script src="js/socio.js?v=20260606-modal-identity"></script>
+<script src="js/modals.js?v=20260606-modal-identity"></script>
+<script src="js/admin.js?v=20260606-tour-modal-admin"></script>
 <script src="js/maestro.js?v=20260521-env-cleanup"></script>
-<script src="js/tour.js?v=20260605-tour-popup"></script>
-<script src="js/main.js?v=20260605-tour-popup"></script>
+<script src="js/tour.js?v=20260606-calendar-tour"></script>
+<script src="js/main.js?v=20260605-auth-telegram"></script>
 </body>
 </html>

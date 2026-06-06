@@ -995,25 +995,26 @@ window.aprobarSolicitudAdmin = async function(id) {
         mostrarMensaje('No se pudo cargar la solicitud', false);
         return;
     }
-    const { error: insertError } = await supabaseClient.from('socios').insert([{
-        nombre: solicitud.nombre,
-        apellido: solicitud.apellido,
-        cedula: solicitud.cedula,
-        telefono: solicitud.telefono,
-        email: solicitud.email,
-        telegram_chat_id: solicitud.telegram_chat_id || null,
-        telegram_username: solicitud.telegram_username || null,
-        telegram_enabled: Boolean(solicitud.telegram_enabled && solicitud.telegram_chat_id),
-        telegram_linked_at: solicitud.telegram_linked_at || null,
-        estado: 'activo',
-        rol: 'socio'
-    }]);
-    if (insertError) {
-        mostrarMensaje(`No se pudo crear el socio: ${insertError.message}`, false);
+    const { data, error } = await supabaseClient.functions.invoke('admin-create-socio', {
+        body: {
+            nombre: solicitud.nombre,
+            apellido: solicitud.apellido,
+            cedula: solicitud.cedula,
+            telefono: solicitud.telefono,
+            telegram_chat_id: solicitud.telegram_chat_id || null,
+            telegram_username: solicitud.telegram_username || null,
+            telegram_enabled: Boolean(solicitud.telegram_enabled && solicitud.telegram_chat_id),
+            telegram_linked_at: solicitud.telegram_linked_at || null,
+            rol: 'socio',
+            estado: 'activo'
+        }
+    });
+    if (error || !data?.ok) {
+        mostrarMensaje(`No se pudo crear el socio: ${error?.message || data?.error || 'error desconocido'}`, false);
         return;
     }
     await supabaseClient.from('solicitudes_membresia').update({ estado: 'aprobado' }).eq('id', id);
-    mostrarMensaje('Socio aprobado', true);
+    mostrarMensaje(`Socio aprobado. Clave temporal: ${data.temporary_password}`, true);
     await cargarSolicitudesAdmin();
     await cargarAdminData();
 };
@@ -1075,9 +1076,18 @@ async function cargarSociosAdmin() {
     `;
     const tablaSociosHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
+        ${construirTablaSociosAdminHTML(data)}
+        </div>
+    ` : '<div class="loading">No hay socios.</div>';
+    container.innerHTML = crearSocioHTML + tablaSociosHTML;
+    document.getElementById('formCrearSocioAdmin')?.addEventListener('submit', crearSocioDesdeAdmin);
+}
+
+function construirTablaSociosAdminHTML(socios = []) {
+    return `
         <table class="tabla-datos">
             <thead><tr><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
-            <tbody>${data.map((socio) => `
+            <tbody>${socios.map((socio) => `
                 <tr>
                     <td><input type="text" class="socio-edit-input" id="socioNombre_admin_${socio.id}" value="${escapeHtml(socio.nombre || '')}" placeholder="Nombre"></td>
                     <td><input type="text" class="socio-edit-input" id="socioApellido_admin_${socio.id}" value="${escapeHtml(socio.apellido || '')}" placeholder="Apellido"></td>
@@ -1107,10 +1117,7 @@ async function cargarSociosAdmin() {
                 </tr>
             `).join('')}</tbody>
         </table>
-        </div>
-    ` : '<div class="loading">No hay socios.</div>';
-    container.innerHTML = crearSocioHTML + tablaSociosHTML;
-    document.getElementById('formCrearSocioAdmin')?.addEventListener('submit', crearSocioDesdeAdmin);
+    `;
 }
 
 async function crearSocioDesdeAdmin(event) {
@@ -1159,7 +1166,11 @@ async function crearSocioDesdeAdmin(event) {
         }
         form.reset();
         mostrarMensaje('Socio creado correctamente.', true);
-        await cargarSociosAdmin();
+        const { data: sociosActualizados } = await supabaseClient.from('socios').select('*').order('fecha_ingreso', { ascending: false });
+        const tablaScroll = document.querySelector('#admin-socios .admin-tabla-scroll');
+        if (tablaScroll && Array.isArray(sociosActualizados)) {
+            tablaScroll.innerHTML = construirTablaSociosAdminHTML(sociosActualizados);
+        }
     } catch (error) {
         const detalle = error?.message || error?.context?.error || 'No se pudo crear el socio.';
         mostrarMensaje(detalle, false);

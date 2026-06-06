@@ -1,4 +1,4 @@
-﻿const GENERICO_CACHE_VERSION = 'generico-pwa-v18-20260605-tour-popup';
+const GENERICO_CACHE_VERSION = 'generico-pwa-v22-20260606-modal-identity';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',

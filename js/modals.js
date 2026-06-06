@@ -580,12 +580,20 @@ async function abrirModal(producto) {
         }
     }
 
-    document.getElementById('productoModal').style.display = 'flex';
+    const productoModal = document.getElementById('productoModal');
+    productoModal.style.display = 'flex';
+    productoModal.classList.add('is-open');
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
     inicializarPedidoModal();
 }
 
 function cerrarProductoModal() {
-    document.getElementById('productoModal').style.display = 'none';
+    const productoModal = document.getElementById('productoModal');
+    productoModal.style.display = 'none';
+    productoModal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
     const pedidoBox = document.querySelector('#productoModal .modal-pedido-box');
     if (pedidoBox) pedidoBox.style.display = '';
     document.getElementById('panelCalificacion').style.display = 'none';
@@ -649,11 +657,17 @@ window.editarProductoAdmin = async function(id) {
     document.getElementById('editDescripcion').value = data.descripcion || '';
     document.getElementById('editImagenUrl').value = data.imagen_url || '';
     if (typeof limpiarInputImagenes === 'function') limpiarInputImagenes('editImagenFile', 'editImagenPreview');
-    document.getElementById('editProductoModal').style.display = 'flex';
+    const editModal = document.getElementById('editProductoModal');
+    editModal.style.display = 'flex';
+    editModal.classList.add('is-open');
+    document.body.classList.add('modal-open');
 };
 
 function cerrarEditProducto() {
-    document.getElementById('editProductoModal').style.display = 'none';
+    const editModal = document.getElementById('editProductoModal');
+    editModal.style.display = 'none';
+    editModal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
     if (typeof limpiarInputImagenes === 'function') limpiarInputImagenes('editImagenFile', 'editImagenPreview');
     appState.productoEditandoId = null;
 }

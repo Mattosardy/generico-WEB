@@ -54,27 +54,6 @@ function inicializarInstalacionPwa() {
     });
 }
 
-function inicializarManualInicio() {
-    const panel = document.getElementById('manualDidacticoInicio');
-    const iniciar = document.getElementById('manualInicioTour');
-    if (!panel) return;
-
-    if (sessionStorage.getItem('generico_manual_inicio_cerrado') === 'true') {
-        panel.hidden = true;
-    }
-
-    iniciar?.addEventListener('click', async () => {
-        if (!appState.rolUsuario) {
-            if (typeof mostrarMensaje === 'function') {
-                mostrarMensaje('Inicia sesion para hacer el tour completo del socio.', true);
-            }
-            await mostrarSeccion('login');
-            return;
-        }
-        window.genericoTour?.open(appState.rolUsuario === 'admin' ? 'admin' : 'socio', { manual: true, intro: true });
-    });
-}
-
 function actualizarBotonAudio() {
     const audio = document.getElementById('backgroundAudio');
     const boton = document.getElementById('btnAudioToggle');
@@ -105,7 +84,7 @@ function inicializarAudioFondo() {
 
     const silenciadoGuardado = localStorage.getItem('generico_audio_muted');
     audio.volume = 0.5;
-    audio.muted = silenciadoGuardado === null ? false : silenciadoGuardado === 'true';
+    audio.muted = silenciadoGuardado === null ? true : silenciadoGuardado === 'true';
     actualizarBotonAudio();
 
     boton.addEventListener('click', async () => {
@@ -250,6 +229,150 @@ function renderPasswordTemporalGate() {
         : Boolean(appState.socioData?.debe_cambiar_password || appState.socioData?.password_temporal);
     gate.hidden = !requerido;
     document.body.classList.toggle('password-temporal-required', requerido);
+    renderPasswordTemporalTelegramGate();
+    actualizarEstadoFormularioPasswordTemporal();
+}
+
+function telegramEstaVinculado() {
+    return Boolean(appState.socioData?.telegram_enabled && appState.socioData?.telegram_chat_id);
+}
+
+function telegramEstaVerificadoParaPassword() {
+    return telegramEstaVinculado() && Boolean(appState.telegramSecurity?.verified);
+}
+
+function actualizarEstadoFormularioPasswordTemporal() {
+    const boton = document.getElementById('btnPasswordTemporal');
+    const requerido = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
+    const habilitado = !requerido || telegramEstaVerificadoParaPassword();
+    if (boton) {
+        boton.disabled = !habilitado;
+        boton.title = habilitado ? '' : 'Activá Telegram y verificá el código antes de cambiar la contraseña.';
+    }
+}
+
+function renderPasswordTemporalTelegramGate() {
+    const container = document.getElementById('passwordTemporalTelegramGate');
+    if (!container) return;
+    const requerido = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
+    if (!requerido || !appState.socioData?.id) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const linked = telegramEstaVinculado();
+    const verified = telegramEstaVerificadoParaPassword();
+    const expiresAt = appState.telegramSecurity?.expiresAt
+        ? new Date(appState.telegramSecurity.expiresAt).toLocaleString('es-UY')
+        : '';
+
+    container.innerHTML = `
+        <div class="telegram-security-card ${verified ? 'verified' : ''}">
+            <div class="telegram-security-copy">
+                <span class="metric-label">Paso obligatorio</span>
+                <strong><i class="fab fa-telegram" aria-hidden="true"></i> ${linked ? (verified ? 'Telegram verificado' : 'Verificá tu Telegram') : 'Activá Telegram'}</strong>
+                <small>${linked
+                    ? (verified
+                        ? 'Ya podés cambiar tu contraseña temporal.'
+                        : 'Enviá un código a tu Telegram y copialo acá para habilitar el cambio de contraseña.')
+                    : 'Para seguir usando la app, primero vinculá tu número con Telegram. Se abrirá el bot del club.'}</small>
+                ${expiresAt && !verified ? `<em>Código vigente hasta ${escapeHtml(expiresAt)}</em>` : ''}
+                <small class="telegram-delay-note"><i class="fas fa-info-circle" aria-hidden="true"></i> Los mensajes de Telegram pueden demorar hasta 4 minutos.</small>
+            </div>
+            <div class="telegram-security-actions">
+                ${linked ? `
+                    <button type="button" id="btnPasswordTelegramCode" class="dashboard-shortcut">
+                        <i class="fab fa-telegram"></i> ${appState.telegramSecurity?.pending ? 'Reenviar código' : 'Enviar código'}
+                    </button>
+                    <form id="formPasswordTelegramCode" class="telegram-security-form">
+                        <input type="text" id="passwordTelegramCode" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Código" autocomplete="one-time-code" ${verified ? 'disabled' : ''}>
+                        <button type="submit" class="dashboard-shortcut" ${verified ? 'disabled' : ''}>Verificar</button>
+                    </form>
+                ` : `
+                    <button type="button" id="btnPasswordActivarTelegram" class="dashboard-shortcut">
+                        <i class="fab fa-telegram"></i> Activar Telegram
+                    </button>
+                    <button type="button" id="btnPasswordRefrescarTelegram" class="dashboard-shortcut secondary">
+                        Ya lo activé
+                    </button>
+                    <div id="telegramFallbackPanel" class="telegram-fallback-panel" style="display: none;"></div>
+                `}
+                <small id="passwordTelegramFeedback" class="telegram-security-feedback"></small>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('btnPasswordActivarTelegram')?.addEventListener('click', async () => {
+        const feedback = document.getElementById('passwordTelegramFeedback');
+        try {
+            if (typeof obtenerTelegramBotUsernameLimpio === 'function' && obtenerTelegramBotUsernameLimpio() === 'NOMBRE_DEL_BOT') {
+                if (feedback) feedback.textContent = 'Configurá TELEGRAM_BOT_USERNAME antes de vincular Telegram.';
+                return;
+            }
+            const { code } = await crearTelegramLinkCode(appState.socioData.id);
+            openTelegramLink(TELEGRAM_BOT_USERNAME, code);
+            if (feedback) feedback.textContent = 'Telegram se abrió. Tocá Start en el bot y luego volvé a esta pantalla.';
+        } catch (error) {
+            if (feedback) feedback.textContent = error.message || 'No se pudo iniciar la vinculación.';
+        }
+    });
+
+    document.getElementById('btnPasswordRefrescarTelegram')?.addEventListener('click', async () => {
+        const feedback = document.getElementById('passwordTelegramFeedback');
+        try {
+            await refrescarEstadoTelegramSocio();
+            renderPasswordTemporalGate();
+            if (feedback) feedback.textContent = telegramEstaVinculado() ? 'Telegram vinculado.' : 'Todavía no aparece vinculado. Probá de nuevo en unos minutos.';
+        } catch (error) {
+            if (feedback) feedback.textContent = error.message || 'No se pudo refrescar Telegram.';
+        }
+    });
+
+    document.getElementById('btnPasswordTelegramCode')?.addEventListener('click', async () => {
+        const feedback = document.getElementById('passwordTelegramFeedback');
+        try {
+            await solicitarCodigoTelegramSecurity();
+            await refrescarEstadoTelegramSocio();
+            renderPasswordTemporalGate();
+            const nuevoFeedback = document.getElementById('passwordTelegramFeedback');
+            if (nuevoFeedback) nuevoFeedback.textContent = 'Código enviado por Telegram.';
+        } catch (error) {
+            if (feedback) feedback.textContent = error.message || 'No se pudo enviar el código.';
+        }
+    });
+
+    document.getElementById('formPasswordTelegramCode')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const feedback = document.getElementById('passwordTelegramFeedback');
+        const code = document.getElementById('passwordTelegramCode')?.value || '';
+        try {
+            const result = await verificarCodigoTelegramSecurity(code);
+            if (!result?.verified) {
+                if (feedback) feedback.textContent = obtenerMensajeErrorTelegramSecurity(result?.reason);
+                return;
+            }
+            await refrescarEstadoTelegramSocio();
+            renderPasswordTemporalGate();
+            mostrarMensaje('Telegram verificado. Ya podés cambiar tu contraseña.', true);
+        } catch (error) {
+            if (feedback) feedback.textContent = error.message || 'No se pudo verificar el código.';
+        }
+    });
+}
+
+async function asegurarTelegramParaCambioPassword() {
+    if (!appState.socioData?.id) return false;
+    try {
+        if (typeof refrescarEstadoTelegramSocio === 'function') {
+            await refrescarEstadoTelegramSocio();
+        }
+    } catch (_error) {
+        // El render muestra el estado actual aunque el refresco falle.
+    }
+    renderPasswordTemporalGate();
+    if (telegramEstaVerificadoParaPassword()) return true;
+    mostrarMensaje('Activá Telegram y verificá el código de seguridad antes de cambiar la contraseña.', false);
+    return false;
 }
 
 async function mostrarSeccion(seccionId) {
@@ -388,7 +511,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarPlaceholders();
     inicializarAudioFondo();
     inicializarInstalacionPwa();
-    inicializarManualInicio();
     prepararMenuSocio();
     if (typeof actualizarBotonesSesion === 'function') actualizarBotonesSesion(false);
 
@@ -486,9 +608,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         mostrarMensaje('Inicio de sesión exitoso', true);
         await verificarSesion();
-        await mostrarSeccion(typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword()
-            ? 'actividades'
-            : obtenerDestinoPostLogin());
+        await mostrarSeccion('inicio');
+        if (window.genericoTour) {
+            window.genericoTour.refresh();
+            window.genericoTour.maybeShow();
+        }
     });
 
     document.getElementById('formRegisterMagic')?.addEventListener('submit', async (event) => {
@@ -528,6 +652,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nueva = document.getElementById('passwordNueva')?.value || '';
         const repetir = document.getElementById('passwordNuevaConfirmar')?.value || '';
         const errorValidacion = validarCambioPasswordActualizado(actual, nueva, repetir);
+
+        if (!(await asegurarTelegramParaCambioPassword())) {
+            return;
+        }
 
         if (errorValidacion) {
             mostrarMensaje(errorValidacion, false);
@@ -572,6 +700,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const repetir = document.getElementById('passwordTemporalConfirmar')?.value || '';
         const errorValidacion = validarNuevaPassword(nueva, repetir);
 
+        if (!(await asegurarTelegramParaCambioPassword())) {
+            return;
+        }
+
         if (errorValidacion) {
             mostrarMensaje(errorValidacion, false);
             return;
@@ -604,9 +736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     await verificarSesion();
-    await mostrarSeccion(typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword()
-        ? 'actividades'
-        : (localStorage.getItem('generico_seccion_activa') || 'inicio'));
+    await mostrarSeccion('inicio');
     if (window.genericoTour) {
         window.genericoTour.refresh();
         window.genericoTour.maybeShow();

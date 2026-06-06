@@ -41,7 +41,7 @@ body {
 
 body {
     background:
-        url("../assets/images/fondo-home.png") center top / cover fixed no-repeat,
+        url("../assets/images/home_inst.png") center top / cover fixed no-repeat,
         var(--generico-bg);
 }
 
@@ -325,7 +325,7 @@ textarea,
 :root {
     --club-primary-color: rgba(169, 218, 111, 0.72);
     --club-primary-color-hover: rgba(188, 235, 134, 0.9);
-    --club-bg-image: url("../assets/images/fondo-home.png");
+    --club-bg-image: url("../assets/images/home_inst.png");
     --club-text-color: #11140f;
     --club-card-bg: rgba(238, 255, 194, 0.62);
 }
@@ -1269,4 +1269,71 @@ body.app-home .footer-cameo-link { color: #121812; }
 .productos-acordeon .productos-toggle,
 .productos-acordeon .productos-panel {
     border-color: rgba(43, 95, 22, 0.82);
+}
+
+/* Modal overlay final: debe ganar por encima del shell, header y menus en desktop/mobile. */
+body.modal-open {
+    overflow: hidden;
+    touch-action: none;
+}
+
+.modal,
+.edit-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 250000 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: rgba(4, 8, 4, 0.72) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.modal[style*="display: flex"],
+.edit-modal[style*="display: flex"],
+.modal.is-open,
+.edit-modal.is-open {
+    display: flex !important;
+}
+
+.modal-content,
+#productoModal .modal-content,
+#noticiaModal .modal-content,
+#reservaActividadModal .modal-content,
+#carritoSocioModal .modal-content,
+.edit-modal-content {
+    position: relative !important;
+    z-index: 250001 !important;
+    width: min(720px, calc(100vw - 24px)) !important;
+    max-width: min(720px, calc(100vw - 24px)) !important;
+    max-height: calc(100dvh - 24px) !important;
+    margin: 0 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 520px) {
+    .modal,
+    .edit-modal {
+        align-items: flex-start !important;
+        padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
+    }
+
+    .modal-content,
+    #productoModal .modal-content,
+    #noticiaModal .modal-content,
+    #reservaActividadModal .modal-content,
+    #carritoSocioModal .modal-content,
+    .edit-modal-content {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
+    }
 }

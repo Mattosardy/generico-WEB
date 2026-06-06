@@ -1,4 +1,4 @@
-﻿// Global shared state for the front-end app.
+// Global shared state for the front-end app.
 window.configSistema = {
     horasLimitePrimer: 48,
     horasLimiteUltimo: 48,

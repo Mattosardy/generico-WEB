@@ -4,17 +4,17 @@
 };
 
 const GENERICO_TOUR_INTRO = {
-    title: 'Instalar y recorrer la app',
-    text: 'Android: abri esta web en Chrome y toca Instalar app. iPhone/iPad: abri Safari, toca Compartir y elegi Agregar a pantalla de inicio.'
+    title: 'Bienvenido a la app',
+    text: 'Primero activa Telegram desde el menu: el bot vincula tu numero, envia codigos de seguridad y habilita el cambio de contrasena. Despues podes instalar la app: Android en Chrome con Instalar app; iPhone/iPad en Safari con Compartir y Agregar a pantalla de inicio.'
 };
 
 const GENERICO_TOUR_STEPS = {
     socio: [
         {
             selector: '#telegramLinkPanel',
-            section: 'actividades',
+            section: 'menu',
             title: 'Telegram del club',
-            text: 'Vincula Telegram para recibir avisos, codigos de seguridad y novedades importantes.'
+            text: 'Activa Telegram antes de seguir usando la app. Ahi recibis codigos de seguridad, avisos y novedades importantes.'
         },
         {
             selector: '#telegramSecurityPanel',
@@ -26,7 +26,7 @@ const GENERICO_TOUR_STEPS = {
             selector: '#productos',
             section: 'productos',
             title: 'Reservas por packs',
-            text: 'Cada socio puede reservar 1 Pack (20g) o 2 Packs (40g) por mes, segun stock disponible.'
+            text: 'Cada socio puede llevar un maximo de 40g mensuales. El minimo disponible por variedad es 1 pack (20g de producto).'
         },
         {
             selector: '#userName',
@@ -36,8 +36,9 @@ const GENERICO_TOUR_STEPS = {
             text: 'Toca tu nombre en la barra para abrir el carrito y revisar tus pedidos del ciclo actual.'
         },
         {
-            selector: '#actividades',
+            selector: '#reservasActividadCalendar',
             section: 'actividades',
+            action: 'calendar',
             title: 'Calendario y reservas',
             text: 'En Agenda y pedidos podes ver fechas de retiro, novedades y el estado de tus reservas.'
         },
@@ -174,6 +175,23 @@ function genericoTourTargetForStep(step) {
     return target;
 }
 
+function genericoTourIsVisible(element) {
+    if (!element) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 && element.offsetParent !== null;
+}
+
+async function genericoTourOpenAccordionPanel(tipoCultivo) {
+    const toggle = document.querySelector(`.productos-toggle[data-tipo-cultivo="${tipoCultivo}"]`);
+    const panel = document.querySelector(`.productos-panel[data-tipo-cultivo="${tipoCultivo}"]`);
+    if (!toggle || !panel) return;
+    if (toggle.getAttribute('aria-expanded') !== 'true' || panel.hidden) toggle.click();
+    panel.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.closest('.productos-columna')?.classList.add('activa');
+    await genericoTourDelay(160);
+}
+
 async function genericoTourPrepareStep(step) {
     if (!step) return;
     try {
@@ -191,6 +209,17 @@ async function genericoTourPrepareStep(step) {
 
         if (step.action === 'cart' && typeof abrirCarritoSocio === 'function') {
             await abrirCarritoSocio();
+        }
+
+        if (step.action === 'calendar') {
+            if (typeof cargarReservasSocio === 'function') {
+                await cargarReservasSocio();
+            }
+            await genericoTourOpenAccordionPanel('actividades-calendario');
+            const target = document.querySelector(step.selector);
+            if (!genericoTourIsVisible(target)) {
+                await genericoTourOpenAccordionPanel('actividades-calendario');
+            }
         }
     } catch (error) {
         console.warn('No se pudo preparar el paso de la guia:', error);
@@ -296,7 +325,7 @@ async function genericoTourRender() {
         title.textContent = GENERICO_TOUR_INTRO.title;
         text.textContent = GENERICO_TOUR_INTRO.text;
         prev.hidden = true;
-        skip.textContent = 'Descubrir por mi mismo';
+        skip.textContent = 'No volver a mostrar';
         next.textContent = 'Iniciar tour';
         root.hidden = false;
         genericoTourState.active = true;
@@ -317,7 +346,8 @@ async function genericoTourRender() {
     const target = genericoTourTargetForStep(step);
     if (target) {
         target.classList.add('tour-highlight');
-        target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        target.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'nearest' });
+        await genericoTourDelay(80);
     }
 
     label.textContent = `Paso ${genericoTourState.stepIndex + 1} de ${total}`;
@@ -330,7 +360,7 @@ async function genericoTourRender() {
     root.hidden = false;
     genericoTourState.active = true;
 
-    window.setTimeout(() => genericoTourPlacePopover(target), 180);
+    window.setTimeout(() => genericoTourPlacePopover(genericoTourTargetForStep(step)), 80);
 }
 
 function genericoTourOpen(role = genericoTourRole(), options = {}) {
@@ -377,13 +407,6 @@ function genericoTourNext() {
 }
 
 function genericoTourDismissForever() {
-    if (genericoTourState.introActive) {
-        sessionStorage.setItem('generico_manual_inicio_cerrado', 'true');
-        const panel = document.getElementById('manualDidacticoInicio');
-        if (panel) panel.hidden = true;
-        genericoTourClose();
-        return;
-    }
     const key = genericoTourKey(genericoTourState.role);
     if (key) localStorage.setItem(key, 'true');
     genericoTourClose();
@@ -393,9 +416,6 @@ function genericoTourMaybeShow(role = genericoTourRole()) {
     if (!role || !GENERICO_TOUR_KEYS[role]) return;
     if (genericoTourState.active) return;
     if (localStorage.getItem(genericoTourKey(role)) === 'true') return;
-    const promptedKey = `generico_tour_${role}_prompted_session`;
-    if (sessionStorage.getItem(promptedKey) === 'true') return;
-    sessionStorage.setItem(promptedKey, 'true');
     window.setTimeout(() => genericoTourOpen(role), 500);
 }
 
