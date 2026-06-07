@@ -1046,23 +1046,21 @@ async function cargarSociosAdmin() {
             <form id="formCrearSocioAdmin" class="admin-create-socio-form">
                 <div class="form-group">
                     <label for="nuevoSocioNombre">Nombre</label>
-                    <input type="text" id="nuevoSocioNombre" placeholder="Nombre del socio" autocomplete="off" required>
+                    <input type="text" id="nuevoSocioNombre" name="nombre" placeholder="Nombre del socio" autocomplete="off" required>
                 </div>
                 <div class="form-group">
                     <label for="nuevoSocioTelefono">Teléfono</label>
-                    <input type="tel" id="nuevoSocioTelefono" placeholder="09XXXXXXX" autocomplete="off" required>
+                    <input type="tel" id="nuevoSocioTelefono" name="telefono" placeholder="09XXXXXXX" autocomplete="off" required>
                 </div>
                 <div class="form-group">
                     <label for="nuevoSocioRol">Rol</label>
-                    <select id="nuevoSocioRol">
+                    <select id="nuevoSocioRol" name="rol">
                         <option value="socio" selected>Socio</option>
-                        <option value="admin">Admin</option>
-                        <option value="maestro">Maestro</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="nuevoSocioEstado">Estado</label>
-                    <select id="nuevoSocioEstado">
+                    <select id="nuevoSocioEstado" name="estado">
                         <option value="activo" selected>Activo</option>
                         <option value="pendiente">Pendiente</option>
                         <option value="inactivo">Inactivo</option>
@@ -1071,7 +1069,7 @@ async function cargarSociosAdmin() {
                 <button type="submit" class="btn-submit"><i class="fas fa-lock"></i> Crear socio</button>
             </form>
             <div id="crearSocioResultado" class="admin-create-socio-result" hidden></div>
-            <small class="admin-create-socio-note">La contraseña temporal se muestra una sola vez. El socio deberá cambiarla en su primer ingreso.</small>
+            <small class="admin-create-socio-note">La contraseña temporal se muestra una sola vez. El socio deberá cambiarla en su primer ingreso. Admin solo crea socios; solo el maestro 091950107 puede crear administradores.</small>
         </div>
     `;
     const tablaSociosHTML = (data || []).length ? `
@@ -1099,7 +1097,7 @@ function construirTablaSociosAdminHTML(socios = []) {
                         </div>
                     </td>
                     <td>
-                        <select class="socio-edit-input tiny" id="socioRol_admin_${socio.id}">
+                        <select class="socio-edit-input tiny" id="socioRol_admin_${socio.id}" ${String(appState?.rolUsuario || '').toLowerCase() !== 'maestro' ? 'disabled' : ''}>
                             <option value="socio" ${(socio.rol || 'socio') === 'socio' ? 'selected' : ''}>Socio</option>
                             <option value="admin" ${socio.rol === 'admin' ? 'selected' : ''}>Admin</option>
                             <option value="maestro" ${socio.rol === 'maestro' ? 'selected' : ''}>Maestro</option>
@@ -1124,13 +1122,18 @@ async function crearSocioDesdeAdmin(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const boton = form.querySelector('button[type="submit"]');
-    const resultadoEl = document.getElementById('crearSocioResultado');
+    const resultadoEl = form.querySelector?.('#crearSocioResultado') || form.parentElement?.querySelector('[data-crear-socio-resultado]') || document.getElementById('crearSocioResultado');
+    const origen = form.dataset.origen || 'admin';
+    const getValue = (name, fallbackId) => form.elements?.[name]?.value?.trim() || document.getElementById(fallbackId)?.value?.trim() || '';
     const payload = {
-        nombre: document.getElementById('nuevoSocioNombre')?.value?.trim() || '',
-        telefono: document.getElementById('nuevoSocioTelefono')?.value?.trim() || '',
-        rol: document.getElementById('nuevoSocioRol')?.value || 'socio',
-        estado: document.getElementById('nuevoSocioEstado')?.value || 'activo'
+        nombre: getValue('nombre', 'nuevoSocioNombre'),
+        telefono: getValue('telefono', 'nuevoSocioTelefono'),
+        rol: getValue('rol', 'nuevoSocioRol') || 'socio',
+        estado: getValue('estado', 'nuevoSocioEstado') || 'activo'
     };
+    if (origen !== 'maestro' && String(appState?.rolUsuario || '').toLowerCase() !== 'maestro') {
+        payload.rol = 'socio';
+    }
 
     if (!payload.nombre || !payload.telefono) {
         mostrarMensaje('Nombre y teléfono son obligatorios.', false);
@@ -1166,10 +1169,12 @@ async function crearSocioDesdeAdmin(event) {
         }
         form.reset();
         mostrarMensaje('Socio creado correctamente.', true);
-        const { data: sociosActualizados } = await supabaseClient.from('socios').select('*').order('fecha_ingreso', { ascending: false });
-        const tablaScroll = document.querySelector('#admin-socios .admin-tabla-scroll');
-        if (tablaScroll && Array.isArray(sociosActualizados)) {
-            tablaScroll.innerHTML = construirTablaSociosAdminHTML(sociosActualizados);
+        if (origen !== 'maestro') {
+            const { data: sociosActualizados } = await supabaseClient.from('socios').select('*').order('fecha_ingreso', { ascending: false });
+            const tablaScroll = document.querySelector('#admin-socios .admin-tabla-scroll');
+            if (tablaScroll && Array.isArray(sociosActualizados)) {
+                tablaScroll.innerHTML = construirTablaSociosAdminHTML(sociosActualizados);
+            }
         }
     } catch (error) {
         const detalle = error?.message || error?.context?.error || 'No se pudo crear el socio.';
