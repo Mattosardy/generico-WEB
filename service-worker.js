@@ -1,4 +1,4 @@
-const GENERICO_CACHE_VERSION = 'generico-pwa-v22-20260606-modal-identity';
+const GENERICO_CACHE_VERSION = 'generico-pwa-v23-20260606-mobile-header';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',
