@@ -5,6 +5,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+const MASTER_PHONE = "+59891950107";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -42,7 +43,7 @@ async function requireAdmin(supabase: ReturnType<typeof createClient>, token: st
   const user = userData.user;
   const { data: socio, error } = await supabase
     .from("socios")
-    .select("id, rol, estado")
+    .select("id, rol, estado, telefono")
     .or(`auth_user_id.eq.${user.id},email.eq.${user.email ?? ""}`)
     .maybeSingle();
 
@@ -51,7 +52,11 @@ async function requireAdmin(supabase: ReturnType<typeof createClient>, token: st
     throw new Error("No tenes permisos para crear socios.");
   }
 
-  return { user, socio };
+  return {
+    user,
+    socio,
+    isMaster: String(socio.rol || "") === "maestro" && normalizePhoneUy(String(socio.telefono || "")) === MASTER_PHONE,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -73,7 +78,7 @@ Deno.serve(async (req) => {
   });
 
   try {
-    await requireAdmin(supabase, token);
+    const actor = await requireAdmin(supabase, token);
 
     const body = await req.json().catch(() => ({}));
     const nombre = String(body.nombre || "").trim();
@@ -84,6 +89,10 @@ Deno.serve(async (req) => {
     const telegramEnabled = Boolean(body.telegram_enabled && body.telegram_chat_id);
 
     if (!nombre || !telefono) throw new Error("Nombre y telefono son obligatorios.");
+    if (rol === "maestro") throw new Error("El rol maestro es unico y no se puede crear desde el panel.");
+    if (rol === "admin" && !actor.isMaster) throw new Error("Solo el maestro puede crear administradores.");
+    if (rol !== "socio" && rol !== "admin") throw new Error("Rol no permitido.");
+    if (telefono === MASTER_PHONE && rol !== "socio") throw new Error("El telefono maestro no se puede registrar como admin.");
 
     const email = buildTechnicalEmail(telefono);
     const temporaryPassword = buildTemporaryPassword();

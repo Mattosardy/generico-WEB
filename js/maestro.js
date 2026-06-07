@@ -245,6 +245,41 @@ async function cargarMaestroSocios() {
     container.innerHTML = `
         <h3>Socios</h3>
         <p style="color:var(--text-muted); margin: 8px 0 14px;">El maestro comparte la misma edicion completa de usuarios que Admin.</p>
+        <div class="admin-create-socio-card">
+            <div class="admin-create-socio-copy">
+                <span class="metric-label">Alta controlada</span>
+                <h3><i class="fas fa-user-plus"></i> Crear socio</h3>
+                <p>Crea socios o administradores con telefono y contrasena temporal. El rol maestro queda reservado al telefono 091950107.</p>
+            </div>
+            <form id="formCrearSocioMaestro" class="admin-create-socio-form" data-origen="maestro">
+                <div class="form-group">
+                    <label for="nuevoSocioNombreMaestro">Nombre</label>
+                    <input type="text" id="nuevoSocioNombreMaestro" name="nombre" placeholder="Nombre del socio" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioTelefonoMaestro">Telefono</label>
+                    <input type="tel" id="nuevoSocioTelefonoMaestro" name="telefono" placeholder="09XXXXXXX" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioRolMaestro">Rol</label>
+                    <select id="nuevoSocioRolMaestro" name="rol">
+                        <option value="socio" selected>Socio</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoSocioEstadoMaestro">Estado</label>
+                    <select id="nuevoSocioEstadoMaestro" name="estado">
+                        <option value="activo" selected>Activo</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit"><i class="fas fa-lock"></i> Crear socio</button>
+            </form>
+            <div class="admin-create-socio-result" data-crear-socio-resultado hidden></div>
+            <small class="admin-create-socio-note">Solo el maestro puede crear administradores. La contrasena temporal se muestra una sola vez.</small>
+        </div>
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
             <thead><tr><th>Nombre</th><th>Apellido</th><th>Cedula</th><th>Nro.</th><th>Telefono</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
@@ -280,6 +315,7 @@ async function cargarMaestroSocios() {
         </table>
         </div>
     `;
+    document.getElementById('formCrearSocioMaestro')?.addEventListener('submit', crearSocioDesdeAdmin);
 }
 
 async function cargarMaestroConfig() {
