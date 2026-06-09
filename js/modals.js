@@ -143,7 +143,9 @@ function actualizarEstadoPedidoModal() {
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         const gramos = Number(btn.dataset.gramos);
         const sinStockParaCantidad = stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos);
+        const excedeCupoAlAgregar = !esArticulo && !appState.reservaEditandoId && gramos > restante;
         btn.classList.toggle('activa', gramos === appState.gramosSeleccionadosPedido);
+        btn.hidden = excedeCupoAlAgregar;
         btn.disabled = passwordTemporalPendiente || (!esArticulo && gramos > restante) || sinStockParaCantidad;
         if (sinStockParaCantidad) {
             btn.title = esArticulo ? 'No hay unidades suficientes para esta cantidad' : 'No hay packs suficientes para esta cantidad';
@@ -568,13 +570,19 @@ async function abrirModal(producto) {
                 : (puedeConfirmar(fechas.ultimoJueves, configSistema.horasLimiteUltimo) ? 'ultimo_jueves' : null));
             const fechaEntrega = tipoEntrega === 'primer_jueves' ? fechas.primerJueves : fechas.ultimoJueves;
             const reservas = tipoEntrega ? await obtenerReservas(appState.socioData.id) : [];
+            const productosCiclo = typeof obtenerProductos === 'function' ? await obtenerProductos() : [];
+            const ciclo = appState.cicloClubActual || obtenerCicloClub();
+            appState.cicloClubActual = ciclo;
+            appState.reservasSocio = reservas;
+            appState.gramosReservadosCiclo = sumarGramosReservadosEnCiclo(reservas, ciclo, productosCiclo);
+            appState.gramosRestantesCiclo = Math.max(0, obtenerCupoMensualGramos() - appState.gramosReservadosCiclo);
             const reserva = appState.reservaEditandoId
                 ? reservas.find((item) => (
                     String(item.id) === String(appState.reservaEditandoId)
                     && String(item.socio_id) === String(appState.socioData.id)
                     && item.estado !== 'cancelado'
                 ))
-                : (tipoEntrega ? obtenerReservaActivaPorEntrega(reservas, tipoEntrega, fechaEntrega) : null);
+                : null;
             appState.reservaEditandoGramos = Number(reserva?.cantidad_gramos || 0);
             if (appState.reservaEditandoId && appState.reservaEditandoGramos > 0) {
                 appState.gramosSeleccionadosPedido = appState.reservaEditandoGramos;

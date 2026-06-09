@@ -305,17 +305,6 @@ async function renderCarritoSocioEn(body, esModal = false) {
                     <strong>${packsUsados} de ${packsCupo} packs reservados</strong>
                     <span>${packsRestantes} packs disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
                 </div>
-            </div>
-            <div class="productos-columna">
-                <h3 class="productos-columna-titulo">
-                    <button type="button" class="productos-toggle" data-tipo-cultivo="carrito-variedades" aria-expanded="false">
-                        <span class="productos-toggle-titulo"><i class="fas fa-leaf"></i> Variedades reservadas</span>
-                        <span class="productos-toggle-descripcion">Pedidos activos del socio</span>
-                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
-                    </button>
-                </h3>
-            </div>
-            <div class="productos-panel" data-tipo-cultivo="carrito-variedades" hidden>
                 <div class="carrito-modal-list">
                     ${activas.length ? activas.map(construirItemCarritoReservaHTML).join('') : '<div class="carrito-modal-empty">Todavía no tenes variedades reservadas.</div>'}
                 </div>
