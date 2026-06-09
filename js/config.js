@@ -2,6 +2,7 @@
 window.configSistema = {
     horasLimitePrimer: 48,
     horasLimiteUltimo: 48,
+    cupoMensualGramos: 40,
     fechaEntregaPrimer: '',
     fechaEntregaUltimo: ''
 };

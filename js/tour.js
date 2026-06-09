@@ -26,7 +26,7 @@ const GENERICO_TOUR_STEPS = {
             selector: '#productos',
             section: 'productos',
             title: 'Reservas por packs',
-            text: 'Cada socio puede llevar un maximo de 40g mensuales. El minimo disponible por variedad es 1 pack (20g de producto).'
+            text: 'El cupo mensual de variedades lo define el maestro. El minimo disponible por variedad es 1 pack (20g de producto).'
         },
         {
             selector: '#carrito',

@@ -11,6 +11,7 @@ async function cargarContenidoInstitucional() {
         });
         configSistema.horasLimitePrimer = Number.parseInt(configMap.horas_limite_primer, 10) || 48;
         configSistema.horasLimiteUltimo = Number.parseInt(configMap.horas_limite_ultimo, 10) || 48;
+        configSistema.cupoMensualGramos = Number.parseInt(configMap.cupo_mensual_gramos, 10) || 40;
         appState.configMap = configMap;
         const entregasFuturas = obtenerEntregasConfiguradasFuturas(configMap, 3);
         if (entregasFuturas[0]?.fecha) configSistema.fechaEntregaPrimer = entregasFuturas[0].fecha;
@@ -322,7 +323,7 @@ function fechaEntregaEsFutura(fecha) {
 }
 
 function obtenerResumenEntregaActividad() {
-    const disponibles = Number.isFinite(Number(appState.gramosRestantesCiclo)) ? Number(appState.gramosRestantesCiclo) : 40;
+    const disponibles = Number.isFinite(Number(appState.gramosRestantesCiclo)) ? Number(appState.gramosRestantesCiclo) : obtenerCupoMensualGramos();
     const reservas = Number.isFinite(Number(appState.reservasActivasCount)) ? Number(appState.reservasActivasCount) : 0;
     const retiros = Number.isFinite(Number(appState.historialRetiradoCount)) ? Number(appState.historialRetiradoCount) : 0;
     return `${gramosAPacks(disponibles)} packs disponibles · ${reservas} pedidos activos · ${retiros} retiros`;

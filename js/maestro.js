@@ -38,7 +38,7 @@ Ofrecemos más de 6 variedades durante todo el año, cultivadas con estrategias 
 
 Condiciones:
 - Mínimo: 20 g por variedad / mes
-- Máximo: 40 g por variedad / mes (combinables entre variedades)
+- Cupo mensual configurable por el maestro (combinable entre variedades)
 
 Si te interesa, coordinamos una reunión y te contamos cómo trabajamos.
 
@@ -325,6 +325,9 @@ async function cargarMaestroConfig() {
     const fechasEntrega = calcularFechasEntrega();
     const fechaPrimer = configSistema.fechaEntregaPrimer || formatearFechaClave(fechasEntrega.primerJueves);
     const fechaUltimo = configSistema.fechaEntregaUltimo || formatearFechaClave(fechasEntrega.ultimoJueves);
+    const horasLimitePrimer = Number(configSistema.horasLimitePrimer || 48);
+    const horasLimiteUltimo = Number(configSistema.horasLimiteUltimo || horasLimitePrimer);
+    const cupoMensual = obtenerCupoMensualGramos();
     container.innerHTML = `
         <h3>Configuracion</h3>
         <div class="form-grid">
@@ -337,9 +340,18 @@ async function cargarMaestroConfig() {
                 <input type="date" id="confFechaUltimo" value="${escapeHtml(fechaUltimo)}">
             </div>
             <div class="form-group full-width">
-                <label>Limite de reserva</label>
-                <input type="text" value="48 horas antes de la fecha de entrega" readonly>
+                <label>Cupo mensual de variedades (gramos)</label>
+                <input type="number" id="confCupoMensual" min="20" max="200" step="20" value="${cupoMensual}">
             </div>
+            <div class="entrega-limite-grid full-width">
+                <label>Limite de reserva entrega 1
+                    <input type="number" id="confHorasLimitePrimer" min="1" max="240" step="1" value="${horasLimitePrimer}">
+                </label>
+                <label>Limite de reserva entrega 2
+                    <input type="number" id="confHorasLimiteUltimo" min="1" max="240" step="1" value="${horasLimiteUltimo}">
+                </label>
+            </div>
+            <small class="form-help-text">Los mensajes automaticos usan estas horas antes de cada entrega.</small>
             <div class="form-group full-width">
                 <button class="btn-submit" onclick="guardarConfigMaestro()">Guardar</button>
             </div>
@@ -370,6 +382,9 @@ window.cargarMaestroReservas = cargarMaestroReservas;
 window.guardarConfigMaestro = async function() {
     const fechaPrimer = document.getElementById('confFechaPrimer')?.value || '';
     const fechaUltimo = document.getElementById('confFechaUltimo')?.value || '';
+    const horasLimitePrimer = Math.max(1, Math.min(240, Number.parseInt(document.getElementById('confHorasLimitePrimer')?.value, 10) || 48));
+    const horasLimiteUltimo = Math.max(1, Math.min(240, Number.parseInt(document.getElementById('confHorasLimiteUltimo')?.value, 10) || horasLimitePrimer));
+    const cupoMensual = Math.max(20, Math.min(200, Number.parseInt(document.getElementById('confCupoMensual')?.value, 10) || 40));
     const primerDate = parsearFechaConfigEntrega(fechaPrimer);
     const ultimoDate = parsearFechaConfigEntrega(fechaUltimo);
 
@@ -381,8 +396,9 @@ window.guardarConfigMaestro = async function() {
     const updates = [
         { clave: 'fecha_entrega_primer', valor: fechaPrimer },
         { clave: 'fecha_entrega_ultimo', valor: fechaUltimo },
-        { clave: 'horas_limite_primer', valor: '48' },
-        { clave: 'horas_limite_ultimo', valor: '48' }
+        { clave: 'horas_limite_primer', valor: String(horasLimitePrimer) },
+        { clave: 'horas_limite_ultimo', valor: String(horasLimiteUltimo) },
+        { clave: 'cupo_mensual_gramos', valor: String(cupoMensual) }
     ];
     for (const item of updates) {
         const { error } = await supabaseClient.from('configuracion_sistema').upsert(item, { onConflict: 'clave' });
@@ -393,8 +409,9 @@ window.guardarConfigMaestro = async function() {
     }
     configSistema.fechaEntregaPrimer = fechaPrimer;
     configSistema.fechaEntregaUltimo = fechaUltimo;
-    configSistema.horasLimitePrimer = 48;
-    configSistema.horasLimiteUltimo = 48;
+    configSistema.horasLimitePrimer = horasLimitePrimer;
+    configSistema.horasLimiteUltimo = horasLimiteUltimo;
+    configSistema.cupoMensualGramos = cupoMensual;
     if (typeof cargarReservasSocio === 'function') await cargarReservasSocio();
     mostrarMensaje('Configuración guardada', true);
 };

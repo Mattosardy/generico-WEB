@@ -13,3 +13,7 @@ values
         'Tenes tiempo hasta 48 hs antes del primer jueves del mes para confirmar tu retiro.'
     )
 on conflict (clave) do nothing;
+
+insert into public.configuracion_sistema (clave, valor)
+values ('cupo_mensual_gramos', '40')
+on conflict (clave) do nothing;

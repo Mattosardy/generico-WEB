@@ -734,6 +734,20 @@ async function cargarEntregasAdmin() {
         });
     });
 
+    const actualizarMensajesAutomaticos = (indice, horas) => {
+        container.querySelectorAll(`.entrega-slot-admin[data-indice="${indice}"] .entrega-mensaje-admin`).forEach((textarea) => {
+            if (!textarea.value.trim() || mensajeLimiteReservaEsAutomatico(textarea.value)) {
+                textarea.value = construirMensajeLimiteReserva(horas, indice);
+            }
+        });
+    };
+    document.getElementById('horasLimitePrimerAdmin')?.addEventListener('input', (event) => {
+        actualizarMensajesAutomaticos(1, Number.parseInt(event.target.value, 10) || 48);
+    });
+    document.getElementById('horasLimiteUltimoAdmin')?.addEventListener('input', (event) => {
+        actualizarMensajesAutomaticos(2, Number.parseInt(event.target.value, 10) || horasLimitePrimer);
+    });
+
     document.getElementById('formEntregaAdmin')?.addEventListener('submit', guardarEntregaAdmin);
 }
 

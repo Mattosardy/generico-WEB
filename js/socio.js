@@ -279,10 +279,12 @@ async function renderCarritoSocioEn(body, esModal = false) {
     appState.reservasSocio = reservas;
     const ciclo = appState.cicloClubActual || obtenerCicloClub();
     const activas = obtenerReservasActivasCarrito(reservas);
+    const cupoMensual = obtenerCupoMensualGramos();
     const gramosUsados = activas.reduce((total, reserva) => total + Number(reserva.cantidad_gramos || 0), 0);
-    const gramosRestantes = Math.max(0, 40 - gramosUsados);
+    const gramosRestantes = Math.max(0, cupoMensual - gramosUsados);
     const packsUsados = gramosAPacks(gramosUsados);
     const packsRestantes = gramosAPacks(gramosRestantes);
+    const packsCupo = gramosAPacks(cupoMensual);
     const articulos = [];
 
     body.innerHTML = `
@@ -300,7 +302,7 @@ async function renderCarritoSocioEn(body, esModal = false) {
             </div>
             <div class="productos-panel" data-tipo-cultivo="carrito-resumen">
                 <div class="carrito-modal-summary">
-                    <strong>${packsUsados} de 2 packs reservados</strong>
+                    <strong>${packsUsados} de ${packsCupo} packs reservados</strong>
                     <span>${packsRestantes} packs disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
                 </div>
             </div>
@@ -382,10 +384,12 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
     const reservasActivas = [reservaPrimer, reservaUltimo].filter(reservaEstaActiva);
     const historialRetirado = (reservas || []).filter((reserva) => reserva.estado === 'entregado' || reserva.estado === 'retirado').length;
     const resumenEntrega = obtenerResumenEntregaUsuario(reservaPrimer, reservaUltimo, puedePrimer, puedeUltimo);
-    const gramosUsados = Math.max(0, 40 - Number(gramosRestantesCiclo || 0));
+    const cupoMensual = obtenerCupoMensualGramos();
+    const gramosUsados = Math.max(0, cupoMensual - Number(gramosRestantesCiclo || 0));
     const packsUsados = gramosAPacks(gramosUsados);
     const packsRestantes = gramosAPacks(gramosRestantesCiclo);
-    const progreso = Math.min(100, Math.max(0, (gramosUsados / 40) * 100));
+    const packsCupo = gramosAPacks(cupoMensual);
+    const progreso = Math.min(100, Math.max(0, (gramosUsados / cupoMensual) * 100));
 
     dashboard.style.display = '';
     dashboard.innerHTML = `
@@ -397,8 +401,8 @@ function renderDashboardSocio(reservas, gramosRestantesCiclo, reservaPrimer, res
             </div>
             <div class="dashboard-grams">
                 <span>${packsRestantes}</span>
-                <small>packs disponibles de 2</small>
-                <div class="dashboard-grams-progress" aria-label="${packsUsados} packs usados de 2">
+                <small>packs disponibles de ${packsCupo}</small>
+                <div class="dashboard-grams-progress" aria-label="${packsUsados} packs usados de ${packsCupo}">
                     <i style="width:${progreso}%"></i>
                 </div>
                 <small>${packsUsados} packs usados este ciclo</small>
@@ -444,7 +448,7 @@ async function cargarReservasSocio() {
         const dashboard = document.getElementById('socioDashboard');
         if (dashboard) dashboard.style.display = 'none';
         appState.gramosReservadosCiclo = 0;
-        appState.gramosRestantesCiclo = 40;
+        appState.gramosRestantesCiclo = obtenerCupoMensualGramos();
         appState.reservasActivasCount = 0;
         appState.historialRetiradoCount = 0;
         appState.cicloClubActual = null;
@@ -461,7 +465,7 @@ async function cargarReservasSocio() {
     const puedePrimer = puedeConfirmar(appState.fechasEntrega.primerJueves, configSistema.horasLimitePrimer);
     const puedeUltimo = puedeConfirmar(appState.fechasEntrega.ultimoJueves, configSistema.horasLimiteUltimo);
     const gramosReservadosCiclo = sumarGramosReservadosEnCiclo(reservas, appState.cicloClubActual, productos);
-    const gramosRestantesCiclo = Math.max(0, 40 - gramosReservadosCiclo);
+    const gramosRestantesCiclo = Math.max(0, obtenerCupoMensualGramos() - gramosReservadosCiclo);
     appState.gramosReservadosCiclo = gramosReservadosCiclo;
     const reservasActivas = [reservaPrimer, reservaUltimo].filter(reservaEstaActiva);
     const historialRetirado = (reservas || []).filter((reserva) => reserva.estado === 'entregado' || reserva.estado === 'retirado').length;

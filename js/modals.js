@@ -115,8 +115,10 @@ function obtenerPrecioPedidoSeleccionado(gramos, esArticulo = false) {
 }
 
 function actualizarEstadoPedidoModal() {
-    const restante = Math.max(0, 40 - obtenerTotalPedidoMesActual());
+    const cupoMensual = obtenerCupoMensualGramos();
+    const restante = Math.max(0, cupoMensual - obtenerTotalPedidoMesActual());
     const packsRestantes = gramosAPacks(restante);
+    const packsCupo = gramosAPacks(cupoMensual);
     const restanteEl = document.getElementById('pedidoRestante');
     const alertaEl = document.getElementById('pedidoAlerta');
     const botonEl = document.getElementById('btnRealizarPedido');
@@ -133,7 +135,7 @@ function actualizarEstadoPedidoModal() {
     const passwordTemporalPendiente = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
     const disponibleTexto = esArticulo
         ? 'Los artículos no descuentan cupo mensual'
-        : `${packsRestantes} de 2 packs`;
+        : `${packsRestantes} de ${packsCupo} packs`;
     restanteEl.textContent = esArticulo
         ? `${disponibleTexto}.${detalleStock}`
         : `Cupo disponible en este ciclo (${cicloActual.etiqueta}): ${disponibleTexto}.${detalleStock}`;
@@ -208,7 +210,7 @@ function inicializarPedidoModal() {
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         btn.onclick = () => {
             const gramos = Number(btn.dataset.gramos);
-            const restante = Math.max(0, 40 - obtenerTotalPedidoMesActual());
+            const restante = Math.max(0, obtenerCupoMensualGramos() - obtenerTotalPedidoMesActual());
             const esArticulo = productoModalEsArticulo();
             if (!esArticulo && gramos > restante) {
                 mostrarMensaje(`Te quedan ${formatearTextoDisponibles(restante, esArticulo)} en este ciclo.`, false);
@@ -289,17 +291,19 @@ async function realizarPedidoProducto() {
     }
 
     const reservas = await obtenerReservas(appState.socioData.id);
+    const productosCiclo = typeof obtenerProductos === 'function' ? await obtenerProductos() : [];
     const reservaExistente = appState.reservaEditandoId
         ? reservas.find((reserva) => (
             String(reserva.id) === String(appState.reservaEditandoId)
             && String(reserva.socio_id) === String(appState.socioData.id)
             && reserva.estado !== 'cancelado'
         ))
-        : (typeof obtenerReservaActivaPorEntrega === 'function'
-            ? obtenerReservaActivaPorEntrega(reservas, tipoEntrega === 'primer' ? 'primer_jueves' : 'ultimo_jueves', fechaEntrega)
-            : null);
-    const totalActual = obtenerTotalPedidoMesActual();
-    if (!esArticulo && totalActual + appState.gramosSeleccionadosPedido > 40) {
+        : null;
+    const totalActual = esArticulo
+        ? obtenerTotalPedidoMesActual()
+        : Math.max(0, sumarGramosReservadosEnCiclo(reservas, appState.cicloClubActual || obtenerCicloClub(), productosCiclo) - Number(appState.reservaEditandoGramos || 0));
+    const cupoMensual = obtenerCupoMensualGramos();
+    if (!esArticulo && totalActual + appState.gramosSeleccionadosPedido > cupoMensual) {
         mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${formatearResumenDisponible(totalActual, esArticulo)} en este ciclo.`, false);
         return;
     }

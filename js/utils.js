@@ -253,6 +253,11 @@ function formatearPacksDisponibles(packs, gramos) {
     return `${cantidad} ${etiquetaPack} (${Number(gramos || 0)}g)`;
 }
 
+function obtenerCupoMensualGramos() {
+    const valor = Number(configSistema?.cupoMensualGramos || appState?.configMap?.cupo_mensual_gramos || 40);
+    return Number.isFinite(valor) && valor > 0 ? valor : 40;
+}
+
 function usuarioEsMaestro() {
     return String(appState?.rolUsuario || '').toLowerCase() === 'maestro';
 }
@@ -604,6 +609,23 @@ function obtenerClaveEntregaPeriodo(mesClave, indice, campo) {
     return `entrega_${mesClave}_${indice}_${campo}`;
 }
 
+function obtenerHorasLimiteEntrega(configMap = {}, indice = 1) {
+    const clave = Number(indice) === 1 ? 'horas_limite_primer' : 'horas_limite_ultimo';
+    const fallback = Number(indice) === 1 ? configSistema.horasLimitePrimer : configSistema.horasLimiteUltimo;
+    const valor = Number.parseInt(configMap[clave], 10);
+    return Number.isFinite(valor) && valor > 0 ? valor : (Number(fallback) || 48);
+}
+
+function construirMensajeLimiteReserva(horas, indice = 1) {
+    const numero = Number(horas) || 48;
+    const entrega = Number(indice) === 1 ? 'primera entrega' : 'segunda entrega';
+    return `Tenes tiempo hasta ${numero} hs antes de la ${entrega} para confirmar tu retiro.`;
+}
+
+function mensajeLimiteReservaEsAutomatico(mensaje = '') {
+    return /ten\S*s tiempo hasta\s+\d+\s*(?:hs|horas)\s+antes/i.test(String(mensaje || ''));
+}
+
 function obtenerMesesEntregaProximos(cantidad = 3, fechaReferencia = new Date()) {
     const meses = [];
     const base = new Date(fechaReferencia.getFullYear(), fechaReferencia.getMonth(), 1);
@@ -624,6 +646,7 @@ function obtenerEntregaPeriodoConfig(configMap = {}, mesClave, indice) {
     let fecha = configMap[obtenerClaveEntregaPeriodo(mesClave, indice, 'fecha')] || '';
     let hora = configMap[obtenerClaveEntregaPeriodo(mesClave, indice, 'hora')] || '18:00';
     let mensaje = configMap[obtenerClaveEntregaPeriodo(mesClave, indice, 'mensaje')] || '';
+    const mensajeAutomatico = construirMensajeLimiteReserva(obtenerHorasLimiteEntrega(configMap, indice), indice);
     const legacyFecha = indice === 1 ? configMap.fecha_entrega_primer : configMap.fecha_entrega_ultimo;
     const legacyMensaje = indice === 1 ? configMap.mensaje_entrega_primer : configMap.mensaje_entrega_ultimo;
     if (!fecha && legacyFecha) {
@@ -632,6 +655,9 @@ function obtenerEntregaPeriodoConfig(configMap = {}, mesClave, indice) {
             fecha = legacyFecha;
             mensaje = mensaje || legacyMensaje || '';
         }
+    }
+    if (!mensaje || mensajeLimiteReservaEsAutomatico(mensaje)) {
+        mensaje = mensajeAutomatico;
     }
     return {
         mesClave,
