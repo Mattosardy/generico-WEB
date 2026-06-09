@@ -1563,6 +1563,59 @@ body::before {
     outline: 2px solid rgba(50, 94, 53, 0.3);
     outline-offset: 2px;
 }
+
+.solicitud-home-trigger {
+    margin-top: 18px;
+    width: min(100%, 320px);
+}
+
+.solicitud-home-form {
+    width: min(100%, 460px);
+    margin: 22px auto 0;
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(100, 140, 75, 0.24);
+    border-radius: 12px;
+    box-shadow: 0 16px 34px rgba(31, 57, 22, 0.12);
+}
+
+.solicitud-home-form[hidden] {
+    display: none;
+}
+
+.solicitud-home-form .btn-submit {
+    width: 100%;
+}
+
+.entrega-limite-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.entrega-limite-grid label {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+}
+
+.form-help-text {
+    display: block;
+    margin-top: 7px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+@media (max-width: 520px) {
+    .entrega-limite-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
 #admin .admin-section-panel h3,
 #maestro h3 {
     color: var(--text-strong);
@@ -5115,6 +5168,46 @@ button.entrega-calendar-event {
 
 .tabla-reservas-excel td .reserva-status-badge {
         margin: 0;
+    }
+
+    #admin-reservasAdmin .admin-tabla-scroll {
+        margin-inline: -8px;
+    }
+
+    #admin-reservasAdmin .tabla-reservas-excel {
+        border-spacing: 0 6px;
+        font-size: 0.78rem;
+    }
+
+    #admin-reservasAdmin .tabla-reservas-excel tr {
+        padding: 6px 8px;
+        border-radius: 10px;
+    }
+
+    #admin-reservasAdmin .tabla-reservas-excel td {
+        grid-template-columns: 74px minmax(0, 1fr);
+        gap: 6px;
+        padding: 4px 2px;
+        min-height: 0;
+        line-height: 1.18;
+    }
+
+    #admin-reservasAdmin .tabla-reservas-excel td::before {
+        font-size: 0.62rem;
+        line-height: 1;
+    }
+
+    #admin-reservasAdmin .tabla-reservas-excel .reserva-status-badge,
+    #admin-reservasAdmin .tabla-reservas-excel .metric-label {
+        padding: 3px 7px;
+        font-size: 0.68rem;
+        line-height: 1;
+    }
+
+    #admin-reservasAdmin .tabla-reservas-excel button {
+        min-height: 30px;
+        padding: 5px 8px;
+        font-size: 0.72rem;
     }
 }
 

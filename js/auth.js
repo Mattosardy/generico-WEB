@@ -53,6 +53,23 @@ function actualizarNombreHeaderSesion(nombrePila = 'Invitado') {
     headerName.style.display = visible ? '' : 'none';
 }
 
+function obtenerPartesNombreSesion(usuario = null, socio = null) {
+    const metadata = usuario?.user_metadata || {};
+    const candidatos = [
+        [metadata.nombre, metadata.apellido],
+        [metadata.full_name],
+        [metadata.name],
+        [metadata.display_name],
+        [socio?.nombre, socio?.apellido],
+        [usuario?.email]
+    ];
+    const limpiarPartes = (partes) => partes.map((parte) => String(parte || '').trim()).filter(Boolean);
+    const normalizar = (partes) => limpiarPartes(partes).join(' ').toLowerCase();
+    const esGenerico = (partes) => ['admin', 'administrador', 'maestro', 'socio', 'invitado'].includes(normalizar(partes));
+    const conContenido = candidatos.map(limpiarPartes).filter((partes) => partes.length);
+    return conContenido.find((partes) => !esGenerico(partes)) || conContenido[0] || ['Invitado'];
+}
+
 function actualizarNombreUsuarioNav(partes = ['Invitado'], rol = appState.rolUsuario) {
     const userName = document.getElementById('userName');
     if (!userName) return;
@@ -97,7 +114,7 @@ async function actualizarUIporRol() {
             if (typeof actualizarEstadoSeguridadTelegram === 'function') {
                 await actualizarEstadoSeguridadTelegram();
             }
-            actualizarNombreUsuarioNav([socio.data.nombre], appState.rolUsuario);
+            actualizarNombreUsuarioNav(obtenerPartesNombreSesion(usuario, socio.data), appState.rolUsuario);
         } else {
             const email = String(usuario.email || '').trim().toLowerCase();
             const adminEmails = Array.isArray(window.GENERICO_ADMIN_EMAILS)
@@ -112,7 +129,7 @@ async function actualizarUIporRol() {
             }
             const dashboard = document.getElementById('socioDashboard');
             if (dashboard) dashboard.style.display = 'none';
-            actualizarNombreUsuarioNav([usuario.email], appState.rolUsuario);
+            actualizarNombreUsuarioNav(obtenerPartesNombreSesion(usuario), appState.rolUsuario);
         }
         actualizarBotonesSesion(true);
     } else {

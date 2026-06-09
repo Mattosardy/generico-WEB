@@ -19,13 +19,22 @@ Deno.serve(async (request) => {
     const body = await request.json().catch(() => ({}));
     const targetDate = typeof body.target_date === "string" ? body.target_date : new Date().toISOString().slice(0, 10);
 
-    const { data, error } = await supabase.rpc("queue_monthly_whatsapp_reminders", {
+    const { data: scheduled, error: scheduleError } = await supabase.rpc("queue_monthly_telegram_reminders", {
       target_date: targetDate,
     });
+    if (scheduleError) throw scheduleError;
 
-    if (error) throw error;
+    const { data: closed, error: closeError } = await supabase.rpc("close_expired_reservation_windows", {
+      target_date: targetDate,
+    });
+    if (closeError) throw closeError;
 
-    return new Response(JSON.stringify({ scheduled: data ?? 0, target_date: targetDate }), {
+    return new Response(JSON.stringify({
+      channel: "telegram",
+      scheduled: scheduled ?? 0,
+      closed_windows: closed ?? 0,
+      target_date: targetDate,
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

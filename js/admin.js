@@ -669,6 +669,8 @@ async function cargarEntregasAdmin() {
     if (!container) return;
     const configMap = await cargarContenidoInstitucional();
     const lugarEntrega = configMap.lugar_entrega || 'Lugar de Siempre';
+    const horasLimitePrimer = Number.parseInt(configMap.horas_limite_primer, 10) || 48;
+    const horasLimiteUltimo = Number.parseInt(configMap.horas_limite_ultimo, 10) || horasLimitePrimer;
 
     container.innerHTML = `
         <h3 style="color:var(--text-strong); margin-bottom: 12px;">Entregas</h3>
@@ -677,7 +679,15 @@ async function cargarEntregasAdmin() {
             <div class="form-grid">
                 <div class="form-group full-width">
                     <label>Aviso automatico</label>
-                    <input type="text" value="Tenes hasta 48 horas antes de la entrega para realizar tu reserva" readonly>
+                    <div class="entrega-limite-grid">
+                        <label>Entrega 1
+                            <input type="number" id="horasLimitePrimerAdmin" min="1" max="240" step="1" value="${horasLimitePrimer}">
+                        </label>
+                        <label>Entrega 2
+                            <input type="number" id="horasLimiteUltimoAdmin" min="1" max="240" step="1" value="${horasLimiteUltimo}">
+                        </label>
+                    </div>
+                    <small class="form-help-text">Tenes hasta las horas configuradas antes de cada entrega para realizar tu reserva.</small>
                 </div>
                 <div class="form-group full-width">
                     <label>Lugar por defecto visible en Actividades</label>
@@ -730,10 +740,12 @@ async function cargarEntregasAdmin() {
 async function guardarEntregaAdmin(event) {
     event.preventDefault();
     const lugarDefault = document.getElementById('entregaLugarDefaultAdmin')?.value?.trim() || 'Lugar de Siempre';
+    const horasLimitePrimer = Math.max(1, Math.min(240, Number.parseInt(document.getElementById('horasLimitePrimerAdmin')?.value, 10) || 48));
+    const horasLimiteUltimo = Math.max(1, Math.min(240, Number.parseInt(document.getElementById('horasLimiteUltimoAdmin')?.value, 10) || horasLimitePrimer));
     const updates = [
         { clave: 'lugar_entrega', valor: lugarDefault },
-        { clave: 'horas_limite_primer', valor: '48' },
-        { clave: 'horas_limite_ultimo', valor: '48' }
+        { clave: 'horas_limite_primer', valor: String(horasLimitePrimer) },
+        { clave: 'horas_limite_ultimo', valor: String(horasLimiteUltimo) }
     ];
 
     document.querySelectorAll('#admin-entregas .entrega-slot-admin').forEach((slot) => {
@@ -966,22 +978,40 @@ window.eliminarProductoAdminClick = async function(id) {
 async function cargarSolicitudesAdmin() {
     const container = document.getElementById('admin-solicitudes');
     if (!container) return;
-    const { data, error } = await supabaseClient.from('solicitudes_membresia').select('*').eq('estado', 'pendiente').order('fecha_solicitud', { ascending: false });
+    let { data, error } = await supabaseClient.from('solicitudes_membresia').select('*').eq('estado', 'pendiente').order('fecha_solicitud', { ascending: false });
+    if (error && /tipo_registro|schema cache|column/i.test(error.message || '')) {
+        const fallback = await supabaseClient.from('solicitudes_membresia').select('*').eq('estado', 'pendiente').order('fecha_solicitud', { ascending: false });
+        data = fallback.data;
+        error = fallback.error;
+    }
     if (error) {
         container.innerHTML = '<div class="loading">No se pudieron cargar las solicitudes.</div>';
         return;
     }
+    const etiquetaRegistro = (solicitud) => {
+        const valor = String(solicitud.tipo_registro || solicitud.mensaje || '').toLowerCase();
+        if (valor.includes('autocultivo')) return 'Autocultivo';
+        if (valor.includes('farmacia')) return 'Compra en farmacias';
+        if (valor.includes('ninguno')) return 'Ninguno';
+        return 'Sin dato';
+    };
+    const obtenerCedulaVisibleSolicitud = (solicitud) => {
+        const cedula = String(solicitud.cedula || '').trim();
+        return cedula.toLowerCase().startsWith('pendiente-') ? '' : cedula;
+    };
     container.innerHTML = (data || []).length ? `
         <div class="admin-tabla-scroll">
         <table class="tabla-datos">
-            <thead><tr><th>Fecha</th><th>Nombre</th><th>Telegram</th><th>Telefono</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Estado</th><th>Fecha</th><th>Nombre</th><th>Registro</th><th>Telefono</th><th>Cedula</th><th>Acciones</th></tr></thead>
             <tbody>${data.map((solicitud) => `
                 <tr>
+                    <td><span class="metric-label">Solicitud pendiente</span></td>
                     <td>${new Date(solicitud.fecha_solicitud).toLocaleDateString('es')}</td>
                     <td>${escapeHtml(solicitud.nombre)} ${escapeHtml(solicitud.apellido)}</td>
-                    <td>${solicitud.telegram_enabled && solicitud.telegram_chat_id ? 'Verificado' : 'Pendiente'}</td>
+                    <td>${escapeHtml(etiquetaRegistro(solicitud))}</td>
                     <td>${escapeHtml(solicitud.telefono)}</td>
-                    <td><button class="btn-aprobar" onclick="aprobarSolicitudAdmin('${solicitud.id}')">Aprobar</button> <button class="btn-rechazar" onclick="rechazarSolicitudAdmin('${solicitud.id}')">Rechazar</button></td>
+                    <td><input type="text" class="socio-edit-input small" id="solicitudCedula_${solicitud.id}" value="${escapeHtml(obtenerCedulaVisibleSolicitud(solicitud))}" placeholder="Cedula"></td>
+                    <td><button class="btn-aprobar" onclick="aprobarSolicitudAdmin('${solicitud.id}')">Confirmado</button> <button class="btn-rechazar" onclick="rechazarSolicitudAdmin('${solicitud.id}')">Rechazar</button></td>
                 </tr>
             `).join('')}</tbody>
         </table>
@@ -995,11 +1025,18 @@ window.aprobarSolicitudAdmin = async function(id) {
         mostrarMensaje('No se pudo cargar la solicitud', false);
         return;
     }
+    const cedulaInput = document.getElementById(`solicitudCedula_${id}`);
+    const cedula = String(cedulaInput?.value || solicitud.cedula || '').trim();
+    if (!cedula || cedula.toLowerCase().startsWith('pendiente-')) {
+        mostrarMensaje('Cargá el número de cédula antes de confirmar la solicitud.', false);
+        cedulaInput?.focus();
+        return;
+    }
     const { data, error } = await supabaseClient.functions.invoke('admin-create-socio', {
         body: {
             nombre: solicitud.nombre,
             apellido: solicitud.apellido,
-            cedula: solicitud.cedula,
+            cedula,
             telefono: solicitud.telefono,
             telegram_chat_id: solicitud.telegram_chat_id || null,
             telegram_username: solicitud.telegram_username || null,
@@ -1013,7 +1050,7 @@ window.aprobarSolicitudAdmin = async function(id) {
         mostrarMensaje(`No se pudo crear el socio: ${error?.message || data?.error || 'error desconocido'}`, false);
         return;
     }
-    await supabaseClient.from('solicitudes_membresia').update({ estado: 'aprobado' }).eq('id', id);
+    await supabaseClient.from('solicitudes_membresia').update({ estado: 'confirmado', cedula }).eq('id', id);
     mostrarMensaje(`Socio aprobado. Clave temporal: ${data.temporary_password}`, true);
     await cargarSolicitudesAdmin();
     await cargarAdminData();
