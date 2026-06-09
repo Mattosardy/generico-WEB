@@ -355,6 +355,7 @@ async function renderCarritoSocioEn(body, esModal = false) {
 async function abrirCarritoPantalla() {
     const body = document.getElementById('carritoPantallaBody');
     if (!body) return;
+    cerrarCarritoSocioModal();
     if (!appState.socioData?.id) {
         body.innerHTML = '<div class="empty-state"><i class="fas fa-cart-shopping"></i><strong>Carrito</strong><span>Iniciá sesión para ver tus pedidos.</span></div>';
         return;

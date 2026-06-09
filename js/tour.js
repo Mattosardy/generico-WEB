@@ -29,11 +29,10 @@ const GENERICO_TOUR_STEPS = {
             text: 'Cada socio puede llevar un maximo de 40g mensuales. El minimo disponible por variedad es 1 pack (20g de producto).'
         },
         {
-            selector: '#userName',
-            section: 'productos',
-            action: 'cart',
+            selector: '#carrito',
+            section: 'carrito',
             title: 'Carrito',
-            text: 'Toca tu nombre en la barra para abrir el carrito y revisar tus pedidos del ciclo actual.'
+            text: 'En Carrito podes revisar tus pedidos del ciclo actual sin abrir ventanas extra.'
         },
         {
             selector: '#reservasActividadCalendar',
@@ -127,6 +126,14 @@ function genericoTourKey(role) {
     return GENERICO_TOUR_KEYS[role] || '';
 }
 
+function genericoTourSessionKey(role) {
+    if (!role) return '';
+    const user = window.appState?.usuarioActual || {};
+    const userKey = String(user.id || user.email || 'anon').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const loginKey = String(user.last_sign_in_at || user.created_at || 'active').replace(/[^a-zA-Z0-9_-]/g, '_');
+    return `generico_tour_${role}_${userKey}_${loginKey}_prompted_session`;
+}
+
 function genericoTourVisibleSteps(role) {
     const steps = GENERICO_TOUR_STEPS[role] || [];
     if (role !== 'admin') return steps;
@@ -205,10 +212,6 @@ async function genericoTourPrepareStep(step) {
             const panel = document.getElementById(`admin-${step.adminSection}`);
             const panelVisible = panel && panel.style.display !== 'none';
             if (button && !panelVisible) button.click();
-        }
-
-        if (step.action === 'cart' && typeof abrirCarritoSocio === 'function') {
-            await abrirCarritoSocio();
         }
 
         if (step.action === 'calendar') {
@@ -367,7 +370,8 @@ function genericoTourOpen(role = genericoTourRole(), options = {}) {
     if (!role || !GENERICO_TOUR_KEYS[role]) return;
     const steps = genericoTourVisibleSteps(role);
     if (!steps.length) return;
-    sessionStorage.setItem(`generico_tour_${role}_prompted_session`, 'true');
+    const sessionKey = genericoTourSessionKey(role);
+    if (sessionKey) sessionStorage.setItem(sessionKey, 'true');
     genericoTourState.role = role;
     genericoTourState.steps = steps;
     genericoTourState.stepIndex = 0;
@@ -416,6 +420,9 @@ function genericoTourMaybeShow(role = genericoTourRole()) {
     if (!role || !GENERICO_TOUR_KEYS[role]) return;
     if (genericoTourState.active) return;
     if (localStorage.getItem(genericoTourKey(role)) === 'true') return;
+    const sessionKey = genericoTourSessionKey(role);
+    if (sessionKey && sessionStorage.getItem(sessionKey) === 'true') return;
+    if (sessionKey) sessionStorage.setItem(sessionKey, 'true');
     window.setTimeout(() => genericoTourOpen(role), 500);
 }
 
@@ -451,6 +458,7 @@ function genericoTourEnsureButtons() {
 
 function genericoTourRefresh() {
     genericoTourEnsureButtons();
+    genericoTourMaybeShow();
 }
 
 window.genericoTour = {
