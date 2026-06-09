@@ -1,4 +1,4 @@
-const GENERICO_CACHE_VERSION = 'generico-pwa-v23-20260606-mobile-header';
+const GENERICO_CACHE_VERSION = 'generico-pwa-v26-20260608-telegram-automation';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',

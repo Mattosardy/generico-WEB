@@ -1,5 +1,6 @@
 {
     "name":  "generico-web",
+    "account_id":  "0d84de2dc65291ec2373fcbbdca81063",
     "compatibility_date":  "2026-05-12",
     "workers_dev":  true,
     "main":  "worker.js",

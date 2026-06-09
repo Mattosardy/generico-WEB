@@ -35,7 +35,10 @@ enable_signup = true
 verify_jwt = true
 
 [functions.schedule-reminders]
-verify_jwt = true
+verify_jwt = false
+
+[functions.dispatch-telegram]
+verify_jwt = false
 
 [functions.admin-create-socio]
 verify_jwt = true

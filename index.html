@@ -18,7 +18,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=20260606-tour-modal-admin">
+    <link rel="stylesheet" href="css/style.css?v=20260608-telegram-automation">
     <link rel="stylesheet" href="css/theme-generico.css?v=20260606-mobile-header">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -70,6 +70,31 @@
             <i class="fas fa-leaf" style="font-size: 48px; color: var(--accent-strong);"></i>
             <h3 style="margin-top: 16px;">Bienvenido al &aacute;rea de socios</h3>
             <p style="color: var(--text-muted);">Us&aacute; el men&uacute; para explorar el cat&aacute;logo, tus pedidos y actividades.</p>
+            <button type="button" id="btnMostrarSolicitudMembresia" class="btn-submit solicitud-home-trigger"><i class="fas fa-user-plus"></i> Solicitar membresia</button>
+            <form id="formSolicitudMembresiaPublica" class="solicitud-home-form" hidden>
+                <div class="form-group">
+                    <label for="solicitudNombre">Nombre *</label>
+                    <input type="text" id="solicitudNombre" autocomplete="given-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="solicitudApellido">Apellido *</label>
+                    <input type="text" id="solicitudApellido" autocomplete="family-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="solicitudTelefono">Tel&eacute;fono *</label>
+                    <input type="tel" id="solicitudTelefono" placeholder="092456838" autocomplete="tel" required>
+                </div>
+                <div class="form-group">
+                    <label for="solicitudTipoRegistro">Registro *</label>
+                    <select id="solicitudTipoRegistro" required>
+                        <option value="">Seleccionar</option>
+                        <option value="autocultivo">Registrado para autocultivo</option>
+                        <option value="farmacias">Registrado para compra en farmacias</option>
+                        <option value="ninguno">Ninguno</option>
+                    </select>
+                </div>
+                <button type="submit" id="btnIniciarSolicitudMembresia" class="btn-submit"><i class="fas fa-paper-plane"></i> Iniciar solicitud</button>
+            </form>
         </div>
     </div>
 
@@ -347,6 +372,7 @@
 
     <div id="admin" class="section" style="display: none;">
         <h2 class="section-title"><i class="fas fa-chart-line"></i> Panel de Administración <span class="admin-section-title-subtitle">Resumen, guía y accesos rápidos</span></h2>
+        <div id="adminCards" class="dashboard-grid"></div>
         <div id="admin-empty" class="admin-empty-state">
             <i class="fas fa-sliders"></i>
             <strong>Panel de administración</strong>
@@ -643,18 +669,18 @@ window.__SUPABASE_ENV__ = {
     anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzenh1ZmZpeHluYnBjdmpiemZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDAyMzAsImV4cCI6MjA5NTMxNjIzMH0.pt7Wqk3jsmr9e0pQPTYmApfl9oktXM4Jd_YASz0te9E"
 };
 </script>
-<script src="js/supabase-client.js?v=20260527-cart-delete"></script>
+<script src="js/supabase-client.js?v=20260608-telegram-automation"></script>
 
 <script src="js/config.js?v=20260606-modal-identity"></script>
 <script src="js/utils.js?v=20260602-calendar-table-align"></script>
 <script src="js/notifications.js?v=20260605-auth-telegram"></script>
 <script src="js/auth.js?v=20260526-restore-functional"></script>
-<script src="js/public.js?v=20260606-modal-identity"></script>
+<script src="js/public.js?v=20260608-telegram-automation"></script>
 <script src="js/socio.js?v=20260606-modal-identity"></script>
 <script src="js/modals.js?v=20260606-modal-identity"></script>
-<script src="js/admin.js?v=20260606-tour-modal-admin"></script>
+<script src="js/admin.js?v=20260608-telegram-automation"></script>
 <script src="js/maestro.js?v=20260521-env-cleanup"></script>
-<script src="js/tour.js?v=20260606-calendar-tour"></script>
-<script src="js/main.js?v=20260605-auth-telegram"></script>
+<script src="js/tour.js?v=20260608-cart-screen-tour"></script>
+<script src="js/main.js?v=20260608-telegram-automation"></script>
 </body>
 </html>

@@ -9,12 +9,12 @@ async function cargarContenidoInstitucional() {
             if (item.clave === 'fecha_entrega_primer') configSistema.fechaEntregaPrimer = item.valor || '';
             if (item.clave === 'fecha_entrega_ultimo') configSistema.fechaEntregaUltimo = item.valor || '';
         });
+        configSistema.horasLimitePrimer = Number.parseInt(configMap.horas_limite_primer, 10) || 48;
+        configSistema.horasLimiteUltimo = Number.parseInt(configMap.horas_limite_ultimo, 10) || 48;
         appState.configMap = configMap;
         const entregasFuturas = obtenerEntregasConfiguradasFuturas(configMap, 3);
         if (entregasFuturas[0]?.fecha) configSistema.fechaEntregaPrimer = entregasFuturas[0].fecha;
         if (entregasFuturas[1]?.fecha) configSistema.fechaEntregaUltimo = entregasFuturas[1].fecha;
-        configSistema.horasLimitePrimer = 48;
-        configSistema.horasLimiteUltimo = 48;
         const videoGuardado = localStorage.getItem('generico_historia_video_url') || '';
         const videoHistoria = String(configMap.historia_video_url || videoGuardado || window.defaultHistoriaVideoUrl || '').trim();
         if (videoHistoria) {

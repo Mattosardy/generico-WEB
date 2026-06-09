@@ -221,6 +221,69 @@ function validarCambioPasswordActualizado(actual, nueva, repetir) {
     return '';
 }
 
+function validarTelefonoSolicitudPublica(telefono) {
+    const limpio = String(telefono || '').replace(/[^\d+]/g, '').trim();
+    const digitos = limpio.replace(/[^\d]/g, '');
+    if (limpio.startsWith('+598') && digitos.length === 11) return '';
+    if (digitos.startsWith('598') && digitos.length === 11) return '';
+    if (digitos.startsWith('09') && digitos.length === 9) return '';
+    if (digitos.startsWith('9') && digitos.length === 8) return '';
+    return 'Ingresá un teléfono válido, por ejemplo 092456838.';
+}
+
+function inicializarSolicitudMembresiaPublica() {
+    const trigger = document.getElementById('btnMostrarSolicitudMembresia');
+    const form = document.getElementById('formSolicitudMembresiaPublica');
+    if (!trigger || !form) return;
+
+    trigger.addEventListener('click', () => {
+        form.hidden = !form.hidden;
+        trigger.setAttribute('aria-expanded', String(!form.hidden));
+        if (!form.hidden) document.getElementById('solicitudNombre')?.focus();
+    });
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const boton = document.getElementById('btnIniciarSolicitudMembresia');
+        const datos = {
+            nombre: document.getElementById('solicitudNombre')?.value.trim() || '',
+            apellido: document.getElementById('solicitudApellido')?.value.trim() || '',
+            telefono: document.getElementById('solicitudTelefono')?.value.trim() || '',
+            tipo_registro: document.getElementById('solicitudTipoRegistro')?.value || ''
+        };
+        const errorTelefono = validarTelefonoSolicitudPublica(datos.telefono);
+        if (!datos.nombre || !datos.apellido || !datos.tipo_registro) {
+            mostrarMensaje('Completá nombre, apellido, teléfono y tipo de registro.', false);
+            return;
+        }
+        if (errorTelefono) {
+            mostrarMensaje(errorTelefono, false);
+            return;
+        }
+
+        if (boton) {
+            boton.disabled = true;
+            boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        }
+        try {
+            const resultado = await solicitarMembresia(datos);
+            if (!resultado.success) {
+                mostrarMensaje(resultado.error || 'No se pudo iniciar la solicitud.', false);
+                return;
+            }
+            form.reset();
+            form.hidden = true;
+            trigger.setAttribute('aria-expanded', 'false');
+            mostrarMensaje('Solicitud pendiente. El administrador la revisará desde Herramientas.', true);
+        } finally {
+            if (boton) {
+                boton.disabled = false;
+                boton.innerHTML = '<i class="fas fa-paper-plane"></i> Iniciar solicitud';
+            }
+        }
+    });
+}
+
 function renderPasswordTemporalGate() {
     const gate = document.getElementById('passwordTemporalGate');
     if (!gate) return;
@@ -511,6 +574,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarPlaceholders();
     inicializarAudioFondo();
     inicializarInstalacionPwa();
+    inicializarSolicitudMembresiaPublica();
     prepararMenuSocio();
     if (typeof actualizarBotonesSesion === 'function') actualizarBotonesSesion(false);
 
@@ -611,7 +675,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         await mostrarSeccion('inicio');
         if (window.genericoTour) {
             window.genericoTour.refresh();
-            window.genericoTour.maybeShow();
         }
     });
 

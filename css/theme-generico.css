@@ -243,7 +243,8 @@ body * {
 
 #productoModal .modal-content {
     background:
-        linear-gradient(rgba(222, 242, 214, 0.92), rgba(205, 232, 194, 0.9)) padding-box,
+        linear-gradient(rgba(242, 250, 236, 0.86), rgba(214, 237, 202, 0.88)) padding-box,
+        url("../assets/images/home_inst.png") center / cover no-repeat padding-box,
         linear-gradient(120deg, rgba(107, 142, 35, 0.42), rgba(79, 111, 26, 0.2)) border-box;
     border: 1px solid rgba(79, 111, 26, 0.28);
 }

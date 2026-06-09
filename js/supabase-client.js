@@ -131,16 +131,36 @@ async function obtenerActividades() {
 
 async function solicitarMembresia(datos) {
     try {
-        const { data, error } = await supabaseClient
+        const telefono = typeof normalizarTelefonoAuth === 'function'
+            ? normalizarTelefonoAuth(datos.telefono)
+            : datos.telefono;
+        const payload = {
+            nombre: datos.nombre,
+            apellido: datos.apellido,
+            cedula: datos.cedula || `pendiente-${String(telefono || '').replace(/[^\d]/g, '')}`,
+            telefono,
+            email: datos.email || null,
+            mensaje: datos.mensaje || null,
+            tipo_registro: datos.tipo_registro || null
+        };
+        let { data, error } = await supabaseClient
             .from('solicitudes_membresia')
-            .insert([{
-                nombre: datos.nombre,
-                apellido: datos.apellido,
-                cedula: datos.cedula,
-                telefono: datos.telefono,
-                email: datos.email || null,
-                mensaje: datos.mensaje || null
-            }]);
+            .insert([payload]);
+
+        if (error && /tipo_registro|schema cache|column/i.test(error.message || '')) {
+            const { tipo_registro, ...payloadFallback } = payload;
+            const fallback = await supabaseClient
+                .from('solicitudes_membresia')
+                .insert([{
+                    ...payloadFallback,
+                    mensaje: [
+                        payloadFallback.mensaje,
+                        tipo_registro ? `Registro: ${tipo_registro}` : ''
+                    ].filter(Boolean).join('\n')
+                }]);
+            data = fallback.data;
+            error = fallback.error;
+        }
         
         if (error) throw error;
         return { success: true, data };
