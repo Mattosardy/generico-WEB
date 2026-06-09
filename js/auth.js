@@ -56,11 +56,12 @@ function actualizarNombreHeaderSesion(nombrePila = 'Invitado') {
 function obtenerPartesNombreSesion(usuario = null, socio = null) {
     const metadata = usuario?.user_metadata || {};
     const candidatos = [
+        [socio?.nombre],
+        [socio?.nombre, socio?.apellido],
         [metadata.nombre, metadata.apellido],
         [metadata.full_name],
         [metadata.name],
         [metadata.display_name],
-        [socio?.nombre, socio?.apellido],
         [usuario?.email]
     ];
     const limpiarPartes = (partes) => partes.map((parte) => String(parte || '').trim()).filter(Boolean);
@@ -106,7 +107,7 @@ async function actualizarUIporRol() {
             socio = await obtenerSocioPorEmail(usuario.email);
         }
         if (socio.success && socio.data) {
-            appState.rolUsuario = socio.data.rol || 'socio';
+            appState.rolUsuario = String(socio.data.rol || 'socio').trim().toLowerCase();
             appState.socioData = socio.data;
             if (typeof renderPasswordTemporalGate === 'function') {
                 renderPasswordTemporalGate();
@@ -151,7 +152,7 @@ async function actualizarUIporRol() {
         el.style.display = appState.rolUsuario !== 'invitado' ? 'inline-block' : 'none';
     });
     document.querySelectorAll('.admin-only').forEach((el) => {
-        el.style.display = appState.rolUsuario === 'admin' ? '' : 'none';
+        el.style.display = appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro' ? '' : 'none';
     });
     document.querySelectorAll('.maestro-only').forEach((el) => {
         el.style.display = appState.rolUsuario === 'maestro' ? '' : 'none';

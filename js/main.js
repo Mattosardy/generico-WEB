@@ -104,6 +104,7 @@ function inicializarAudioFondo() {
 function usuarioPuedeVerSeccion(seccionId) {
     const rolesPermitidos = restrictedSections[seccionId];
     if (!rolesPermitidos) return true;
+    if (appState.rolUsuario === 'maestro') return true;
     return rolesPermitidos.includes(appState.rolUsuario);
 }
 
@@ -443,7 +444,7 @@ async function mostrarSeccion(seccionId) {
     const accesoPermitido = usuarioPuedeVerSeccion(seccionValida);
     const destino = accesoPermitido ? seccionValida : 'inicio';
     if (!accesoPermitido) guardarDestinoPostLogin(seccionValida);
-    if (destino === 'admin' && appState.rolUsuario === 'admin' && typeof cargarAdminData === 'function') {
+    if (destino === 'admin' && (appState.rolUsuario === 'admin' || appState.rolUsuario === 'maestro') && typeof cargarAdminData === 'function') {
         await ejecutarCargaSegura('cargarAdminData', cargarAdminData);
     }
     if (destino === 'maestro' && appState.rolUsuario === 'maestro' && typeof cargarMaestroDataCompleta === 'function') {
