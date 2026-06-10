@@ -213,18 +213,21 @@ function obtenerReservasActivasCarrito(reservas = []) {
         .sort((a, b) => new Date(a.fecha_retiro).getTime() - new Date(b.fecha_retiro).getTime());
 }
 
-function construirItemCarritoReservaHTML(reserva) {
+function construirItemCarritoReservaHTML(reserva, esArticulo = false) {
     const tipoReserva = obtenerTipoReservaUI(reserva);
     const fecha = reserva.fecha_retiro ? new Date(reserva.fecha_retiro).toLocaleDateString('es-UY') : 'Fecha a confirmar';
-    const nombre = reserva.producto_nombre || 'Variedad a definir';
+    const nombre = reserva.producto_nombre || (esArticulo ? 'Artículo a definir' : 'Variedad a definir');
     const estado = obtenerEtiquetaEstadoReserva(reserva, true);
+    const cantidad = esArticulo
+        ? formatearCantidadPedido(reserva.cantidad_gramos, true)
+        : formatearPacksReserva(reserva.cantidad_gramos);
     return `
         <article class="carrito-modal-item" data-reserva-id="${escapeHtml(String(reserva.id))}" data-tipo="${escapeHtml(tipoReserva)}">
             <div class="carrito-modal-item-main">
-                <span class="carrito-modal-item-icon"><i class="fas fa-leaf"></i></span>
+                <span class="carrito-modal-item-icon"><i class="fas ${esArticulo ? 'fa-box' : 'fa-leaf'}"></i></span>
                 <span class="carrito-modal-item-copy">
                     <strong>${escapeHtml(nombre)}</strong>
-                    <small>${escapeHtml(formatearPacksReserva(reserva.cantidad_gramos))} - ${escapeHtml(fecha)} - ${escapeHtml(estado)}</small>
+                    <small>${escapeHtml(cantidad)} - ${escapeHtml(fecha)} - ${escapeHtml(estado)}</small>
                 </span>
             </div>
             <div class="carrito-modal-item-actions">
@@ -276,16 +279,18 @@ async function abrirCarritoSocio() {
 
 async function renderCarritoSocioEn(body, esModal = false) {
     const reservas = await obtenerReservas(appState.socioData.id);
+    const productos = typeof obtenerProductos === 'function' ? await obtenerProductos() : [];
     appState.reservasSocio = reservas;
     const ciclo = appState.cicloClubActual || obtenerCicloClub();
     const activas = obtenerReservasActivasCarrito(reservas);
     const cupoMensual = obtenerCupoMensualGramos();
-    const gramosUsados = activas.reduce((total, reserva) => total + Number(reserva.cantidad_gramos || 0), 0);
+    const variedades = activas.filter((reserva) => !reservaEsArticulo(reserva, productos));
+    const articulos = activas.filter((reserva) => reservaEsArticulo(reserva, productos));
+    const gramosUsados = variedades.reduce((total, reserva) => total + Number(reserva.cantidad_gramos || 0), 0);
     const gramosRestantes = Math.max(0, cupoMensual - gramosUsados);
     const packsUsados = gramosAPacks(gramosUsados);
     const packsRestantes = gramosAPacks(gramosRestantes);
     const packsCupo = gramosAPacks(cupoMensual);
-    const articulos = [];
 
     body.innerHTML = `
         <span class="dashboard-eyebrow">Carrito del socio</span>
@@ -295,7 +300,7 @@ async function renderCarritoSocioEn(body, esModal = false) {
                 <h3 class="productos-columna-titulo">
                     <button type="button" class="productos-toggle" data-tipo-cultivo="carrito-resumen" aria-expanded="true">
                         <span class="productos-toggle-titulo"><i class="fas fa-cart-shopping"></i> Resumen</span>
-                        <span class="productos-toggle-descripcion">Cupo disponible del ciclo</span>
+                        <span class="productos-toggle-descripcion">Variedades y artículos reservados</span>
                         <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
                     </button>
                 </h3>
@@ -306,21 +311,8 @@ async function renderCarritoSocioEn(body, esModal = false) {
                     <span>${packsRestantes} packs disponibles en ${escapeHtml(ciclo.etiqueta || 'este ciclo')}</span>
                 </div>
                 <div class="carrito-modal-list">
-                    ${activas.length ? activas.map(construirItemCarritoReservaHTML).join('') : '<div class="carrito-modal-empty">Todavía no tenes variedades reservadas.</div>'}
-                </div>
-            </div>
-            <div class="productos-columna">
-                <h3 class="productos-columna-titulo">
-                    <button type="button" class="productos-toggle" data-tipo-cultivo="carrito-articulos" aria-expanded="false">
-                        <span class="productos-toggle-titulo"><i class="fas fa-box"></i> Artículos</span>
-                        <span class="productos-toggle-descripcion">Reservas por unidad</span>
-                        <i class="fas fa-chevron-down productos-toggle-icono" aria-hidden="true"></i>
-                    </button>
-                </h3>
-            </div>
-            <div class="productos-panel" data-tipo-cultivo="carrito-articulos" hidden>
-                <div class="carrito-modal-list">
-                    ${articulos.length ? '' : '<div class="carrito-modal-empty">Los artículos que reserves aparecerán acá cuando activemos esa sección.</div>'}
+                    ${variedades.length ? variedades.map((reserva) => construirItemCarritoReservaHTML(reserva, false)).join('') : '<div class="carrito-modal-empty">Todavia no tenes variedades reservadas.</div>'}
+                    ${articulos.length ? articulos.map((reserva) => construirItemCarritoReservaHTML(reserva, true)).join('') : ''}
                 </div>
             </div>
         </div>

@@ -51,6 +51,19 @@ function obtenerTotalPedidoMesActual() {
 }
 
 const GRAMOS_POR_UNIDAD_ARTICULO = 20;
+const MENSAJE_LIMITE_VARIEDADES = 'Has llegado al límite de 40g. Podés modificar el pedido y agregar una variedad diferente.';
+
+function obtenerCupoRestantePedidoActual() {
+    return Math.max(0, obtenerCupoMensualGramos() - obtenerTotalPedidoMesActual());
+}
+
+function mostrarAdvertenciaLimiteVariedades() {
+    if (typeof window.alert === 'function') {
+        window.alert(MENSAJE_LIMITE_VARIEDADES);
+        return;
+    }
+    mostrarMensaje(MENSAJE_LIMITE_VARIEDADES, false);
+}
 
 function productoModalEsArticulo() {
     return typeof productoEsArticulo === 'function' && productoEsArticulo(appState.productoModalActual || {});
@@ -116,7 +129,7 @@ function obtenerPrecioPedidoSeleccionado(gramos, esArticulo = false) {
 
 function actualizarEstadoPedidoModal() {
     const cupoMensual = obtenerCupoMensualGramos();
-    const restante = Math.max(0, cupoMensual - obtenerTotalPedidoMesActual());
+    const restante = obtenerCupoRestantePedidoActual();
     const packsRestantes = gramosAPacks(restante);
     const packsCupo = gramosAPacks(cupoMensual);
     const restanteEl = document.getElementById('pedidoRestante');
@@ -133,6 +146,7 @@ function actualizarEstadoPedidoModal() {
         ? ` Stock: ${esArticulo ? formatearTextoDisponibles(stock.gramosDisponibles, true) : formatearPacksDisponibles(stock.stockPacks, stock.gramosDisponibles)}.`
         : '';
     const passwordTemporalPendiente = typeof socioDebeCambiarPassword === 'function' && socioDebeCambiarPassword();
+    const limiteVariedadesAlcanzado = !esArticulo && !appState.reservaEditandoId && restante <= 0;
     const disponibleTexto = esArticulo
         ? 'Los artículos no descuentan cupo mensual'
         : `${packsRestantes} de ${packsCupo} packs`;
@@ -145,10 +159,12 @@ function actualizarEstadoPedidoModal() {
         const sinStockParaCantidad = stock.stockActivo && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos);
         const excedeCupoAlAgregar = !esArticulo && !appState.reservaEditandoId && gramos > restante;
         btn.classList.toggle('activa', gramos === appState.gramosSeleccionadosPedido);
-        btn.hidden = excedeCupoAlAgregar;
-        btn.disabled = passwordTemporalPendiente || (!esArticulo && gramos > restante) || sinStockParaCantidad;
+        btn.hidden = false;
+        btn.disabled = passwordTemporalPendiente || sinStockParaCantidad;
         if (sinStockParaCantidad) {
             btn.title = esArticulo ? 'No hay unidades suficientes para esta cantidad' : 'No hay packs suficientes para esta cantidad';
+        } else if (excedeCupoAlAgregar) {
+            btn.title = 'Límite mensual alcanzado';
         } else {
             btn.removeAttribute('title');
         }
@@ -174,6 +190,12 @@ function actualizarEstadoPedidoModal() {
         alertaEl.textContent = 'Cambiá tu contraseña temporal para poder reservar.';
         botonEl.disabled = true;
         botonEl.innerHTML = appState.reservaEditandoId ? 'Modificar pedido' : 'Realizar pedido';
+        return;
+    }
+    if (limiteVariedadesAlcanzado) {
+        alertaEl.textContent = MENSAJE_LIMITE_VARIEDADES;
+        botonEl.disabled = true;
+        botonEl.innerHTML = 'Realizar pedido';
         return;
     }
     if (!appState.gramosSeleccionadosPedido) {
@@ -212,10 +234,14 @@ function inicializarPedidoModal() {
     document.querySelectorAll('#opcionesPedido .opcion-pedido').forEach((btn) => {
         btn.onclick = () => {
             const gramos = Number(btn.dataset.gramos);
-            const restante = Math.max(0, obtenerCupoMensualGramos() - obtenerTotalPedidoMesActual());
+            const restante = obtenerCupoRestantePedidoActual();
             const esArticulo = productoModalEsArticulo();
             if (!esArticulo && gramos > restante) {
-                mostrarMensaje(`Te quedan ${formatearTextoDisponibles(restante, esArticulo)} en este ciclo.`, false);
+                if (restante <= 0) {
+                    mostrarAdvertenciaLimiteVariedades();
+                } else {
+                    mostrarMensaje(`Te quedan ${formatearTextoDisponibles(restante, esArticulo)} en este ciclo.`, false);
+                }
                 return;
             }
             if (typeof productoTieneStockParaGramos === 'function' && !productoTieneStockParaGramos(appState.productoModalActual || {}, gramos)) {
@@ -306,7 +332,7 @@ async function realizarPedidoProducto() {
         : Math.max(0, sumarGramosReservadosEnCiclo(reservas, appState.cicloClubActual || obtenerCicloClub(), productosCiclo) - Number(appState.reservaEditandoGramos || 0));
     const cupoMensual = obtenerCupoMensualGramos();
     if (!esArticulo && totalActual + appState.gramosSeleccionadosPedido > cupoMensual) {
-        mostrarMensaje(`Límite mensual alcanzado. Ya llevás ${formatearResumenDisponible(totalActual, esArticulo)} en este ciclo.`, false);
+        mostrarAdvertenciaLimiteVariedades();
         return;
     }
 
@@ -598,6 +624,9 @@ async function abrirModal(producto) {
     document.body.classList.add('modal-open');
     document.body.style.overflow = 'hidden';
     inicializarPedidoModal();
+    if (!esArticulo && !appState.reservaEditandoId && appState.gramosRestantesCiclo <= 0) {
+        window.setTimeout(mostrarAdvertenciaLimiteVariedades, 0);
+    }
 }
 
 function cerrarProductoModal() {
