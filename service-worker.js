@@ -1,4 +1,4 @@
-const GENERICO_CACHE_VERSION = 'generico-pwa-v28-20260610-t3-menu-title';
+const GENERICO_CACHE_VERSION = 'generico-pwa-v29-20260610-hide-menu-badge';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',
