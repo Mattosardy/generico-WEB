@@ -1226,6 +1226,132 @@ body.app-home .footer-cameo-link { color: #121812; }
     }
 }
 
+/* Menu principal con el mismo lenguaje visual del boton de regreso a inicio. */
+body.app-home #navContainer.header-nav > .app-main-btn,
+body.app-home #navContainer.header-nav > .app-main-btn.nav-btn,
+body.app-home .header-nav .app-main-btn {
+    display: grid;
+    grid-template-columns: clamp(48px, 14vw, 64px) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(10px, 3vw, 16px);
+    min-height: clamp(76px, 18vw, 96px);
+    height: auto;
+    padding: clamp(10px, 3vw, 14px) clamp(14px, 5vw, 22px);
+    border: 1px solid rgba(87, 128, 57, 0.48);
+    border-radius: 30px;
+    background:
+        linear-gradient(145deg, rgba(238, 255, 216, 0.96) 0%, rgba(198, 232, 151, 0.9) 48%, rgba(163, 206, 111, 0.84) 100%);
+    color: var(--club-text-color);
+    box-shadow:
+        0 18px 34px rgba(22, 45, 16, 0.26),
+        0 5px 0 rgba(78, 119, 48, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        inset 0 -18px 30px rgba(93, 142, 58, 0.12);
+    font-family: "Poppins", system-ui, sans-serif;
+    text-align: left;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
+    overflow: hidden;
+}
+
+body.app-home #navContainer.header-nav > .app-main-btn svg,
+body.app-home #navContainer.header-nav > .app-main-btn i,
+body.app-home .header-nav .app-main-btn svg,
+body.app-home .header-nav .app-main-btn i {
+    grid-column: 1;
+    display: grid;
+    place-items: center;
+    width: clamp(48px, 14vw, 64px);
+    height: clamp(48px, 14vw, 64px);
+    min-width: clamp(48px, 14vw, 64px);
+    padding: 10px;
+    border: 2px solid rgba(52, 103, 30, 0.48);
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(206, 236, 164, 0.72));
+    color: #102410;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 8px 16px rgba(23, 48, 16, 0.2);
+}
+
+body.app-home #navContainer.header-nav > .app-main-btn span,
+body.app-home .header-nav .app-main-btn span {
+    grid-column: 2;
+    justify-self: center;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #061108;
+    font-size: clamp(1.18rem, 6.2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: .02em;
+    line-height: 1;
+    text-align: center;
+}
+
+body.app-home #navContainer.header-nav > .app-main-btn::after,
+body.app-home .header-nav .app-main-btn::after {
+    content: "";
+    position: absolute;
+    inset: 1px 1px auto 1px;
+    display: block;
+    width: auto;
+    height: 42%;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+body.app-home #navContainer.header-nav > .app-main-btn:hover,
+body.app-home #navContainer.header-nav > .app-main-btn:focus-visible,
+body.app-home .header-nav .app-main-btn:hover,
+body.app-home .header-nav .app-main-btn:focus-visible {
+    background:
+        linear-gradient(145deg, rgba(245, 255, 226, 0.98) 0%, rgba(209, 240, 166, 0.94) 50%, rgba(172, 214, 116, 0.9) 100%);
+    filter: brightness(1.03) saturate(1.04);
+    transform: translateY(-2px);
+    box-shadow:
+        0 22px 42px rgba(22, 45, 16, 0.3),
+        0 6px 0 rgba(78, 119, 48, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78),
+        inset 0 -18px 30px rgba(93, 142, 58, 0.14);
+}
+
+body.app-home #navContainer.header-nav > .app-main-btn:active,
+body.app-home .header-nav .app-main-btn:active {
+    transform: translateY(2px) scale(0.99);
+    box-shadow:
+        0 9px 20px rgba(22, 45, 16, 0.22),
+        0 2px 0 rgba(78, 119, 48, 0.28),
+        inset 0 3px 10px rgba(57, 92, 37, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 420px) {
+    body.app-home #navContainer.header-nav > .app-main-btn,
+    body.app-home #navContainer.header-nav > .app-main-btn.nav-btn,
+    body.app-home .header-nav .app-main-btn {
+        grid-template-columns: clamp(48px, 15vw, 58px) minmax(0, 1fr);
+        min-height: clamp(68px, 18vw, 84px);
+        padding: 9px 12px;
+    }
+
+    body.app-home #navContainer.header-nav > .app-main-btn svg,
+    body.app-home #navContainer.header-nav > .app-main-btn i,
+    body.app-home .header-nav .app-main-btn svg,
+    body.app-home .header-nav .app-main-btn i {
+        width: clamp(48px, 15vw, 58px);
+        height: clamp(48px, 15vw, 58px);
+        min-width: clamp(48px, 15vw, 58px);
+        border-radius: 18px;
+    }
+
+    body.app-home #navContainer.header-nav > .app-main-btn span,
+    body.app-home .header-nav .app-main-btn span {
+        font-size: clamp(1rem, 5.8vw, 1.5rem);
+    }
+}
+
 .actividades-acordeon .productos-panel[data-tipo-cultivo="actividades-historia"] {
     padding: 20px;
 }
