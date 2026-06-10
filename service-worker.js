@@ -1,4 +1,4 @@
-const GENERICO_CACHE_VERSION = 'generico-pwa-v30-20260610-cart-summary-limit';
+const GENERICO_CACHE_VERSION = 'generico-pwa-v31-20260610-admin-remove-orders-chart';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',

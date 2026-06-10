@@ -498,33 +498,20 @@ async function cargarGraficosDashboard() {
     const adminCards = document.getElementById('adminCards');
     if (!adminCards) return;
 
-    const { data: reservas } = await supabaseClient
-        .from('reservas_mensuales')
-        .select('fecha_retiro, cantidad_gramos')
-        .eq('estado', 'confirmado');
     const { data: socios } = await supabaseClient
         .from('socios')
         .select('fecha_ingreso');
 
-    const reservasPorMes = {};
     const sociosPorMes = {};
-    (reservas || []).forEach((reserva) => {
-        const mes = new Date(reserva.fecha_retiro).toLocaleDateString('es', { month: 'short', year: 'numeric' });
-        reservasPorMes[mes] = (reservasPorMes[mes] || 0) + gramosAPacks(reserva.cantidad_gramos);
-    });
     (socios || []).forEach((socio) => {
         const mes = new Date(socio.fecha_ingreso).toLocaleDateString('es', { month: 'short', year: 'numeric' });
         sociosPorMes[mes] = (sociosPorMes[mes] || 0) + 1;
     });
 
-    if (!document.getElementById('graficoReservas')) {
+    if (!document.getElementById('graficoSocios')) {
         adminCards.insertAdjacentHTML(
             'afterend',
             `<div id="adminChartsRow" class="admin-charts-row">
-                <div class="admin-chart-card">
-                    <div class="card-label">Pedidos mensuales</div>
-                    <canvas id="graficoReservas" class="admin-chart-canvas"></canvas>
-                </div>
                 <div class="admin-chart-card">
                     <div class="card-label">Nuevos socios</div>
                     <canvas id="graficoSocios" class="admin-chart-canvas"></canvas>
@@ -533,20 +520,7 @@ async function cargarGraficosDashboard() {
         );
     }
 
-    if (appState.reservasChart) appState.reservasChart.destroy();
     if (appState.sociosChart) appState.sociosChart.destroy();
-
-    const ctxReservas = document.getElementById('graficoReservas')?.getContext('2d');
-    if (ctxReservas) {
-        appState.reservasChart = new Chart(ctxReservas, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(reservasPorMes),
-                datasets: [{ label: 'Packs', data: Object.values(reservasPorMes), backgroundColor: 'rgba(124, 163, 90, 0.5)', borderColor: '#7ca35a', borderWidth: 1 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e0ecd0' } } }, scales: { y: { ticks: { color: '#e0ecd0' } }, x: { ticks: { color: '#e0ecd0' } } } }
-        });
-    }
 
     const ctxSocios = document.getElementById('graficoSocios')?.getContext('2d');
     if (ctxSocios) {

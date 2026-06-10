@@ -42,7 +42,6 @@ window.appState = {
     gramosRestantesCiclo: 40,
     reservasActivasCount: 0,
     historialRetiradoCount: 0,
-    reservasChart: null,
     sociosChart: null,
     configWhatsApp: { phoneNumberId: null, accessToken: null },
     configTelegram: { botUsername: window.TELEGRAM_BOT_USERNAME },
