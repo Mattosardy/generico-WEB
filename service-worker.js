@@ -1,4 +1,4 @@
-const GENERICO_CACHE_VERSION = 'generico-pwa-v27-20260610-t3-420-branding';
+const GENERICO_CACHE_VERSION = 'generico-pwa-v28-20260610-t3-menu-title';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',
