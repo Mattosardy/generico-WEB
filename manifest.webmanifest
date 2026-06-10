@@ -1,7 +1,7 @@
 {
-  "name": "generico_WEB",
-  "short_name": "generico_WEB",
-  "description": "Plantilla generico_WEB para clubes: area privada de socios, pedidos mensuales, entregas y novedades.",
+  "name": "T3 / 420",
+  "short_name": "T3 / 420",
+  "description": "Demo T3 / 420 para clubes: area privada de socios, pedidos mensuales, entregas y novedades.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

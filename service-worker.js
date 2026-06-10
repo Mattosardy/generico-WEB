@@ -1,4 +1,4 @@
-const GENERICO_CACHE_VERSION = 'generico-pwa-v26-20260608-telegram-automation';
+const GENERICO_CACHE_VERSION = 'generico-pwa-v27-20260610-t3-420-branding';
 const GENERICO_APP_SHELL = [
     '/',
     '/index.html',
@@ -17,6 +17,7 @@ const GENERICO_APP_SHELL = [
     '/js/maestro.js',
     '/js/tour.js',
     '/js/main.js',
+    '/assets/images/logo-t3-420.png',
     '/assets/icons/icon-192.png',
     '/assets/icons/icon-512.png',
     '/assets/icons/maskable-icon-512.png',

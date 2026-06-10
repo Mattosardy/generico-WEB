@@ -892,7 +892,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
     const historiaAdicional = document.getElementById('historiaTextoAdicional');
     const btnLeerMasHistoria = document.getElementById('btnLeerMasHistoria');
     const historiaTextoPlano = typeof configMap.historia_texto === 'string' ? configMap.historia_texto.trim() : '';
-    const tituloHistoriaPredeterminado = 'generico_WEB';
+    const tituloHistoriaPredeterminado = 'T3 / 420';
     const resumenHistoria = 'Flores de alta calidad y una experiencia cuidada para quienes buscan elegir y consumir de forma consciente.';
     const normalizarTextoHistoria = (texto) => String(texto || '')
         .normalize('NFD')
@@ -955,7 +955,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
     if (historiaAdicional) {
         let textoAdicional = '';
         if (historiaTextoPlano) {
-            const textoSinTitulo = historiaTextoPlano.replace(/^generico_WEB\s*/i, '').trim();
+            const textoSinTitulo = historiaTextoPlano.replace(/^(generico_WEB|T3 \/ 420)\s*/i, '').trim();
             textoAdicional = textoSinTitulo.startsWith(resumenHistoria)
                 ? textoSinTitulo.slice(resumenHistoria.length).trim()
                 : textoSinTitulo;
@@ -1016,7 +1016,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
             historiaMedia.innerHTML = `
                 <img
                     src="${imagenPrincipal}"
-                    alt="Historia generico_WEB"
+                    alt="Historia T3 / 420"
                     class="historia-media-principal"
                     onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('Sitio en construcción')}';"
                 >
@@ -1060,7 +1060,7 @@ function aplicarContenidoInstitucional(configMap = {}) {
 function inicializarPlaceholders() {
     if (localStorage.getItem('generico_placeholders')) return;
     const images = {
-        'generico-dream': { color: '#2d5a27', text: 'generico_WEB Dream' },
+        'generico-dream': { color: '#2d5a27', text: 'T3 / 420 Dream' },
         'sapo-kush': { color: '#3a6b2d', text: 'Sapo Kush' },
         'rana-verde': { color: '#4a7a3a', text: 'Rana Verde' },
         'red-pop': { color: '#8b3a3a', text: 'Red Pop' }
@@ -1079,7 +1079,7 @@ function inicializarPlaceholders() {
         ctx.fillText(config.text, 200, 140);
         ctx.font = '14px Poppins, Arial';
         ctx.fillStyle = '#a0b890';
-        ctx.fillText('generico_WEB', 200, 170);
+        ctx.fillText('T3 / 420', 200, 170);
         placeholders[name] = canvas.toDataURL('image/jpeg', 0.9);
     });
     localStorage.setItem('generico_placeholders', JSON.stringify(placeholders));
@@ -1099,7 +1099,7 @@ window.seleccionarHistoriaImagen = function(indice) {
     historiaMedia.innerHTML = `
         <img
             src="${imagen}"
-            alt="Historia generico_WEB"
+            alt="Historia T3 / 420"
             class="historia-media-principal"
             onerror="this.onerror=null; this.src='${crearPlaceholderConstruccion('Sitio en construcción')}';"
         >
