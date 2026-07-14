@@ -1,6 +1,6 @@
 // ============================================
 // SUPABASE CLIENT - GENERICO CLUB
-// VERSIÓN CON LOGIN POR EMAIL
+// VERSION CON LOGIN POR TELEFONO Y PASSWORD
 // ============================================
 
 function resolverSupabaseEnv() {
@@ -15,7 +15,21 @@ function resolverSupabaseEnv() {
     try {
         parsedUrl = new URL(supabaseUrl);
     } catch (_error) {
-        throw new Error('SUPABASE_URL invalida. Verificar variables de entorno del servidor.');
+        const error = new Error('SUPABASE_URL invalida. Verificar variables de entorno del servidor.');
+        error.code = 'SUPABASE_CONFIG_INVALID';
+        throw error;
+    }
+
+    const esLocal = ['localhost', '127.0.0.1'].includes(parsedUrl.hostname);
+    if ((!esLocal && parsedUrl.protocol !== 'https:') || (esLocal && !['http:', 'https:'].includes(parsedUrl.protocol))) {
+        const error = new Error('SUPABASE_URL debe usar HTTPS (salvo durante desarrollo local).');
+        error.code = 'SUPABASE_CONFIG_INVALID';
+        throw error;
+    }
+    if (!esLocal && !/^[a-z0-9-]+\.supabase\.co$/i.test(parsedUrl.hostname)) {
+        const error = new Error('SUPABASE_URL no apunta a un hostname valido de Supabase.');
+        error.code = 'SUPABASE_CONFIG_INVALID';
+        throw error;
     }
 
     return {
@@ -29,15 +43,21 @@ var SUPABASE_URL = '';
 var SUPABASE_ANON_KEY = '';
 var SUPABASE_PROJECT_REF = '';
 var supabaseClient = null;
+var supabaseInitError = null;
+var supabaseSessionCheckBlocked = false;
 
-const supabaseEnv = resolverSupabaseEnv();
-SUPABASE_URL = supabaseEnv.url;
-SUPABASE_ANON_KEY = supabaseEnv.anonKey;
-SUPABASE_PROJECT_REF = supabaseEnv.projectRef;
+try {
+    const supabaseEnv = resolverSupabaseEnv();
+    SUPABASE_URL = supabaseEnv.url;
+    SUPABASE_ANON_KEY = supabaseEnv.anonKey;
+    SUPABASE_PROJECT_REF = supabaseEnv.projectRef;
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (error) {
+    supabaseInitError = error;
+    console.error('No se pudo inicializar Supabase:', error.message);
+}
 
 window.SUPABASE_URL = SUPABASE_URL;
-
-supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.supabaseClient = supabaseClient;
 
 function errorEsRefreshTokenInvalido(error) {
@@ -45,15 +65,115 @@ function errorEsRefreshTokenInvalido(error) {
     return mensaje.includes('invalid refresh token') || mensaje.includes('refresh token not found');
 }
 
+function haySesionLocalSupabase() {
+    if (typeof localStorage === 'undefined' || !SUPABASE_PROJECT_REF) return false;
+    try {
+        const prefijo = `sb-${SUPABASE_PROJECT_REF}-`;
+        return Object.keys(localStorage).some((clave) => clave.startsWith(prefijo));
+    } catch (_error) {
+        return false;
+    }
+}
+
+function clasificarErrorSupabase(error, opciones = {}) {
+    const mensajeOriginal = String(error?.message || error || '').trim();
+    const mensaje = mensajeOriginal.toLowerCase();
+    const status = Number(error?.status || error?.statusCode || 0);
+    const teniaSesionLocal = Boolean(opciones.teniaSesionLocal);
+    const esConsultaSesion = opciones.operacion === 'refresh' || opciones.operacion === 'sesion';
+    const esErrorDeRed = error?.name === 'AuthRetryableFetchError'
+        || error?.name === 'TypeError'
+        || mensaje.includes('failed to fetch')
+        || mensaje.includes('fetch failed')
+        || mensaje.includes('network request failed')
+        || mensaje.includes('load failed')
+        || mensaje.includes('err_name_not_resolved');
+
+    if (error?.code === 'SUPABASE_CONFIG_INVALID' || !SUPABASE_URL || !supabaseClient) {
+        return {
+            code: 'configuracion_invalida',
+            message: 'La configuracion de Supabase es invalida o esta incompleta. Verifica la URL configurada para esta web.',
+            canClearSession: false,
+            retryable: false
+        };
+    }
+
+    if (errorEsRefreshTokenInvalido(error)) {
+        return {
+            code: 'sesion_vieja',
+            message: 'La sesion guardada ya no es valida y no se pudo refrescar. Podes limpiar solo esa sesion local e iniciar sesion nuevamente.',
+            canClearSession: teniaSesionLocal,
+            retryable: false
+        };
+    }
+
+    if (esErrorDeRed && typeof navigator !== 'undefined' && navigator.onLine === false) {
+        return {
+            code: esConsultaSesion && teniaSesionLocal ? 'refresh_sin_conexion' : 'sin_conexion',
+            message: esConsultaSesion && teniaSesionLocal
+                ? 'No se pudo refrescar la sesion guardada porque no hay conexion. No se borro la sesion local.'
+                : 'No hay conexion a Internet. Revisa la red e intenta nuevamente.',
+            canClearSession: false,
+            retryable: true
+        };
+    }
+
+    if (esErrorDeRed || status >= 500) {
+        return {
+            code: esConsultaSesion && teniaSesionLocal ? 'refresh_supabase_no_disponible' : 'supabase_no_disponible',
+            message: esConsultaSesion && teniaSesionLocal
+                ? 'Supabase no esta disponible y no se pudo refrescar la sesion guardada. La sesion local se conservo.'
+                : 'Supabase no esta disponible. Verifica la URL configurada o intenta nuevamente mas tarde.',
+            canClearSession: false,
+            retryable: true
+        };
+    }
+
+    if (['invalid_login_credentials', 'invalid_credentials'].includes(String(error?.code || '').toLowerCase())
+        || mensaje.includes('invalid login credentials')
+        || mensaje.includes('telefono o contrasena incorrectos')) {
+        return {
+            code: 'credenciales_incorrectas',
+            message: 'Telefono o contrasena incorrectos.',
+            canClearSession: false,
+            retryable: false
+        };
+    }
+
+    return {
+        code: 'error_autenticacion',
+        message: mensajeOriginal || 'No se pudo completar la autenticacion.',
+        canClearSession: false,
+        retryable: status === 429
+    };
+}
+
+function publicarEstadoAuthSupabase(diagnostico = null) {
+    window.supabaseAuthStatus = diagnostico;
+    window.dispatchEvent(new CustomEvent('supabase-auth-status', { detail: diagnostico }));
+}
+
+function detenerRefreshAutomaticoSupabase() {
+    try {
+        supabaseClient?.auth?.stopAutoRefresh();
+    } catch (_error) {
+        // La pantalla de login debe seguir disponible aunque no se pueda detener el timer interno.
+    }
+}
+
 function limpiarSesionLocalSupabase() {
-    if (typeof localStorage === 'undefined') return;
+    if (typeof localStorage === 'undefined' || !SUPABASE_PROJECT_REF) return false;
     try {
         const prefijo = `sb-${SUPABASE_PROJECT_REF}-`;
         Object.keys(localStorage).forEach((clave) => {
             if (clave.startsWith(prefijo)) localStorage.removeItem(clave);
         });
+        supabaseSessionCheckBlocked = false;
+        publicarEstadoAuthSupabase(null);
+        return true;
     } catch (error) {
         console.warn('No se pudo limpiar la sesión local de Supabase:', error);
+        return false;
     }
 }
 
@@ -229,24 +349,24 @@ function normalizarTelefonoAuth(telefono) {
 
 async function loginConTelefonoPassword(telefono, password) {
     try {
+        if (!supabaseClient) throw supabaseInitError || new Error('Configuracion de Supabase no disponible.');
         const phone = normalizarTelefonoAuth(telefono);
-        const { data: emailTecnico, error: rpcError } = await supabaseClient.rpc('get_login_email_by_phone', {
-            p_phone: phone
-        });
-
-        if (rpcError) throw rpcError;
-        if (!emailTecnico) throw new Error('Telefono o contrasena incorrectos');
-
         const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: emailTecnico,
+            phone,
             password
         });
 
         if (error) throw error;
+        const refreshEstabaBloqueado = supabaseSessionCheckBlocked;
+        supabaseSessionCheckBlocked = false;
+        publicarEstadoAuthSupabase(null);
+        if (refreshEstabaBloqueado) supabaseClient.auth.startAutoRefresh();
         return { success: true, data };
     } catch (error) {
         console.error('Error al iniciar sesion con telefono:', error.message);
-        return { success: false, error };
+        const diagnostic = clasificarErrorSupabase(error, { operacion: 'login' });
+        publicarEstadoAuthSupabase(diagnostic);
+        return { success: false, error, diagnostic, message: diagnostic.message };
     }
 }
 
@@ -307,14 +427,34 @@ async function cambiarPasswordTemporal(nuevaPassword) {
 
 // Obtener usuario actual (sesión activa)
 async function obtenerUsuarioActual() {
+    const teniaSesionLocal = haySesionLocalSupabase();
+    if (!supabaseClient) {
+        publicarEstadoAuthSupabase(clasificarErrorSupabase(
+            supabaseInitError || new Error('Configuracion de Supabase no disponible.'),
+            { operacion: 'sesion', teniaSesionLocal }
+        ));
+        return null;
+    }
+    if (supabaseSessionCheckBlocked) return null;
+
     try {
         const { data: { user }, error } = await supabaseClient.auth.getUser();
         if (error) throw error;
+        publicarEstadoAuthSupabase(null);
         return user;
     } catch (error) {
-        if (errorEsRefreshTokenInvalido(error)) {
-            limpiarSesionLocalSupabase();
+        if (error?.message === 'Auth session missing!' && !teniaSesionLocal) {
+            publicarEstadoAuthSupabase(null);
             return null;
+        }
+        const diagnostic = clasificarErrorSupabase(error, {
+            operacion: 'refresh',
+            teniaSesionLocal
+        });
+        publicarEstadoAuthSupabase(diagnostic);
+        if (diagnostic.code.startsWith('refresh_') || diagnostic.code === 'sesion_vieja') {
+            supabaseSessionCheckBlocked = true;
+            detenerRefreshAutomaticoSupabase();
         }
         if (error?.message !== 'Auth session missing!') {
             console.error('Error al obtener usuario:', error.message);
@@ -400,7 +540,7 @@ async function confirmarReserva(socioId, gramos, tipo, fechaRetiro, producto = n
         const reserva = {
             socio_id: socioId,
             mes: fechaReserva.getMonth() + 1,
-            ['a\u00c3\u00b1o']: fechaReserva.getFullYear(),
+            ['a\u00f1o']: fechaReserva.getFullYear(),
             cantidad_gramos: gramos,
             fecha_retiro: fechaRetiro,
             tipo_entrega: tipo === 'primer' ? 'primer_jueves' : 'ultimo_jueves',
@@ -514,6 +654,9 @@ window.marcarPasswordCambiada = marcarPasswordCambiada;
 window.normalizarTelefonoAuth = normalizarTelefonoAuth;
 window.obtenerUsuarioActual = obtenerUsuarioActual;
 window.cerrarSesion = cerrarSesion;
+window.clasificarErrorSupabase = clasificarErrorSupabase;
+window.limpiarSesionLocalSupabase = limpiarSesionLocalSupabase;
+window.haySesionLocalSupabase = haySesionLocalSupabase;
 
 // Funciones para socio
 window.obtenerSocioPorAuthId = obtenerSocioPorAuthId;

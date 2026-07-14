@@ -1,3 +1,7 @@
+insert into public.configuracion_sistema (clave, valor)
+values ('maestro_telefono', '')
+on conflict (clave) do nothing;
+
 create or replace function public.current_user_is_maestro()
 returns boolean
 language sql
@@ -11,7 +15,10 @@ as $$
         where (s.auth_user_id = auth.uid()
             or lower(coalesce(s.email, '')) = lower(coalesce(auth.jwt()->>'email', '')))
           and s.rol = 'maestro'
-          and public.normalize_phone_uy(s.telefono) = '+59891950107'
+          and public.normalize_phone_uy(s.telefono) = public.normalize_phone_uy(
+              coalesce((select valor from public.configuracion_sistema where clave = 'maestro_telefono'), '')
+          )
+          and nullif((select valor from public.configuracion_sistema where clave = 'maestro_telefono'), '') is not null
           and coalesce(s.estado, 'activo') = 'activo'
     );
 $$;
@@ -33,7 +40,15 @@ declare
     v_new_role text := coalesce(new.rol, 'socio');
     v_old_role text := 'socio';
     v_new_phone text := public.normalize_phone_uy(new.telefono);
+    v_master_phone text;
 begin
+    select public.normalize_phone_uy(valor)
+    into v_master_phone
+    from public.configuracion_sistema
+    where clave = 'maestro_telefono';
+
+    v_master_phone := coalesce(v_master_phone, '');
+
     if tg_op = 'UPDATE' then
         v_old_role := coalesce(old.rol, 'socio');
     end if;
@@ -43,8 +58,12 @@ begin
     end if;
 
     if v_new_role = 'maestro' then
-        if v_new_phone <> '+59891950107' then
-            raise exception 'El unico maestro permitido es el telefono 091950107.';
+        if v_master_phone = '' then
+            raise exception 'Primero debe configurarse el telefono maestro.';
+        end if;
+
+        if v_new_phone <> v_master_phone then
+            raise exception 'El rol maestro esta reservado al telefono configurado.';
         end if;
 
         if tg_op = 'INSERT' then
@@ -75,8 +94,8 @@ begin
         return new;
     end if;
 
-    if v_old_role = 'maestro' and v_new_phone <> '+59891950107' then
-        raise exception 'El telefono del maestro debe ser 091950107.';
+    if v_old_role = 'maestro' and v_new_phone <> v_master_phone then
+        raise exception 'El telefono del maestro debe coincidir con la configuracion.';
     end if;
 
     if v_new_role is distinct from v_old_role then

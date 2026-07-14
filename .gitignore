@@ -1,8 +1,18 @@
 config.txt
 .env
+.env.*
+!.env.example
+!**/.env.example
 .env.local
 node_modules/
 supabase/.temp/
+supabase/.branches/
+.wrangler/
+*.log
+*.dump
+*.bak
+*.backup
+*.tmp
 
 # Local Netlify folder
 .netlify

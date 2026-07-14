@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css?v=20260608-telegram-automation">
     <link rel="stylesheet" href="css/theme-generico.css?v=20260610-hide-menu-badge">
+    <link rel="stylesheet" href="css/club-theme.css?v=generated-club-theme">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -33,8 +34,8 @@
             <div class="logo">
                 <div class="home-title-group">
   <h1 class="home-main-title">
-    <img src="assets/images/logo-t3-420.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'">
-    <span>T3 - 420</span>
+    <img id="clubLogoPrincipal" src="assets/images/logo-t3-420.png" alt="" aria-hidden="true" class="logo-mark" onerror="this.style.display='none'">
+    <span id="clubNombrePrincipal">T3 - 420</span>
   </h1>
 
   <div class="home-subtitle">inicio</div>
@@ -124,7 +125,7 @@
                                         <span><i class="fas fa-calendar-check"></i> Pedidos y entregas configurables</span>
                                         <span><i class="fas fa-bell"></i> Avisos y entregas organizadas</span>
                                         <span><i class="fas fa-pen-to-square"></i> Posibilidad de modificar o eliminar pedidos según disponibilidad y estado</span>
-                                        <button type="button" class="club-intro-badge-action" data-install-app><i class="fas fa-mobile-screen-button"></i> Instalar T3 / 420 en el dispositivo</button>
+                                        <button type="button" class="club-intro-badge-action" data-install-app><i class="fas fa-mobile-screen-button"></i> <span data-club-install-text>Instalar T3 / 420 en el dispositivo</span></button>
                                     </div>
                                 </div>
                                 <div class="historia-content">
@@ -348,6 +349,10 @@
                 <button type="submit" class="btn-submit"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
                 <p class="login-admin-help">¿Necesitás una nueva clave? Solicitá una nueva clave temporal al administrador del club.</p>
             </form>
+            <div id="supabaseAuthNotice" role="alert" hidden style="max-width: 400px; margin-top: 16px; padding: 14px; border: 1px solid var(--border-strong); border-radius: 12px; color: var(--text-main); background: var(--surface-soft);">
+                <p id="supabaseAuthNoticeText" style="margin: 0;"></p>
+                <button type="button" id="btnLimpiarSesionSupabase" class="btn-submit" hidden style="margin-top: 12px;">Limpiar sesion guardada</button>
+            </div>
         </div>
         <div id="panelRegister" style="display: none;" hidden aria-hidden="true">
             <p style="color: var(--text-main); margin-bottom: 20px;">Completá tus datos y verificá Telegram para recibir avisos del club.</p>
@@ -665,22 +670,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 window.__SUPABASE_ENV__ = {
-    url: "https://bszxuffixynbpcvjbzfa.supabase.co",
-    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzenh1ZmZpeHluYnBjdmpiemZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDAyMzAsImV4cCI6MjA5NTMxNjIzMH0.pt7Wqk3jsmr9e0pQPTYmApfl9oktXM4Jd_YASz0te9E"
+    url: "%VITE_SUPABASE_URL%",
+    anonKey: "%VITE_SUPABASE_ANON_KEY%"
 };
 </script>
-<script src="js/supabase-client.js?v=20260608-telegram-automation"></script>
+<script src="js/club-config.js?v=20260613-club-config"></script>
+<script src="js/supabase-client.js?v=20260714-auth-diagnostics"></script>
 
 <script src="js/config.js?v=20260606-modal-identity"></script>
 <script src="js/utils.js?v=20260602-calendar-table-align"></script>
 <script src="js/notifications.js?v=20260605-auth-telegram"></script>
-<script src="js/auth.js?v=20260526-restore-functional"></script>
+<script src="js/auth.js?v=20260714-auth-diagnostics"></script>
 <script src="js/public.js?v=20260608-telegram-automation"></script>
 <script src="js/socio.js?v=20260610-cart-summary-limit"></script>
 <script src="js/modals.js?v=20260610-cart-summary-limit"></script>
 <script src="js/admin.js?v=20260608-telegram-automation"></script>
 <script src="js/maestro.js?v=20260521-env-cleanup"></script>
 <script src="js/tour.js?v=20260608-cart-screen-tour"></script>
-<script src="js/main.js?v=20260610-admin-remove-orders-chart"></script>
+<script src="js/main.js?v=20260714-auth-diagnostics"></script>
 </body>
 </html>

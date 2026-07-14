@@ -9,7 +9,9 @@ window.configSistema = {
 
 window.defaultHistoriaVideoUrl = '';
 window.defaultHistoriaImagenUrl = 'assets/images/home_inst.png';
-window.TELEGRAM_BOT_USERNAME = 'GenericoWeb_bot';
+window.TELEGRAM_BOT_USERNAME = typeof window.getClubConfigValue === 'function'
+    ? window.getClubConfigValue('telegramUsername', 'GenericoWeb_bot')
+    : 'GenericoWeb_bot';
 window.GOOGLE_CALENDAR_EMBED_URL = '';
 
 // Feature flags comerciales controlados por el proveedor/deploy, no por Supabase del club.

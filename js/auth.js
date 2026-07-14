@@ -2,7 +2,30 @@ function mostrarPanelLogin() {
     document.getElementById('panelLogin').style.display = 'block';
     document.getElementById('panelRegister').style.display = 'none';
     document.getElementById('panelForgot').style.display = 'none';
+    actualizarAvisoAuthSupabase();
 }
+
+function actualizarAvisoAuthSupabase(diagnostico = window.supabaseAuthStatus) {
+    const notice = document.getElementById('supabaseAuthNotice');
+    const text = document.getElementById('supabaseAuthNoticeText');
+    const clearButton = document.getElementById('btnLimpiarSesionSupabase');
+    if (!notice || !text || !clearButton) return;
+
+    if (!diagnostico) {
+        notice.hidden = true;
+        text.textContent = '';
+        clearButton.hidden = true;
+        return;
+    }
+
+    notice.hidden = false;
+    text.textContent = diagnostico.message;
+    clearButton.hidden = !diagnostico.canClearSession;
+}
+
+window.addEventListener('supabase-auth-status', (event) => {
+    actualizarAvisoAuthSupabase(event.detail);
+});
 
 function mostrarPanelRegister() {
     mostrarMensaje('El alta de socios la realiza el administrador del club.', false);

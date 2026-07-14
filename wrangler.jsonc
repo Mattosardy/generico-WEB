@@ -1,5 +1,5 @@
 {
-    "name":  "generico-web",
+    "name":  "t3-420",
     "account_id":  "0d84de2dc65291ec2373fcbbdca81063",
     "compatibility_date":  "2026-05-12",
     "workers_dev":  true,
@@ -10,7 +10,7 @@
                    "run_worker_first":  true
                },
     "vars":  {
-                 "SUPABASE_URL":  "https://bszxuffixynbpcvjbzfa.supabase.co",
-                 "SUPABASE_ANON_KEY":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzenh1ZmZpeHluYnBjdmpiemZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDAyMzAsImV4cCI6MjA5NTMxNjIzMH0.pt7Wqk3jsmr9e0pQPTYmApfl9oktXM4Jd_YASz0te9E"
+                 "SUPABASE_URL":  "https://knxvvblvrvntqpwqwiog.supabase.co",
+                 "SUPABASE_ANON_KEY":  "sb_publishable_dahGlJ-EFT_GA8AnRDN9jg_YrrxqqfQ"
              }
 }

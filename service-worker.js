@@ -1,10 +1,16 @@
-const GENERICO_CACHE_VERSION = 'generico-pwa-v31-20260610-admin-remove-orders-chart';
-const GENERICO_APP_SHELL = [
+// Factory injection points:
+// - CLUB_CACHE_NAME should be unique per club/slug and version.
+// - CLUB_CACHE_PREFIX controls which old caches this instance may clean up.
+// - CLUB_APP_SHELL should include the generated manifest, config and public assets for the club.
+const CLUB_CACHE_NAME = 'generico-pwa-v33-20260714-new-supabase';
+const CLUB_CACHE_PREFIX = 'generico-';
+const CLUB_APP_SHELL = [
     '/',
     '/index.html',
     '/manifest.webmanifest',
     '/css/style.css',
     '/css/theme-generico.css',
+    '/js/club-config.js',
     '/js/config.js',
     '/js/utils.js',
     '/js/supabase-client.js',
@@ -24,6 +30,9 @@ const GENERICO_APP_SHELL = [
     '/assets/icons/apple-touch-icon.png'
 ];
 
+const GENERICO_CACHE_VERSION = CLUB_CACHE_NAME;
+const GENERICO_APP_SHELL = CLUB_APP_SHELL;
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(GENERICO_CACHE_VERSION)
@@ -37,7 +46,7 @@ self.addEventListener('activate', (event) => {
         caches.keys()
             .then((keys) => Promise.all(
                 keys
-                    .filter((key) => key.startsWith('generico-') && key !== GENERICO_CACHE_VERSION)
+                    .filter((key) => key.startsWith(CLUB_CACHE_PREFIX) && key !== GENERICO_CACHE_VERSION)
                     .map((key) => caches.delete(key))
             ))
             .then(() => self.clients.claim())

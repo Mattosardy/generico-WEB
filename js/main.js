@@ -636,13 +636,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             passwordInput.type = event.target.checked ? 'text' : 'password';
         }
     });
+    document.getElementById('btnLimpiarSesionSupabase')?.addEventListener('click', () => {
+        const estado = window.supabaseAuthStatus;
+        if (!estado?.canClearSession || typeof limpiarSesionLocalSupabase !== 'function') return;
+        if (!limpiarSesionLocalSupabase()) {
+            mostrarMensaje('No se pudo limpiar la sesion guardada en este navegador.', false);
+            return;
+        }
+        mostrarMensaje('Sesion local eliminada. Ya podes iniciar sesion nuevamente.', true);
+        window.setTimeout(() => window.location.reload(), 800);
+    });
     document.getElementById('formLoginPassword')?.addEventListener('submit', async (event) => {
         event.preventDefault();
         const telefono = document.getElementById('loginTelefonoPassword').value.trim();
         const password = document.getElementById('loginPassword').value;
         const resultado = await loginConTelefonoPassword(telefono, password);
         if (!resultado.success) {
-            mostrarMensaje('Telefono o contrasena incorrectos', false);
+            mostrarMensaje(resultado.message || 'No se pudo iniciar sesion.', false);
+            if (typeof actualizarAvisoAuthSupabase === 'function') {
+                actualizarAvisoAuthSupabase(resultado.diagnostic);
+            }
             return;
         }
         mostrarMensaje('Inicio de sesión exitoso', true);

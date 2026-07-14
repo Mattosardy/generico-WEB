@@ -249,7 +249,7 @@ async function cargarMaestroSocios() {
             <div class="admin-create-socio-copy">
                 <span class="metric-label">Alta controlada</span>
                 <h3><i class="fas fa-user-plus"></i> Crear socio</h3>
-                <p>Crea socios o administradores con telefono y contrasena temporal. El rol maestro queda reservado al telefono 091950107.</p>
+                <p>Crea socios o administradores con telefono y contrasena temporal. El rol maestro queda reservado al telefono configurado por el proveedor.</p>
             </div>
             <form id="formCrearSocioMaestro" class="admin-create-socio-form" data-origen="maestro">
                 <div class="form-group">

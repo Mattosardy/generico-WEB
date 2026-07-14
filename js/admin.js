@@ -1120,7 +1120,7 @@ async function cargarSociosAdmin() {
                 <button type="submit" class="btn-submit"><i class="fas fa-lock"></i> Crear socio</button>
             </form>
             <div id="crearSocioResultado" class="admin-create-socio-result" hidden></div>
-            <small class="admin-create-socio-note">La contraseña temporal se muestra una sola vez. El socio deberá cambiarla en su primer ingreso. Admin solo crea socios; solo el maestro 091950107 puede crear administradores.</small>
+            <small class="admin-create-socio-note">La contraseña temporal se muestra una sola vez. El socio deberá cambiarla en su primer ingreso. Admin solo crea socios; solamente el maestro configurado puede crear administradores.</small>
         </div>
     `;
     const tablaSociosHTML = (data || []).length ? `

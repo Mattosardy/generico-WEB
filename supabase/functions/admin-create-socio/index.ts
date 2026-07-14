@@ -5,7 +5,6 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const MASTER_PHONE = "+59891950107";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -24,11 +23,6 @@ function normalizePhoneUy(value: string) {
   return phone;
 }
 
-function buildTechnicalEmail(phone: string) {
-  const digits = phone.replace(/[^\d]/g, "");
-  return `socio-${digits}@generico.local`;
-}
-
 function buildTemporaryPassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
   const values = crypto.getRandomValues(new Uint8Array(12));
@@ -44,7 +38,7 @@ async function requireAdmin(supabase: ReturnType<typeof createClient>, token: st
   const { data: socio, error } = await supabase
     .from("socios")
     .select("id, rol, estado, telefono")
-    .or(`auth_user_id.eq.${user.id},email.eq.${user.email ?? ""}`)
+    .eq("auth_user_id", user.id)
     .maybeSingle();
 
   if (error) throw error;
@@ -52,10 +46,21 @@ async function requireAdmin(supabase: ReturnType<typeof createClient>, token: st
     throw new Error("No tenes permisos para crear socios.");
   }
 
+  let masterPhone = "";
+  if (String(socio.rol || "") === "maestro") {
+    const { data: masterPhoneConfig } = await supabase
+      .from("configuracion_sistema")
+      .select("valor")
+      .eq("clave", "maestro_telefono")
+      .maybeSingle();
+    masterPhone = normalizePhoneUy(String(masterPhoneConfig?.valor || ""));
+  }
   return {
     user,
     socio,
-    isMaster: String(socio.rol || "") === "maestro" && normalizePhoneUy(String(socio.telefono || "")) === MASTER_PHONE,
+    isMaster: Boolean(masterPhone)
+      && String(socio.rol || "") === "maestro"
+      && normalizePhoneUy(String(socio.telefono || "")) === masterPhone,
   };
 }
 
@@ -92,9 +97,6 @@ Deno.serve(async (req) => {
     if (rol === "maestro") throw new Error("El rol maestro es unico y no se puede crear desde el panel.");
     if (rol === "admin" && !actor.isMaster) throw new Error("Solo el maestro puede crear administradores.");
     if (rol !== "socio" && rol !== "admin") throw new Error("Rol no permitido.");
-    if (telefono === MASTER_PHONE && rol !== "socio") throw new Error("El telefono maestro no se puede registrar como admin.");
-
-    const email = buildTechnicalEmail(telefono);
     const temporaryPassword = buildTemporaryPassword();
 
     const { data: existingSocio } = await supabase
@@ -105,9 +107,9 @@ Deno.serve(async (req) => {
     if (existingSocio) throw new Error("Ya existe un socio con ese telefono.");
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
+      phone: telefono,
       password: temporaryPassword,
-      email_confirm: true,
+      phone_confirm: true,
       user_metadata: { nombre, apellido, telefono, rol },
     });
     if (authError) throw authError;
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
       apellido,
       cedula: String(body.cedula || "").trim() || cedulaFallback,
       telefono,
-      email,
+      email: null,
       auth_user_id: authUserId,
       rol,
       estado,
