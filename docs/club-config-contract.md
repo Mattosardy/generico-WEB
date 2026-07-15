@@ -17,6 +17,9 @@ window.CLUB_CONFIG = {
   supportPhone: "",
   supportEmail: "",
   telegramUsername: "DemoBot",
+  features: {
+    telegram: false
+  },
   colors: {
     primary: "#6b8e23",
     secondary: "#dff7cf",
@@ -60,6 +63,7 @@ window.CLUB_CONFIG = {
 - `supportPhone`: public support phone, optional.
 - `supportEmail`: public support email, optional.
 - `telegramUsername`: public bot username, not a bot token.
+- `features.telegram`: public boolean flag. Keep it `false` until the optional Telegram integration is provisioned.
 - `colors`: public theme values.
 - `assets`: public relative asset paths.
 - `supabase.url`: public Supabase project URL.
@@ -94,6 +98,8 @@ assets/icons/icon-192.png
 ```
 
 Factory must ensure generated assets exist before publishing an instance. If a generated asset is missing, the base defaults in `js/club-config.js` keep the demo usable.
+
+The runtime resolves configurable background paths against the document base before inserting them into CSS variables. This prevents a relative path such as `assets/images/home.png` from being resolved under `/css/`.
 
 ## CSS Theme Override
 

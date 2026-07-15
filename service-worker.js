@@ -2,7 +2,7 @@
 // - CLUB_CACHE_NAME should be unique per club/slug and version.
 // - CLUB_CACHE_PREFIX controls which old caches this instance may clean up.
 // - CLUB_APP_SHELL should include the generated manifest, config and public assets for the club.
-const CLUB_CACHE_NAME = 'generico-pwa-v33-20260714-new-supabase';
+const CLUB_CACHE_NAME = 'generico-pwa-v34-20260714-optional-telegram';
 const CLUB_CACHE_PREFIX = 'generico-';
 const CLUB_APP_SHELL = [
     '/',

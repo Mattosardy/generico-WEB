@@ -12,6 +12,9 @@ window.defaultHistoriaImagenUrl = 'assets/images/home_inst.png';
 window.TELEGRAM_BOT_USERNAME = typeof window.getClubConfigValue === 'function'
     ? window.getClubConfigValue('telegramUsername', 'GenericoWeb_bot')
     : 'GenericoWeb_bot';
+window.TELEGRAM_ENABLED = typeof window.isClubFeatureEnabled === 'function'
+    ? window.isClubFeatureEnabled('telegram')
+    : false;
 window.GOOGLE_CALENDAR_EMBED_URL = '';
 
 // Feature flags comerciales controlados por el proveedor/deploy, no por Supabase del club.
@@ -46,7 +49,10 @@ window.appState = {
     historialRetiradoCount: 0,
     sociosChart: null,
     configWhatsApp: { phoneNumberId: null, accessToken: null },
-    configTelegram: { botUsername: window.TELEGRAM_BOT_USERNAME },
+    configTelegram: {
+        enabled: window.TELEGRAM_ENABLED,
+        botUsername: window.TELEGRAM_BOT_USERNAME
+    },
     telegramSecurity: {
         deviceId: null,
         deviceName: '',

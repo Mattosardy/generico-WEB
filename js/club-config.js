@@ -12,6 +12,9 @@
         supportPhone: '',
         supportEmail: '',
         logo: 'assets/images/logo-t3-420.png',
+        features: {
+            telegram: false
+        },
         assets: {
             logo: 'assets/images/logo-t3-420.png',
             homeBackground: 'assets/images/home_inst.png',
@@ -54,6 +57,10 @@
             ...(existingConfig.assets || {}),
             logo: existingConfig.assets?.logo || existingConfig.logo || fallbackConfig.assets.logo
         },
+        features: {
+            ...fallbackConfig.features,
+            ...(existingConfig.features || {})
+        },
         colors: {
             ...fallbackConfig.colors,
             ...(existingConfig.colors || {})
@@ -70,8 +77,22 @@
 
     window.getClubConfigValue = getClubConfigValue;
 
+    function isClubFeatureEnabled(feature) {
+        return window.CLUB_CONFIG?.features?.[feature] === true;
+    }
+
+    window.isClubFeatureEnabled = isClubFeatureEnabled;
+
     function getClubAssetValue(key, fallback) {
         return getClubConfigValue(`assets.${key}`, fallback);
+    }
+
+    function resolveClubAssetUrl(value) {
+        try {
+            return new URL(value, document.baseURI).href;
+        } catch (_error) {
+            return value;
+        }
     }
 
     function applyCssVariable(name, path, fallback) {
@@ -135,7 +156,8 @@
         const appleTouchIcon = getClubAssetValue('appleTouchIcon', fallbackConfig.assets.appleTouchIcon);
 
         if (homeBackground) {
-            document.documentElement.style.setProperty('--club-bg-image', `url("${homeBackground}")`);
+            const backgroundUrl = resolveClubAssetUrl(homeBackground);
+            document.documentElement.style.setProperty('--club-bg-image', `url("${backgroundUrl}")`);
         }
 
         const logoElement = document.getElementById('clubLogoPrincipal');

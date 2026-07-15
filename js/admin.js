@@ -1523,6 +1523,12 @@ function construirItemTelegramInboxHTML(mensaje = {}) {
 async function cargarTelegramInboxMensajes() {
     const container = document.getElementById('telegramInboxMensajes');
     if (!container) return;
+
+    if (window.TELEGRAM_ENABLED !== true) {
+        container.innerHTML = '<div class="empty-state"><i class="fab fa-telegram"></i><strong>Telegram no habilitado</strong><span>La bandeja estara disponible cuando esta integracion se active para el club.</span></div>';
+        return;
+    }
+
     container.innerHTML = '<div class="loading">Cargando mensajes recibidos...</div>';
 
     const { data, error } = await supabaseClient
